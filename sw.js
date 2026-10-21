@@ -1,5 +1,5 @@
 // Carnet de fonte : cache hors ligne
-const CACHE='fonte-v7';
+const CACHE='fonte-v8';
 const CORE=['./','./index.html','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png'];
 const MEDIA=['./media/thumbs.json','./media/p0.json','./media/p1.json','./media/p2.json','./media/p3.json'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
