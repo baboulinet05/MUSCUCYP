@@ -273,6 +273,14 @@ h3{margin:0;font:700 20px/1.15 var(--f-display);letter-spacing:.01em}
 .fld{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--muted)}
 .fld input,.fld select{height:46px;border-radius:11px;border:1px solid var(--line);background:var(--bg);padding:0 12px;font-size:16px;font-weight:500;color:var(--fg);outline:none}
 .fld input:focus,.fld select:focus{border-color:var(--accent)}
+.fld{min-width:0}
+.fld input,.fld select{display:block;width:100%;min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;line-height:44px}
+.fld input[type="date"]{text-align:left;padding-right:12px}
+.fld input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
+.fld input[type="date"]::-webkit-calendar-picker-indicator{opacity:.6}
+.fld select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+.dlg{overflow-x:hidden}
+.fld-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
 .ta{width:100%;border-radius:11px;border:1px solid var(--line);background:var(--bg);padding:10px;font:13px/1.4 ui-monospace,Menlo,monospace;color:var(--fg);resize:vertical}
 .derr{margin:0;color:var(--fail);font-weight:600;font-size:14px}
 .sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -1358,7 +1366,7 @@ const BUILTIN=[];
 (()=>{let m='';for(const line of RAW.split('\n')){const l=line.trim();if(!l)continue;if(l[0]==='#'){m=l.slice(1).trim();continue}const[name,equip,t]=l.split('|');const type=t||(m==='Cardio'?'c':equip==='Poids du corps'?'b':'w');BUILTIN.push({id:slug(name),name,muscle:m,equip,type})}})();
 
 const KEY='carnet-fonte-v1';
-const APP_VERSION='1.9';
+const APP_VERSION='1.9.1';
 function exampleRoutines(){
   const R=(name,list)=>({id:uid(),name,exercises:list.map(([n,k])=>({exId:slug(n),rest:90,sets:Array.from({length:k},()=>({t:'n',a:'',b:''}))}))});
   return[
@@ -1528,7 +1536,7 @@ function muscleHTML(){const off=ui.mOff||0;const m=muscleWeek(off);const L=MAIN_
 /* ================= Mensurations ================= */
 const MEAS=['Bras','Avant-bras','Poitrine','Épaules','Taille','Hanches','Cuisse','Mollet','Cou'];
 function measDlg(kind){const d=new Date();const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  openDlg({title:'Nouvelle mesure',html:`<label class="fld"><span>Zone</span><select id="ms-k">${MEAS.map(k=>`<option ${k===kind?'selected':''}>${k}</option>`).join('')}</select></label><label class="fld"><span>Tour (cm)</span><input id="ms-v" type="text" inputmode="decimal" autofocus placeholder="ex. 38,5"></label><label class="fld"><span>Date</span><input id="ms-d" type="date" value="${iso}" max="${iso}"></label><p class="derr" id="ms-err" hidden></p>`,
+  openDlg({title:'Nouvelle mesure',html:`<label class="fld"><span>Zone</span><select id="ms-k">${MEAS.map(k=>`<option ${k===kind?'selected':''}>${k}</option>`).join('')}</select></label><div class="fld-row"><label class="fld"><span>Tour (cm)</span><input id="ms-v" type="text" inputmode="decimal" autofocus placeholder="ex. 38,5"></label><label class="fld"><span>Date</span><input id="ms-d" type="date" value="${iso}" max="${iso}"></label></div><p class="derr" id="ms-err" hidden></p>`,
   buttons:[{label:'Enregistrer',kind:'primary',fn:()=>{const v=num($('#ms-v').value);if(!(v>5&&v<300)){const e=$('#ms-err');e.textContent='Indique une mesure entre 5 et 300 cm.';e.hidden=false;return false}
     const[y,m,dd]=($('#ms-d').value||iso).split('-').map(Number);S.measures=S.measures||[];S.measures.push({id:uid(),k:$('#ms-k').value,t:new Date(y,m-1,dd,12).getTime(),v});save();renderMain();renderDetail();flash('Mesure enregistrée')}},{label:'Annuler',kind:'soft'}]})}
 function measLast(){const out={};for(const x of (S.measures||[]).slice().sort((a,b)=>a.t-b.t)){(out[x.k]=out[x.k]||[]).push(x)}return out}
@@ -1590,7 +1598,7 @@ function goalDlg(id){const X=ex(id),g=S.goals[id],b=bestFor(id);
 /* ================= Poids du corps ================= */
 function bodySorted(){return(S.body||[]).slice().sort((a,b)=>a.t-b.t)}
 function bodyDlg(){const last=bodySorted().pop();const d=new Date();const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  openDlg({title:'Nouvelle pesée',html:`<label class="fld"><span>Poids (kg)</span><input id="bw-kg" type="text" inputmode="decimal" autofocus placeholder="${last?fmt(last.kg):'ex. 78,5'}"></label><label class="fld"><span>Date</span><input id="bw-d" type="date" value="${iso}" max="${iso}"></label><p class="derr" id="bw-err" hidden></p>`,
+  openDlg({title:'Nouvelle pesée',html:`<div class="fld-row"><label class="fld"><span>Poids (kg)</span><input id="bw-kg" type="text" inputmode="decimal" autofocus placeholder="${last?fmt(last.kg):'ex. 78,5'}"></label><label class="fld"><span>Date</span><input id="bw-d" type="date" value="${iso}" max="${iso}"></label></div><p class="derr" id="bw-err" hidden></p>`,
   buttons:[{label:'Enregistrer',kind:'primary',fn:()=>{const kg=num($('#bw-kg').value);const dv=$('#bw-d').value;if(!(kg>20&&kg<400)){const e=$('#bw-err');e.textContent='Indique un poids entre 20 et 400 kg.';e.hidden=false;return false}
     const [y,m,dd]=(dv||iso).split('-').map(Number);const t=new Date(y,m-1,dd,12).getTime();S.body=(S.body||[]).filter(b=>monday(b.t)!==monday(t)||new Date(b.t).toDateString()!==new Date(t).toDateString());S.body.push({id:uid(),t,kg});save();renderMain();renderDetail();flash('Pesée enregistrée')}},{label:'Annuler',kind:'soft'}]})}
 function bodyCardHTML(){const B=bodySorted();
@@ -2048,6 +2056,10 @@ document.addEventListener('change',e=>{const el=e.target,f=el.dataset&&el.datase
   else if(el.id==='fileIn'){const file=el.files&&el.files[0];el.value='';if(!file)return;const r=new FileReader();r.onload=()=>applyImport(String(r.result));r.onerror=()=>flash('Lecture du fichier impossible');r.readAsText(file)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(MODAL)closeDlg();else if(ui.detail.length)ACTS['d-close']();else if(ui.picker)ACTS['p-close']()}
   if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('sin')){e.preventDefault();const all=[...document.querySelectorAll('#ed .sin')];const k=all.indexOf(e.target);if(k>=0&&all[k+1])all[k+1].focus();else e.target.blur()}});
+
+/* ================= Clavier iOS : garder la fenêtre visible ================= */
+(function(){const vv=window.visualViewport;if(!vv)return;const fit=()=>{const d=document.getElementById('dlg');if(!d)return;d.style.top=vv.offsetTop+'px';d.style.height=vv.height+'px';d.style.bottom='auto'};vv.addEventListener('resize',fit);vv.addEventListener('scroll',fit);fit()})();
+document.addEventListener('focusin',e=>{if(e.target.closest&&e.target.closest('#dlg')&&e.target.matches('input,select,textarea'))setTimeout(()=>{try{e.target.scrollIntoView({block:'center',behavior:'smooth'})}catch(_){}},300)});
 
 /* ================= Invitation à installer ================= */
 let deferredInstall=null;
