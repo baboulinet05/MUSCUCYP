@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#0E1012" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<style>:root{color-scheme:light;box-sizing:border-box}[hidden]{display:none!important}img{max-width:100%}html,body{height:100%;overscroll-behavior:none}#app{position:fixed;inset:0;padding-top:env(safe-area-inset-top,0px)}.tabbar{padding-bottom:max(4px,env(safe-area-inset-bottom,0px))}</style>
+<style>:root{color-scheme:light;box-sizing:border-box}[hidden]{display:none!important}img{max-width:100%}html{background:var(--surface)}html,body{height:100%;overscroll-behavior:none}body{background:var(--surface)}#app{position:fixed;top:0;left:0;right:0;bottom:0;height:var(--app-h,100%);background:var(--bg);padding-top:env(safe-area-inset-top,0px)}.tabbar{padding-bottom:max(4px,env(safe-area-inset-bottom,0px))}</style>
 <title>Carnet de fonte</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -637,6 +637,7 @@ const BUILTIN=[];
 (()=>{let m='';for(const line of RAW.split('\n')){const l=line.trim();if(!l)continue;if(l[0]==='#'){m=l.slice(1).trim();continue}const[name,equip,t]=l.split('|');const type=t||(m==='Cardio'?'c':equip==='Poids du corps'?'b':'w');BUILTIN.push({id:slug(name),name,muscle:m,equip,type})}})();
 
 const KEY='carnet-fonte-v1';
+const APP_VERSION='1.3';
 function exampleRoutines(){
   const R=(name,list)=>({id:uid(),name,exercises:list.map(([n,k])=>({exId:slug(n),rest:90,sets:Array.from({length:k},()=>({t:'n',a:'',b:''}))}))});
   return[
@@ -788,6 +789,7 @@ function setView(){
   <section class="card setc"><h3>Installer sur l'iPhone</h3>
     ${standalone?`<p class="okline">${icon('check')}L'app est installée sur ton écran d'accueil.</p>`:`<ol class="steps"><li>Ouvre l'app dans <b>Safari</b>.</li><li>Touche <b>Partager</b>, puis <b>Sur l'écran d'accueil</b>.</li><li>Lance-la depuis l'icône : elle s'ouvre en plein écran et marche hors ligne.</li></ol>`}</section>
   <section class="card setc"><h3>Données</h3>
+    <div class="setrow"><span class="muted">Version de l'app</span><b class="num">${APP_VERSION}</b></div>
     <div class="setrow"><span class="muted">Séances</span><b class="num">${S.history.length}</b></div>
     <div class="setrow"><span class="muted">Routines</span><b class="num">${S.routines.length}</b></div>
     <div class="setrow"><span class="muted">Exercices perso</span><b class="num">${S.custom.length}</b></div>
@@ -1075,6 +1077,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(MODAL)closeDlg()
   if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('sin')){e.preventDefault();const all=[...document.querySelectorAll('#ed .sin')];const k=all.indexOf(e.target);if(k>=0&&all[k+1])all[k+1].focus();else e.target.blur()}});
 
 /* ================= Démarrage ================= */
+function fitScreen(){try{const st=navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);if(!st)return;
+  const portrait=window.innerHeight>=window.innerWidth;const full=portrait?Math.max(screen.height,screen.width):Math.min(screen.height,screen.width);
+  const h=/iPhone|iPad|iPod/.test(navigator.userAgent)?Math.max(full,window.innerHeight):window.innerHeight;
+  document.documentElement.style.setProperty('--app-h',h+'px')}catch(e){}}
+fitScreen();window.addEventListener('resize',fitScreen);window.addEventListener('orientationchange',()=>setTimeout(fitScreen,300));
 if(S.active&&S.active.rest&&S.active.rest.end<Date.now())S.active.rest=null;
 if(S.active){ui.edMode='workout';ui.editorOpen=true}
 renderAll();save();
