@@ -187,6 +187,11 @@ h3{margin:0;font:700 20px/1.15 var(--f-display);letter-spacing:.01em}
 .bkp{background:var(--accent-soft);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
 .bkp p{margin:0;font-size:14px;line-height:1.45}.bkp b{display:block;font:700 18px var(--f-display);text-transform:uppercase;color:var(--accent)}
 .shimg{width:100%;border-radius:12px;display:block}
+.inst-top{display:flex;gap:12px;align-items:flex-start}.inst-ic{width:56px;height:56px;border-radius:13px;flex:none}
+.inst{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.inst li{display:flex;align-items:center;gap:12px;font-size:15px;line-height:1.35}
+.ib{width:40px;height:40px;flex:none;border-radius:10px;background:var(--raised);display:grid;place-items:center;color:var(--drop)}
+.inst-ok{color:var(--done-ink)}
 .howl{margin:0;padding:0;list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:10px}
 .howl li{counter-increment:st;display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;line-height:1.45;max-width:65ch}
 .howl li::before{content:counter(st);width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font:700 16px var(--f-display)}
@@ -261,7 +266,7 @@ h3{margin:0;font:700 20px/1.15 var(--f-display);letter-spacing:.01em}
 .dtitle{margin:0;font:700 24px/1.1 var(--f-display);text-transform:uppercase}
 .dtext{margin:0;color:var(--muted)}
 .dbtns{display:flex;flex-direction:column;gap:8px;margin-top:4px}
-.dbtns.sheet{gap:0;margin-top:0}
+.dbtns.k-sheet{gap:0;margin-top:0}
 .sh-item{height:52px;border-bottom:1px solid var(--line);font-weight:600;font-size:16px;text-align:left}
 .sh-item.danger{color:var(--fail)}
 .sh-item.cancel{border:0;color:var(--muted);text-align:center}
@@ -1353,7 +1358,7 @@ const BUILTIN=[];
 (()=>{let m='';for(const line of RAW.split('\n')){const l=line.trim();if(!l)continue;if(l[0]==='#'){m=l.slice(1).trim();continue}const[name,equip,t]=l.split('|');const type=t||(m==='Cardio'?'c':equip==='Poids du corps'?'b':'w');BUILTIN.push({id:slug(name),name,muscle:m,equip,type})}})();
 
 const KEY='carnet-fonte-v1';
-const APP_VERSION='1.7';
+const APP_VERSION='1.8';
 function exampleRoutines(){
   const R=(name,list)=>({id:uid(),name,exercises:list.map(([n,k])=>({exId:slug(n),rest:90,sets:Array.from({length:k},()=>({t:'n',a:'',b:''}))}))});
   return[
@@ -1713,7 +1718,7 @@ function setView(){
     <ol class="steps"><li>Dans Hevy : <b>Profil → Réglages → Exporter et importer des données → Exporter les données</b>.</li><li>Enregistre le fichier CSV dans Fichiers.</li><li>Choisis-le ici : tes séances arrivent dans l'historique, avec la colonne « Précédent » et les records.</li></ol>
     <button class="btn btn-primary" data-act="hevy-file">Choisir le fichier Hevy</button></section>
   <section class="card setc"><h3>Installer sur l'iPhone</h3>
-    ${standalone?`<p class="okline">${icon('check')}L'app est installée sur ton écran d'accueil.</p>`:`<ol class="steps"><li>Ouvre l'app dans <b>Safari</b>.</li><li>Touche <b>Partager</b>, puis <b>Sur l'écran d'accueil</b>.</li><li>Lance-la depuis l'icône : elle s'ouvre en plein écran et marche hors ligne.</li></ol>`}</section>
+    ${standalone?`<p class="okline">${icon('check')}L'app est installée sur ton écran d'accueil.</p>`:`<button class="btn btn-soft" data-act="install-help" style="align-self:flex-start">Afficher le mode d'emploi</button><ol class="steps"><li>Ouvre l'app dans <b>Safari</b>.</li><li>Touche <b>Partager</b>, puis <b>Sur l'écran d'accueil</b>.</li><li>Lance-la depuis l'icône : elle s'ouvre en plein écran et marche hors ligne.</li></ol>`}</section>
   <section class="card setc"><h3>Données</h3>
     <div class="setrow"><span class="muted">Version de l'app</span><b class="num">${APP_VERSION}</b></div>
     <div class="setrow"><span class="muted">Séances</span><b class="num">${S.history.length}</b></div>
@@ -1922,7 +1927,7 @@ function confirmDlg(title,text,ok,fn){openDlg({title,html:`<p class="dtext">${es
 function renderDialog(){const el=$('#dlg');if(!MODAL){el.hidden=true;el.innerHTML='';return}el.hidden=false;const m=MODAL;
   const b=m.kind==='sheet'?m.items.map((it,i)=>`<button class="sh-item ${it.danger?'danger':''}" data-act="modal:${i}">${esc(it.label)}</button>`).join('')+`<button class="sh-item cancel" data-act="modal-close">Annuler</button>`
     :m.buttons.map((x,i)=>`<button class="btn block ${x.kind==='danger'?'btn-danger':x.kind==='primary'?'btn-primary':'btn-soft'}" data-act="modal:${i}">${esc(x.label)}</button>`).join('');
-  el.innerHTML=`<div class="scrim" data-act="modal-close"></div><div class="dlg" role="dialog" aria-modal="true" aria-label="${esc(m.title||'Options')}">${m.title?`<h3 class="dtitle">${esc(m.title)}</h3>`:''}${m.html||''}<div class="dbtns ${m.kind}">${b}</div></div>`}
+  el.innerHTML=`<div class="scrim" data-act="modal-close"></div><div class="dlg" role="dialog" aria-modal="true" aria-label="${esc(m.title||'Options')}">${m.title?`<h3 class="dtitle">${esc(m.title)}</h3>`:''}${m.html||''}<div class="dbtns k-${m.kind}">${b}</div></div>`}
 let flashT=null;
 function flash(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;t.classList.remove('show');void t.offsetWidth;t.classList.add('show');clearTimeout(flashT);flashT=setTimeout(()=>{t.hidden=true},2300)}
 function createExerciseDlg(prefill,muscle){
@@ -2000,6 +2005,7 @@ const ACTS={
   'meas-open'(k){pushDetail({kind:'meas',id:k})},
   'meas-del'(id){confirmDlg('Supprimer cette mesure ?','Elle sera retirée de ton suivi.','Supprimer',()=>{S.measures=S.measures.filter(x=>x.id!==id);save();renderDetail();renderMain()})},
   'w-share'(id){const w=S.history.find(w=>w.id===id);if(w)shareImage(w)},
+  'install-help'(){installShown=false;maybeInstallPrompt(true)},
   'bkp-later'(){S.settings.backupSnooze=Date.now()+3*864e5;save();renderMain()},
   'body-add'(){bodyDlg()},
   'body-open'(){pushDetail({kind:'body'})},
@@ -2043,6 +2049,27 @@ document.addEventListener('change',e=>{const el=e.target,f=el.dataset&&el.datase
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(MODAL)closeDlg();else if(ui.detail.length)ACTS['d-close']();else if(ui.picker)ACTS['p-close']()}
   if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('sin')){e.preventDefault();const all=[...document.querySelectorAll('#ed .sin')];const k=all.indexOf(e.target);if(k>=0&&all[k+1])all[k+1].focus();else e.target.blur()}});
 
+/* ================= Invitation à installer ================= */
+let deferredInstall=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;maybeInstallPrompt()});
+const isStandalone=()=>!!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches));
+const isIOS=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const SHARE_SVG='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+const ADD_SVG='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg>';
+function installSnoozed(){try{return +localStorage.getItem('fonte-install-later')>Date.now()}catch(e){return false}}
+function snoozeInstall(days){try{localStorage.setItem('fonte-install-later',String(Date.now()+days*864e5))}catch(e){}}
+let installShown=false;
+function maybeInstallPrompt(force){if(isStandalone()||!document.querySelector('link[rel="manifest"]'))return;if(!force&&(installShown||installSnoozed()||MODAL))return;
+  const ios=isIOS();if(!ios&&!deferredInstall&&!force)return;installShown=true;
+  const other=ios&&/CriOS|FxiOS|EdgiOS/.test(navigator.userAgent);
+  const steps=ios?`<ol class="inst">
+      <li><span class="ib">${SHARE_SVG}</span><span>Touche <b>Partager</b>${other?' (dans la barre d\'adresse)':' en bas de Safari'}</span></li>
+      <li><span class="ib">${ADD_SVG}</span><span>Fais défiler et choisis <b>Sur l'écran d'accueil</b></span></li>
+      <li><span class="ib inst-ok">${icon('check')}</span><span>Touche <b>Ajouter</b>, puis ouvre l'app depuis son icône</span></li></ol>`
+    :`<p class="dtext">Ajoute-la à ton téléphone : elle s'ouvrira en plein écran, comme une vraie application.</p>`;
+  openDlg({title:'Installe Carnet de fonte',html:`<div class="inst-top"><img src="apple-touch-icon.png" alt="" class="inst-ic" onerror="this.remove()"><p class="dtext">Ajoute l'app à ton écran d'accueil : plein écran, hors ligne, et <b>tes séances restent en sécurité</b> (dans Safari, iOS peut les effacer).</p></div>${steps}`,
+    buttons:[...(deferredInstall&&!ios?[{label:'Installer l\'application',kind:'primary',fn:async()=>{try{deferredInstall.prompt();await deferredInstall.userChoice}catch(e){}deferredInstall=null}}]:[{label:'J\'ai compris',kind:'primary',fn:()=>snoozeInstall(3)}]),{label:'Plus tard',kind:'soft',fn:()=>snoozeInstall(7)}]})}
+
 /* ================= Démarrage ================= */
 function fitScreen(){try{const st=navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);if(!st)return;
   const portrait=window.innerHeight>=window.innerWidth;const full=portrait?Math.max(screen.height,screen.width):Math.min(screen.height,screen.width);
@@ -2052,6 +2079,7 @@ fitScreen();window.addEventListener('resize',fitScreen);window.addEventListener(
 if(S.active&&S.active.rest&&S.active.rest.end<Date.now())S.active.rest=null;
 if(S.active){ui.edMode='workout';ui.editorOpen=true}
 renderAll();save();
+setTimeout(()=>maybeInstallPrompt(),1200);
 if(MEDIA_MODE==='packs'){new MutationObserver(hydrate).observe(document.body,{childList:true,subtree:true});hydrate()}
 if('serviceWorker'in navigator&&document.querySelector('link[rel="manifest"]')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 </script>
