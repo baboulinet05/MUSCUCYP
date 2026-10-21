@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fonte">
+<meta name="theme-color" content="#F1F3F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1012" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Carnet de fonte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: app shell — scrolling view + bottom tab bar; séance, sélecteur d'exercices et fiches en feuilles plein écran. Plaques de compétition comme repères de couleur. */
+:root{
+  --bg:#F1F3F5; --surface:#FFFFFF; --raised:#E8EBEE; --fg:#14171A; --muted:#5F6871; --line:#D9DEE3;
+  --accent:#C62F2A; --accent-ink:#FFFFFF; --accent-soft:#F7E2E0;
+  --done:#E1F2E6; --done-ink:#1E7543; --warm:#A67600; --drop:#2A60C4; --fail:#C62F2A;
+  --bar:#CDD3D9; --scrim:rgba(14,17,20,.45); --shadow:0 1px 2px rgba(20,24,28,.05),0 8px 24px rgba(20,24,28,.06);
+  --f-display:"Barlow Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1012; --surface:#171A1E; --raised:#22262B; --fg:#ECEEF0; --muted:#8F98A1; --line:#2A2F35;
+  --accent:#EE4B3F; --accent-ink:#FFFFFF; --accent-soft:#3A1D1B;
+  --done:#14281C; --done-ink:#55C985; --warm:#E5AE22; --drop:#6A97F2; --fail:#EE4B3F;
+  --bar:#353B42; --scrim:rgba(0,0,0,.62); --shadow:none; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1012; --surface:#171A1E; --raised:#22262B; --fg:#ECEEF0; --muted:#8F98A1; --line:#2A2F35;
+  --accent:#EE4B3F; --accent-ink:#FFFFFF; --accent-soft:#3A1D1B;
+  --done:#14281C; --done-ink:#55C985; --warm:#E5AE22; --drop:#6A97F2; --fail:#EE4B3F;
+  --bar:#353B42; --scrim:rgba(0,0,0,.62); --shadow:none; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{height:100%}
+body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 var(--f-body);-webkit-tap-highlight-color:transparent;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+button:disabled{cursor:default;opacity:.5}
+input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.num{font-variant-numeric:tabular-nums}
+
+#app{height:100%;display:flex;flex-direction:column}
+.view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.wrap,.wrapx{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{padding-block:18px 32px;display:flex;flex-direction:column;gap:14px}
+
+.vh{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-top:6px}
+.eyebrow{margin:0;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{margin:0;font:700 38px/1 var(--f-display);text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+h2{margin:0;font:700 22px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.02em}
+h3{margin:0;font:700 20px/1.15 var(--f-display);letter-spacing:.01em}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 18px;border-radius:12px;font-weight:600;white-space:nowrap}
+.btn.sm{height:38px;padding:0 14px;border-radius:10px;font-size:14px}
+.btn.lg{height:54px;font-size:16px}
+.btn.block{width:100%}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-soft{background:var(--raised)}
+.btn-danger{background:var(--accent-soft);color:var(--fail)}
+.btn-ghost{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-weight:600;height:38px;padding:0 4px}
+.btn-ghost.danger{color:var(--fail)}
+.btn-ghost.block{width:100%;justify-content:center}
+.icon-btn{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;color:var(--muted)}
+.icon-btn:active{background:var(--raised)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+
+/* Tab bar */
+.tabbar{display:flex;background:var(--surface);border-top:1px solid var(--line);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 7px;font-size:11px;font-weight:600;color:var(--muted);text-align:center}
+.tab.on{color:var(--accent)}
+.resume{display:flex;align-items:center;gap:10px;width:100%;background:var(--fg);color:var(--bg);padding-block:11px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));font-weight:600}
+.resume .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none;animation:pulse 1.6s infinite}
+.resume .rn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+.resume .go{color:var(--accent);font-weight:700}
+@keyframes pulse{50%{opacity:.35}}
+
+/* Séance */
+.today-line{display:flex;gap:18px;flex-wrap:wrap}
+.mini{display:flex;flex-direction:column}
+.k{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.v{font:700 22px/1.15 var(--f-display);font-variant-numeric:tabular-nums}
+.rgrid{display:grid;gap:10px;grid-template-columns:1fr}
+@media (min-width:560px){.rgrid{grid-template-columns:1fr 1fr}}
+.rcard{display:flex;flex-direction:column;gap:8px}
+.rc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.rc-top h3{padding-top:6px;min-width:0;overflow-wrap:anywhere}
+.rc-ex{margin:0;color:var(--muted);font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rc-meta{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.rcard .btn{margin-top:4px}
+.empty{border:1.5px dashed var(--line);border-radius:16px;padding:22px 18px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--fg);font:700 20px var(--f-display);margin-bottom:4px}
+.plates{display:flex;gap:4px;justify-content:center;margin-bottom:10px}
+.plates i{display:block;width:8px;border-radius:2px}
+
+/* Lists */
+.search{display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;border-radius:12px;background:var(--raised);color:var(--muted)}
+.search input{flex:1;min-width:0;border:0;background:none;outline:none;font-size:16px;color:var(--fg)}
+.search input::-webkit-search-cancel-button{display:none}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px))) 0;padding:0 max(16px,env(safe-area-inset-left,0px))}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;height:34px;padding:0 13px;border-radius:999px;background:var(--raised);font-weight:600;font-size:13px;white-space:nowrap}
+.chip.on{background:var(--fg);color:var(--bg)}
+.sel{height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:0 10px;font-size:16px;max-width:100%}
+.xi{display:flex;align-items:center;gap:12px;width:100%;padding:10px 0;border-bottom:1px solid var(--line);text-align:left}
+.xi .xt{flex:1;min-width:0;display:flex;flex-direction:column}
+.t{font-weight:600;overflow-wrap:anywhere}
+.s{font-size:13px;color:var(--muted)}
+.av{width:42px;height:42px;flex:none;border-radius:11px;background:var(--raised);display:grid;place-items:center;font:700 14px var(--f-display);letter-spacing:.04em;color:var(--accent)}
+.av.sm{width:36px;height:36px;border-radius:10px;font-size:13px}
+.tick{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;flex:none}
+.tick.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tick svg.i{width:16px;height:16px;stroke-width:3}
+.xi > svg.i{color:var(--muted)}
+.xi-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left}
+.av{position:relative;overflow:hidden}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.media-wrap{margin:0;display:flex;flex-direction:column;gap:4px}
+.media{position:relative;border-radius:16px;overflow:hidden;background:var(--raised);aspect-ratio:3/2;width:100%;max-width:100%}
+.media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.media .f1{opacity:0;animation:swap 2.6s ease-in-out infinite}
+@keyframes swap{0%,36%{opacity:0}50%,86%{opacity:1}100%{opacity:0}}
+.media.split{aspect-ratio:auto;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:none;border-radius:0;overflow:visible}
+.media.split img{position:static;aspect-ratio:3/2;opacity:1;animation:none;border-radius:12px}
+.media-wrap figcaption{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.credit{font-size:11px;color:var(--muted)}
+.how{display:flex;flex-direction:column;gap:10px}
+.howl{margin:0;padding:0;list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:10px}
+.howl li{counter-increment:st;display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;line-height:1.45;max-width:65ch}
+.howl li::before{content:counter(st);width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font:700 16px var(--f-display)}
+.tip{margin:0;background:var(--raised);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.45}
+.tip b{font:700 13px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.count-line{font-size:13px;color:var(--muted);padding:6px 0 2px}
+
+/* Sheets */
+.sheet{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);animation:rise .22s ease-out}
+#picker{z-index:30}#detail{z-index:40}
+@keyframes rise{from{transform:translateY(18px);opacity:.4}}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:56px;background:var(--surface);border-bottom:1px solid var(--line);padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+.sh-title{font:700 18px var(--f-display);text-transform:uppercase;letter-spacing:.03em;text-align:center;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.pk-tools{display:flex;flex-direction:column;gap:10px;padding-block:12px 8px;background:var(--surface);border-bottom:1px solid var(--line);max-width:none}
+.pk-tools > *{width:100%;max-width:608px;margin-inline:auto}
+.pk-foot{padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--surface);border-top:1px solid var(--line)}
+.pk-foot .btn{max-width:608px;margin:0 auto;display:flex}
+
+/* Editor */
+.ed-clock{display:flex;align-items:center;gap:6px;font:700 20px var(--f-display);font-variant-numeric:tabular-nums}
+.ed-clock svg.i{width:18px;height:18px;color:var(--accent)}
+.ed-wrap{display:flex;flex-direction:column;gap:14px;padding-block:16px 140px}
+.ed-name{border:0;background:none;outline:none;font:700 30px/1.05 var(--f-display);text-transform:uppercase;width:100%;padding:0;color:var(--fg)}
+.ed-name::placeholder{color:var(--muted)}
+.ed-stats{display:flex;gap:24px;flex-wrap:wrap;padding-bottom:4px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.ed-stats > div{display:flex;flex-direction:column}
+.excard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ex-head{display:flex;align-items:center;gap:6px}
+.ex-name{flex:1;min-width:0;display:flex;align-items:center;gap:10px;text-align:left}
+.ex-name .t{color:var(--accent);font-size:16px;line-height:1.25}
+.ex-name > span:last-child{display:flex;flex-direction:column;min-width:0}
+.ex-note{width:100%;border:0;background:none;resize:none;outline:none;font-size:16px;color:var(--fg);padding:2px 0;line-height:1.35}
+.ex-note::placeholder{color:var(--muted)}
+.ex-rest{display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-weight:600;font-size:14px;align-self:flex-start}
+.ex-rest svg.i{width:17px;height:17px}
+.ex-rest select{border:0;background:none;color:var(--accent);font-weight:700;font-size:16px;padding:2px 0;outline:none}
+.sets{display:flex;flex-direction:column;gap:3px}
+.srow{display:grid;grid-template-columns:38px minmax(0,1fr) 68px 58px 42px;gap:6px;align-items:center;border-radius:9px;padding:3px}
+.srow.r{grid-template-columns:38px minmax(0,1fr) minmax(0,1fr)}
+.shead{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-block:0}
+.shead span{text-align:center}.shead span:nth-child(2){text-align:left}
+.srow.r.shead span:nth-child(2){text-align:center}
+.shead .c{display:grid;place-items:center}.shead svg.i{width:15px;height:15px}
+.slabel{height:36px;border-radius:9px;background:var(--raised);font:700 17px var(--f-display);text-align:center}
+.slabel.w{color:var(--warm)}.slabel.d{color:var(--drop)}.slabel.f{color:var(--fail)}
+.prev{font:500 15px var(--f-display);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;height:36px;font-variant-numeric:tabular-nums}
+.sin{width:100%;height:36px;border-radius:9px;border:0;background:var(--raised);text-align:center;font:600 18px var(--f-display);font-variant-numeric:tabular-nums;padding:0 4px;outline:none;color:var(--fg)}
+.sin:focus{box-shadow:inset 0 0 0 2px var(--accent)}
+.sin::placeholder{color:var(--muted);opacity:.75}
+.chk{height:36px;border-radius:9px;background:var(--raised);display:grid;place-items:center;color:var(--muted)}
+.chk svg.i{stroke-width:3}
+.srow.done{background:var(--done)}
+.srow.done .sin,.srow.done .slabel{background:transparent}
+.srow.done .chk{background:var(--done-ink);color:var(--surface)}
+.shake{animation:shake .32s}
+@keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+
+/* Rest bar */
+.restbar{position:fixed;left:0;right:0;bottom:0;z-index:35;background:var(--surface);border-top:1px solid var(--line);padding-top:0;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-shadow:0 -8px 24px rgba(0,0,0,.08)}
+.rb-track{height:4px;background:var(--raised);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px))) 10px}
+.rb-fill{height:100%;background:var(--accent);transform-origin:left;transition:transform .25s linear}
+.rb-row{display:flex;align-items:center;gap:8px;max-width:608px;margin:0 auto}
+.rb-time{flex:1;display:flex;flex-direction:column;align-items:center}
+.rb-time span:last-child{font:700 28px/1 var(--f-display);font-variant-numeric:tabular-nums}
+
+/* Dialog */
+#dlg{position:fixed;inset:0;z-index:60}
+.scrim{position:absolute;inset:0;background:var(--scrim);animation:fade .18s}
+@keyframes fade{from{opacity:0}}
+.dlg{position:absolute;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;padding:20px max(18px,env(safe-area-inset-left,0px)) calc(16px + env(safe-area-inset-bottom,0px));max-height:88%;overflow-y:auto;display:flex;flex-direction:column;gap:12px;animation:rise .2s ease-out}
+.dtitle{margin:0;font:700 24px/1.1 var(--f-display);text-transform:uppercase}
+.dtext{margin:0;color:var(--muted)}
+.dbtns{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.dbtns.sheet{gap:0;margin-top:0}
+.sh-item{height:52px;border-bottom:1px solid var(--line);font-weight:600;font-size:16px;text-align:left}
+.sh-item.danger{color:var(--fail)}
+.sh-item.cancel{border:0;color:var(--muted);text-align:center}
+.fld{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--muted)}
+.fld input,.fld select{height:46px;border-radius:11px;border:1px solid var(--line);background:var(--bg);padding:0 12px;font-size:16px;font-weight:500;color:var(--fg);outline:none}
+.fld input:focus,.fld select:focus{border-color:var(--accent)}
+.ta{width:100%;border-radius:11px;border:1px solid var(--line);background:var(--bg);padding:10px;font:13px/1.4 ui-monospace,Menlo,monospace;color:var(--fg);resize:vertical}
+.derr{margin:0;color:var(--fail);font-weight:600;font-size:14px}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sum > div{background:var(--raised);border-radius:12px;padding:10px;display:flex;flex-direction:column}
+.prs{background:var(--accent-soft);border-radius:12px;padding:12px}
+.prs-h{margin:0 0 6px;display:flex;align-items:center;gap:6px;font:700 18px var(--f-display);text-transform:uppercase;color:var(--accent)}
+.prs ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.prs li{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.prs li span{min-width:0;overflow-wrap:anywhere}
+.prs li b{white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* History */
+.wk{display:flex;flex-direction:column;gap:10px}
+.wk-stats{display:flex;gap:22px;flex-wrap:wrap}
+.chart{width:100%;height:auto;display:block;overflow:visible}
+.chart .b-on{fill:var(--accent)}.chart .b-off{fill:var(--bar)}
+.chart .tx{fill:var(--muted);font:500 10px var(--f-body)}
+.chart .tv{fill:var(--fg);font:700 12px var(--f-display)}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .ln{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
+.chart .ar{fill:var(--accent);opacity:.12}
+.chart .pt{fill:var(--surface);stroke:var(--accent);stroke-width:2}
+.chart .pt.end{fill:var(--accent)}
+.month{font:700 14px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+.hcard{display:flex;flex-direction:column;gap:8px;width:100%;text-align:left}
+.hc-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.hc-date{font-size:13px;color:var(--muted);white-space:nowrap}
+.hc-stats{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);font-weight:600}
+.hc-stats span{display:inline-flex;align-items:center;gap:4px}
+.hc-stats svg.i{width:15px;height:15px}
+.hc-stats .pr{color:var(--accent)}
+.hc-ex{margin:0;padding:0;list-style:none;font-size:14px;display:flex;flex-direction:column;gap:2px}
+.hc-ex b{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600;margin-right:4px}
+
+/* Detail */
+.dwrap{display:flex;flex-direction:column;gap:14px;padding-block:18px 40px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--raised);border-radius:999px;padding:4px 10px;color:var(--muted)}
+.rec{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rec > div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:2px}
+.rec .sub{font-size:12px;color:var(--muted)}
+.slist{display:flex;flex-direction:column;gap:3px}
+.sline{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:baseline;font-variant-numeric:tabular-nums;font-size:15px}
+.sline .l{font:700 15px var(--f-display);color:var(--muted);text-align:center}
+.sline .l.w{color:var(--warm)}.sline .l.d{color:var(--drop)}.sline .l.f{color:var(--fail)}
+.sline .e{font-size:12px;color:var(--muted)}
+.dsec{display:flex;flex-direction:column;gap:8px}
+.dex{display:flex;flex-direction:column;gap:6px;padding:12px 0;border-bottom:1px solid var(--line)}
+.dex-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.dex-h .t{color:var(--accent)}
+.muted{color:var(--muted)}
+.note-txt{margin:0;font-size:14px;color:var(--muted);font-style:italic}
+
+/* Settings */
+.setc{display:flex;flex-direction:column;gap:12px}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.setrow > span{min-width:0}
+.toggle{width:52px;height:32px;border-radius:999px;background:var(--raised);position:relative;flex:none;transition:background .15s}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
+.toggle.on{background:var(--done-ink)}
+.toggle.on::after{transform:translateX(20px)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.btnrow .btn{flex:1 1 140px}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;color:var(--muted)}
+.steps b{color:var(--fg)}
+.okline{display:flex;align-items:center;gap:8px;color:var(--done-ink);font-weight:600}
+
+#toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:80;background:var(--fg);color:var(--bg);font-weight:600;padding:10px 16px;border-radius:999px;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.2);max-width:calc(100% - 32px)}
+#toast.show{animation:toast 2.2s ease forwards}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,-8px)}10%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div id="app">
+  <main class="view" id="main"></main>
+  <div id="resume" hidden></div>
+  <nav class="tabbar" id="tabbar" aria-label="Navigation"></nav>
+</div>
+<div id="ed" class="sheet" hidden></div>
+<div id="picker" class="sheet" hidden></div>
+<div id="detail" class="sheet" hidden></div>
+<div id="restbar" class="restbar" hidden></div>
+<div id="dlg" hidden></div>
+<div id="toast" role="status" hidden></div>
+<input type="file" id="fileIn" accept="application/json,.json,text/plain" hidden>
+
+<script>
+'use strict';
+/* ================= Annuaire d'exercices ================= */
+const RAW=`# Pectoraux
+Développé couché barre|Barre
+Développé couché haltères|Haltères
+Développé incliné barre|Barre
+Développé incliné haltères|Haltères
+Développé décliné barre|Barre
+Développé décliné haltères|Haltères
+Développé couché Smith|Smith
+Développé incliné Smith|Smith
+Développé couché machine|Machine
+Développé incliné machine|Machine
+Presse pectorale convergente|Machine
+Développé sol (floor press)|Barre
+Développé couché unilatéral haltère|Haltères
+Squeeze press|Haltères
+Écarté couché haltères|Haltères
+Écarté incliné haltères|Haltères
+Écarté poulie vis-à-vis haute|Poulie
+Écarté poulie vis-à-vis basse|Poulie
+Écarté poulie vis-à-vis milieu|Poulie
+Écarté incliné poulie|Poulie
+Pec deck (butterfly)|Machine
+Pull-over haltère|Haltères
+Svend press|Autre
+Pompes|Poids du corps
+Pompes inclinées|Poids du corps
+Pompes déclinées|Poids du corps
+Pompes lestées|Poids du corps
+Pompes sur anneaux|Poids du corps
+Dips buste penché (pectoraux)|Poids du corps
+# Dos
+Tractions pronation|Poids du corps
+Tractions supination|Poids du corps
+Tractions prise neutre|Poids du corps
+Tractions prise large|Poids du corps
+Tractions assistées machine|Machine
+Tirage vertical prise large|Poulie
+Tirage vertical prise serrée|Poulie
+Tirage vertical supination|Poulie
+Tirage vertical unilatéral|Poulie
+Tirage vertical machine|Machine
+Tirage bras tendus poulie|Poulie
+Pull-over poulie|Poulie
+Rowing barre buste penché|Barre
+Rowing Yates (supination)|Barre
+Rowing Pendlay|Barre
+Rowing T-bar|Barre
+Rowing T-bar machine|Machine
+Seal row|Barre
+Meadows row|Barre
+Rowing haltère unilatéral|Haltères
+Rowing haltères buste penché|Haltères
+Rowing poitrine appuyée haltères|Haltères
+Rowing Kroc|Haltères
+Rowing assis poulie prise serrée|Poulie
+Rowing assis poulie prise large|Poulie
+Rowing unilatéral poulie|Poulie
+Rowing machine convergente|Machine
+High row machine|Machine
+Rowing inversé|Poids du corps
+Soulevé de terre|Barre
+Soulevé de terre sumo|Barre
+Soulevé de terre trap bar|Autre
+Rack pull|Barre
+# Épaules
+Développé militaire debout|Barre
+Développé militaire assis|Barre
+Développé haltères assis|Haltères
+Développé haltères debout|Haltères
+Développé Arnold|Haltères
+Développé épaules machine|Machine
+Développé épaules Smith|Smith
+Z press|Barre
+Push press|Barre
+Landmine press|Barre
+Élévations latérales haltères|Haltères
+Élévations latérales assis|Haltères
+Élévations latérales poulie|Poulie
+Élévations latérales machine|Machine
+Élévations latérales élastique|Élastique
+Élévations latérales penché sur banc|Haltères
+Élévations frontales haltères|Haltères
+Élévations frontales disque|Autre
+Élévations frontales poulie|Poulie
+Oiseau haltères|Haltères
+Oiseau poulie|Poulie
+Reverse pec deck|Machine
+Face pull|Poulie
+Rowing menton barre|Barre
+Rowing menton poulie|Poulie
+Y-raise banc incliné|Haltères
+Cuban press|Haltères
+Pompes piquées (pike push-up)|Poids du corps
+Pompes en équilibre (handstand push-up)|Poids du corps
+# Trapèzes
+Shrug barre|Barre
+Shrug haltères|Haltères
+Shrug machine|Machine
+Shrug trap bar|Autre
+Shrug poulie|Poulie
+Shrug Smith|Smith
+# Biceps
+Curl barre droite|Barre
+Curl barre EZ|Barre EZ
+Curl haltères alterné|Haltères
+Curl haltères simultané|Haltères
+Curl marteau|Haltères
+Curl marteau corde|Poulie
+Curl incliné haltères|Haltères
+Curl pupitre barre EZ (Larry Scott)|Barre EZ
+Curl pupitre haltère|Haltères
+Curl pupitre machine|Machine
+Curl concentré|Haltères
+Curl poulie basse|Poulie
+Curl poulie haute (double biceps)|Poulie
+Curl bayésien (poulie derrière)|Poulie
+Curl araignée (spider curl)|Barre EZ
+Curl Zottman|Haltères
+Curl drag|Barre
+Curl 21|Barre
+Curl kettlebell|Kettlebell
+Curl élastique|Élastique
+Curl machine|Machine
+# Triceps
+Développé couché prise serrée|Barre
+Barre au front (skull crusher)|Barre EZ
+Barre au front haltères|Haltères
+Extension nuque haltère|Haltères
+Extension nuque barre EZ|Barre EZ
+Extension au-dessus de la tête poulie|Poulie
+Extension triceps poulie barre|Poulie
+Extension triceps corde|Poulie
+Extension triceps unilatérale poulie|Poulie
+Extension triceps machine|Machine
+Kickback haltère|Haltères
+Kickback poulie|Poulie
+JM press|Barre
+Tate press|Haltères
+Dips|Poids du corps
+Dips entre deux bancs|Poids du corps
+Dips machine|Machine
+Pompes diamant|Poids du corps
+# Avant-bras
+Curl poignets barre|Barre
+Curl poignets inversé|Barre
+Curl poignets haltère|Haltères
+Curl inversé barre EZ|Barre EZ
+Rouleau de poignet|Autre
+Suspension à la barre (dead hang)|Poids du corps|t
+Pince disque (plate pinch)|Autre|t
+# Abdos
+Crunch|Poids du corps
+Crunch poulie|Poulie
+Crunch machine|Machine
+Crunch décliné|Poids du corps
+Crunch inversé|Poids du corps
+Sit-up|Poids du corps
+Bicycle crunch|Poids du corps
+Relevés de jambes suspendu|Poids du corps
+Relevés de genoux suspendu|Poids du corps
+Relevés de jambes chaise romaine|Poids du corps
+Relevés de jambes au sol|Poids du corps
+Toes to bar|Poids du corps
+V-up|Poids du corps
+Dragon flag|Poids du corps
+Essuie-glaces (windshield wipers)|Poids du corps
+Roue abdominale|Autre|b
+Russian twist|Poids du corps
+Mountain climbers|Poids du corps
+Dead bug|Poids du corps
+Planche (gainage)|Poids du corps|t
+Gainage latéral|Poids du corps|t
+Hollow hold|Poids du corps|t
+L-sit|Poids du corps|t
+Woodchopper poulie|Poulie
+Pallof press|Poulie
+# Lombaires
+Extension lombaire banc 45°|Poids du corps
+Extension lombaire machine|Machine
+Hyperextension inversée|Machine
+Superman|Poids du corps
+Good morning|Barre
+# Quadriceps
+Squat barre haute|Barre
+Squat barre basse|Barre
+Front squat|Barre
+Squat pause|Barre
+Box squat|Barre
+Zercher squat|Barre
+Squat Smith|Smith
+Hack squat|Machine
+Pendulum squat|Machine
+V-squat|Machine
+Belt squat|Machine
+Presse à cuisses|Machine
+Presse à cuisses unilatérale|Machine
+Leg extension|Machine
+Leg extension unilatéral|Machine
+Squat goblet haltère|Haltères
+Squat goblet kettlebell|Kettlebell
+Fentes avant haltères|Haltères
+Fentes arrière haltères|Haltères
+Fentes marchées haltères|Haltères
+Fentes barre|Barre
+Fentes Smith|Smith
+Fente latérale|Haltères
+Squat bulgare haltères|Haltères
+Squat bulgare Smith|Smith
+Step-up haltères|Haltères
+Sissy squat|Poids du corps
+Squat poids du corps|Poids du corps
+Squat sauté|Poids du corps
+Pistol squat|Poids du corps
+Chaise contre le mur|Poids du corps|t
+# Ischios
+Soulevé de terre roumain barre|Barre
+Soulevé de terre roumain haltères|Haltères
+Soulevé de terre roumain unilatéral|Haltères
+Soulevé de terre jambes tendues|Barre
+Leg curl allongé|Machine
+Leg curl assis|Machine
+Leg curl debout unilatéral|Machine
+Leg curl haltère|Haltères
+Nordic curl|Poids du corps
+Glute-ham raise|Poids du corps
+Leg curl swiss ball|Poids du corps
+# Fessiers
+Hip thrust barre|Barre
+Hip thrust machine|Machine
+Hip thrust Smith|Smith
+Hip thrust unilatéral|Poids du corps
+Pont fessier|Poids du corps
+Pont fessier barre|Barre
+Kickback fessier poulie|Poulie
+Kickback fessier machine|Machine
+Abduction machine|Machine
+Abduction poulie|Poulie
+Abduction élastique|Élastique
+Pull-through poulie|Poulie
+Extension de hanche 45° (fessiers)|Poids du corps
+Frog pump|Poids du corps
+Marche latérale élastique|Élastique
+# Adducteurs
+Adduction machine|Machine
+Adduction poulie|Poulie
+Squat sumo haltère|Haltères
+Squat sumo barre|Barre
+Planche Copenhague|Poids du corps|t
+# Mollets
+Mollets debout machine|Machine
+Mollets assis machine|Machine
+Mollets à la presse|Machine
+Mollets Smith|Smith
+Mollets donkey|Machine
+Mollets unilatéral haltère|Haltères
+Mollets poids du corps|Poids du corps
+Releveurs (tibial raise)|Autre
+# Corps entier
+Épaulé (power clean)|Barre
+Hang clean|Barre
+Épaulé-jeté|Barre
+Arraché|Barre
+Thruster barre|Barre
+Thruster haltères|Haltères
+Clean & press haltères|Haltères
+Man maker|Haltères
+Swing kettlebell|Kettlebell
+Snatch kettlebell|Kettlebell
+Turkish get-up|Kettlebell
+Wall ball|Autre
+Burpees|Poids du corps
+Farmer walk|Haltères|t
+Poussée de traîneau|Autre|t
+# Cardio
+Tapis de course|Machine
+Course à pied extérieur|Autre
+Marche inclinée tapis|Machine
+Vélo stationnaire|Machine
+Vélo extérieur|Autre
+Rameur|Machine
+Elliptique|Machine
+Stairmaster|Machine
+Assault bike|Machine
+SkiErg|Machine
+Natation|Autre
+Corde à sauter|Autre|t`;
+
+/* Descriptions FR + photos (Free Exercise DB, domaine public) */
+const INFO={"developpe-couche-barre":{"img":"Barbell_Bench_Press_-_Medium_Grip","s":["Allonge-toi sur le banc, omoplates serrées, pieds bien à plat, mains un peu plus larges que les épaules","Descends la barre en contrôle jusqu'au bas des pectoraux, coudes à environ 45° du buste","Pousse la barre jusqu'à bras tendus en expirant"],"tip":"Garde les fessiers sur le banc et une légère cambrure : les épaules restent protégées."},"developpe-couche-halteres":{"img":"Dumbbell_Bench_Press","s":["Allongé, haltères à hauteur de poitrine, omoplates serrées","Pousse les haltères vers le haut en les rapprochant légèrement","Redescends lentement jusqu'à sentir l'étirement des pectoraux"],"tip":"Les haltères permettent de descendre plus bas qu'avec la barre, mais arrête-toi avant toute gêne à l'épaule."},"developpe-incline-barre":{"img":"Barbell_Incline_Bench_Press_-_Medium_Grip","s":["Banc incliné à 30-45°, prise un peu plus large que les épaules","Descends la barre vers le haut des pectoraux","Pousse jusqu'à bras tendus sans décoller le dos"],"tip":"Plus le banc est incliné, plus les épaules travaillent : 30° cible bien le haut des pecs."},"developpe-incline-halteres":{"img":"Incline_Dumbbell_Press","s":["Banc incliné à 30-45°, haltères au niveau du haut de la poitrine","Pousse vers le haut en rapprochant les haltères","Redescends en 2 à 3 secondes"],"tip":"Garde les poignets alignés au-dessus des coudes tout au long du mouvement."},"developpe-decline-barre":{"img":"Decline_Barbell_Bench_Press","s":["Allongé sur le banc décliné, jambes bloquées sous les boudins","Descends la barre vers le bas des pectoraux","Pousse jusqu'à bras tendus"],"tip":"Fais-toi aider pour sortir et ranger la barre, la position rend le rack difficile d'accès."},"developpe-decline-halteres":{"img":"Decline_Dumbbell_Bench_Press","s":["Installé sur le banc décliné, haltères à hauteur du bas de la poitrine","Pousse les haltères vers le haut","Redescends lentement en gardant les coudes légèrement fléchis vers le buste"],"tip":"Monte les haltères un par un en position avant de commencer."},"developpe-couche-smith":{"img":"Smith_Machine_Bench_Press","s":["Place le banc pour que la barre arrive au-dessus du bas des pectoraux","Déverrouille la barre et descends-la jusqu'à la poitrine","Pousse jusqu'à bras tendus"],"tip":"La trajectoire est guidée : idéal pour pousser lourd sans pareur."},"developpe-incline-smith":{"img":"Smith_Machine_Incline_Bench_Press","s":["Banc incliné à 30° sous la barre guidée","Descends la barre vers le haut des pectoraux","Pousse jusqu'à bras tendus"],"tip":"Vérifie la position du banc à vide avant de charger."},"developpe-couche-machine":{"img":"Machine_Bench_Press","s":["Règle le siège pour que les poignées soient au niveau du milieu de la poitrine","Pousse les poignées jusqu'à bras presque tendus","Reviens lentement sans laisser les charges se toucher"],"tip":"Garde les omoplates collées au dossier tout du long."},"developpe-incline-machine":{"img":"Leverage_Incline_Chest_Press","s":["Assis, dos contre le dossier, poignées à hauteur du haut de la poitrine","Pousse vers le haut et l'avant","Reviens en contrôle jusqu'à l'étirement"],"tip":"Bon exercice pour finir une séance pecs en sécurité, même à l'échec."},"presse-pectorale-convergente":{"img":"Leverage_Chest_Press","s":["Règle le siège, poignées à hauteur de poitrine","Pousse les poignées : elles se rapprochent en fin de mouvement","Reviens lentement jusqu'à l'étirement"],"tip":"Serre les pectoraux une seconde en fin de poussée."},"developpe-sol-floor-press":{"img":"Floor_Press","s":["Allongé au sol sous la barre, genoux pliés","Descends la barre jusqu'à ce que les coudes touchent le sol","Marque une pause puis pousse jusqu'à bras tendus"],"tip":"L'amplitude réduite cible le verrouillage et les triceps, en ménageant les épaules."},"developpe-couche-unilateral-haltere":{"img":"One_Arm_Dumbbell_Bench_Press","s":["Allongé, un seul haltère à hauteur de poitrine, l'autre main sur le banc","Pousse l'haltère vers le haut sans laisser le bassin tourner","Redescends lentement puis change de côté"],"tip":"Gaine fort les abdos : ton tronc doit résister à la rotation."},"squeeze-press":{"img":"Close-Grip_Dumbbell_Press","s":["Allongé, haltères collés l'un contre l'autre au-dessus de la poitrine, paumes face à face","Descends-les en les pressant fort l'un contre l'autre","Remonte en gardant la pression"],"tip":"Plus tu serres les haltères, plus les pectoraux travaillent : la charge reste légère."},"ecarte-couche-halteres":{"img":"Dumbbell_Flyes","s":["Allongé, haltères au-dessus de la poitrine, coudes légèrement fléchis","Ouvre les bras en arc de cercle jusqu'à l'étirement des pecs","Referme en gardant le même angle de coude"],"tip":"Pense à « serrer un arbre » : les coudes ne doivent ni plier ni tendre pendant la série."},"ecarte-incline-halteres":{"img":"Incline_Dumbbell_Flyes","s":["Banc à 30°, haltères au-dessus du haut de la poitrine","Ouvre les bras en arc de cercle, coudes légèrement fléchis","Referme jusqu'à ce que les haltères se rejoignent"],"tip":"Descends juste au niveau des épaules, pas plus bas."},"ecarte-poulie-vis-a-vis-haute":{"img":"Cable_Crossover","s":["Poulies en position haute, un pas en avant, buste légèrement penché","Ramène les poignées vers le bas et l'avant jusqu'à ce qu'elles se croisent","Remonte lentement en contrôle"],"tip":"Cible surtout le bas des pectoraux."},"ecarte-poulie-vis-a-vis-basse":{"img":"Low_Cable_Crossover","s":["Poulies en position basse, un pas en avant","Monte les poignées vers l'avant et le haut jusqu'à hauteur du menton","Redescends lentement"],"tip":"Cible surtout le haut des pectoraux."},"ecarte-poulie-vis-a-vis-milieu":{"img":"Cable_Crossover","s":["Poulies à hauteur d'épaules, un pas en avant","Ramène les poignées devant la poitrine en arc de cercle","Reviens lentement jusqu'à l'étirement"],"tip":"Garde les coudes légèrement fléchis et fixes."},"ecarte-incline-poulie":{"img":"Incline_Cable_Flye","s":["Banc incliné entre deux poulies basses, poignées au-dessus de la poitrine","Ouvre les bras en arc de cercle","Referme au-dessus du haut des pecs"],"tip":"La tension reste constante sur toute l'amplitude, contrairement aux haltères."},"pec-deck-butterfly":{"img":"Butterfly","s":["Règle le siège : poignées à hauteur de poitrine","Ramène les bras devant toi jusqu'à ce que les poignées se touchent","Reviens lentement sans relâcher la tension"],"tip":"Reste collé au dossier, ne pousse pas avec les épaules."},"pull-over-haltere":{"img":"Straight-Arm_Dumbbell_Pullover","s":["Allongé sur le banc, un haltère tenu à deux mains au-dessus de la poitrine","Descends-le derrière la tête, bras quasi tendus","Ramène-le au-dessus de la poitrine"],"tip":"Descends seulement jusqu'à un étirement confortable des dorsaux et pectoraux."},"svend-press":{"img":"Svend_Press","s":["Debout, un ou deux disques pressés entre les paumes devant la poitrine","Pousse les disques devant toi en continuant de les serrer","Ramène-les à la poitrine"],"tip":"Charge légère : c'est la pression des mains qui fait travailler les pecs."},"pompes":{"img":"Pushups","s":["Mains un peu plus larges que les épaules, corps gainé de la tête aux talons","Descends la poitrine près du sol, coudes à 45°","Pousse jusqu'à bras tendus"],"tip":"Si c'est trop dur, fais-les sur les genoux ou mains surélevées."},"pompes-inclinees":{"img":"Incline_Push-Up","s":["Mains sur un banc ou une barre, corps gainé","Descends la poitrine vers le support","Pousse jusqu'à bras tendus"],"tip":"Plus le support est haut, plus c'est facile : parfait pour progresser vers les pompes au sol."},"pompes-declinees":{"img":"Decline_Push-Up","s":["Pieds sur un banc, mains au sol","Descends la poitrine vers le sol en gardant le corps droit","Pousse jusqu'à bras tendus"],"tip":"Version plus difficile qui insiste sur le haut des pectoraux."},"pompes-lestees":{"img":"Pushups","s":["Pompe classique avec un disque posé sur le haut du dos ou un gilet lesté","Descends la poitrine près du sol","Pousse jusqu'à bras tendus"],"tip":"Note le lest dans la colonne +kg."},"pompes-sur-anneaux":{"img":"Suspended_Push-Up","s":["Mains sur les anneaux ou sangles, corps gainé","Descends en gardant les anneaux stables près du buste","Pousse et tourne légèrement les paumes vers l'extérieur en haut"],"tip":"L'instabilité recrute énormément les stabilisateurs : commence anneaux assez hauts."},"dips-buste-penche-pectoraux":{"img":"Dips_-_Chest_Version","s":["Aux barres parallèles, bras tendus","Penche le buste vers l'avant et descends, coudes légèrement écartés","Remonte jusqu'à bras tendus"],"tip":"Descends jusqu'à ce que les épaules soient au niveau des coudes, pas plus bas si ça tire."},"tractions-pronation":{"img":"Pullups","s":["Suspendu à la barre, mains en pronation un peu plus larges que les épaules","Tire en ramenant les coudes vers les hanches jusqu'à passer le menton au-dessus de la barre","Redescends jusqu'à bras tendus"],"tip":"Commence chaque rep en abaissant les épaules, sans balancer les jambes."},"tractions-supination":{"img":"Chin-Up","s":["Suspendu, paumes vers toi, mains à largeur d'épaules","Tire jusqu'à passer le menton au-dessus de la barre","Redescends en contrôle"],"tip":"Version qui sollicite davantage les biceps, souvent plus facile au début."},"tractions-prise-neutre":{"img":"V-Bar_Pullup","s":["Suspendu aux poignées parallèles, paumes face à face","Tire jusqu'au menton au-dessus des poignées","Redescends jusqu'à bras tendus"],"tip":"La prise la plus confortable pour les coudes et les épaules."},"tractions-prise-large":{"img":"Pullups","s":["Mains en pronation nettement plus larges que les épaules","Tire la poitrine vers la barre en ouvrant les coudes","Redescends lentement"],"tip":"Amplitude plus courte mais forte sollicitation du haut du dos."},"tractions-assistees-machine":{"img":null,"s":["Règle le contrepoids : plus il est lourd, plus tu es aidé","Genoux sur la plateforme, tire jusqu'au menton au-dessus de la barre","Redescends lentement"],"tip":"Note le poids d'assistance : quand il baisse, tu progresses."},"tirage-vertical-prise-large":{"img":"Wide-Grip_Lat_Pulldown","s":["Assis, cuisses bloquées, mains larges sur la barre","Tire la barre vers le haut de la poitrine en ramenant les coudes vers le bas","Remonte lentement jusqu'à l'étirement"],"tip":"Ne te penche pas trop en arrière et ne tire pas avec les bras seulement."},"tirage-vertical-prise-serree":{"img":"Close-Grip_Front_Lat_Pulldown","s":["Poignée triangle ou prise serrée, cuisses bloquées","Tire vers le haut de la poitrine, coudes le long du corps","Remonte en contrôle jusqu'à bras tendus"],"tip":"Sors la poitrine vers la poignée en fin de tirage."},"tirage-vertical-supination":{"img":"Underhand_Cable_Pulldowns","s":["Barre en supination, mains à largeur d'épaules","Tire la barre vers le haut de la poitrine","Remonte lentement"],"tip":"Bonne alternative aux tractions supination."},"tirage-vertical-unilateral":{"img":"One_Arm_Lat_Pulldown","s":["Une poignée à la poulie haute, assis ou à genoux","Tire le coude vers la hanche","Remonte en laissant l'épaule s'étirer"],"tip":"Pratique pour corriger un déséquilibre gauche-droite."},"tirage-vertical-machine":{"img":null,"s":["Règle le siège, cuisses bloquées, saisis les poignées","Tire vers le bas en ramenant les coudes vers les hanches","Remonte lentement jusqu'à l'étirement"],"tip":"Garde le buste fixe : ce sont les dorsaux qui travaillent."},"tirage-bras-tendus-poulie":{"img":"Straight-Arm_Pulldown","s":["Debout face à la poulie haute, barre en main, bras tendus","Descends la barre jusqu'aux cuisses en gardant les bras tendus","Remonte lentement"],"tip":"Isole très bien les dorsaux : garde une légère flexion des coudes."},"pull-over-poulie":{"img":"Rope_Straight-Arm_Pulldown","s":["Corde à la poulie haute, buste légèrement penché","Ramène la corde vers les cuisses bras tendus en écartant les extrémités","Remonte en contrôle"],"tip":"Pense à pousser avec les coudes plutôt qu'avec les mains."},"rowing-barre-buste-penche":{"img":"Bent_Over_Barbell_Row","s":["Buste penché à 45° ou plus, dos plat, barre bras tendus","Tire la barre vers le nombril en serrant les omoplates","Redescends en contrôle"],"tip":"Dos neutre obligatoire : si tu t'arrondis, allège."},"rowing-yates-supination":{"img":"Reverse_Grip_Bent-Over_Rows","s":["Buste penché vers 30°, barre en supination","Tire la barre vers le bas du ventre","Redescends lentement"],"tip":"Plus redressé que le rowing classique : permet de charger lourd, sollicite aussi les biceps."},"rowing-pendlay":{"img":"Bent_Over_Barbell_Row","s":["Buste parallèle au sol, barre posée au sol","Tire explosivement la barre jusqu'au bas de la poitrine","Repose-la au sol à chaque répétition"],"tip":"Chaque rep repart de l'arrêt : pas d'élan avec les jambes."},"rowing-t-bar":{"img":"Bent_Over_Two-Arm_Long_Bar_Row","s":["À cheval sur la barre, poignée en V sous le disque, dos plat","Tire la charge vers la poitrine","Redescends en contrôle"],"tip":"Garde les genoux fléchis et le dos neutre."},"rowing-t-bar-machine":{"img":"Lying_T-Bar_Row","s":["Allongé poitrine contre le support, poignées en main","Tire les coudes vers l'arrière en serrant les omoplates","Redescends lentement"],"tip":"Le support protège le bas du dos : idéal pour charger."},"seal-row":{"img":"Lying_Cambered_Barbell_Row","s":["Allongé à plat ventre sur un banc haut, barre sous toi","Tire la barre vers le banc","Redescends jusqu'à bras tendus"],"tip":"Aucune triche possible : le dos travaille seul."},"meadows-row":{"img":"One-Arm_Long_Bar_Row","s":["Debout de côté par rapport à une barre calée dans un coin, saisis le bout en pronation","Tire le coude vers le haut et l'arrière","Redescends en laissant l'épaule s'étirer"],"tip":"Utilise des sangles si la prise lâche avant le dos."},"rowing-haltere-unilateral":{"img":"One-Arm_Dumbbell_Row","s":["Main et genou sur un banc, dos plat, haltère dans l'autre main","Tire l'haltère vers la hanche","Redescends jusqu'à bras tendus"],"tip":"Pense à amener le coude vers la poche arrière, pas vers le plafond."},"rowing-halteres-buste-penche":{"img":"Bent_Over_Two-Dumbbell_Row","s":["Buste penché, dos plat, un haltère dans chaque main","Tire les deux haltères vers les hanches","Redescends lentement"],"tip":"Serre les omoplates une seconde en haut."},"rowing-poitrine-appuyee-halteres":{"img":"Dumbbell_Incline_Row","s":["Allongé poitrine contre un banc incliné, haltères bras tendus","Tire les coudes vers l'arrière","Redescends en contrôle"],"tip":"Supprime l'élan et protège le bas du dos."},"rowing-kroc":{"img":"One-Arm_Dumbbell_Row","s":["Une main en appui, haltère lourd dans l'autre","Tire l'haltère vers la hanche avec un léger mouvement du buste","Enchaîne les reps sur des séries longues"],"tip":"Version lourde et un peu « tricheuse » pour les séries de 15 à 30 reps."},"rowing-assis-poulie-prise-serree":{"img":"Seated_Cable_Rows","s":["Assis, pieds sur les cales, poignée triangle bras tendus","Tire la poignée vers le ventre en sortant la poitrine","Reviens lentement jusqu'à l'étirement"],"tip":"Le buste bouge très peu : ne te balance pas."},"rowing-assis-poulie-prise-large":{"img":"Seated_Cable_Rows","s":["Assis, barre longue en prise large","Tire la barre vers le bas de la poitrine, coudes ouverts","Reviens en contrôle"],"tip":"Coudes ouverts : insiste sur le haut du dos et l'arrière d'épaule."},"rowing-unilateral-poulie":{"img":"Seated_One-arm_Cable_Pulley_Rows","s":["Assis ou debout, une poignée à la poulie","Tire le coude vers l'arrière en tournant légèrement le buste","Reviens lentement"],"tip":"Laisse l'épaule s'avancer en fin de retour pour un étirement complet."},"rowing-machine-convergente":{"img":"Leverage_Iso_Row","s":["Poitrine contre le support, poignées en main","Tire les coudes vers l'arrière","Reviens lentement"],"tip":"Les bras indépendants permettent de travailler chaque côté séparément."},"high-row-machine":{"img":"Leverage_High_Row","s":["Assis, poignées au-dessus et devant toi","Tire vers le bas et l'arrière jusqu'aux épaules","Remonte lentement"],"tip":"Mélange tirage vertical et rowing : très bon pour l'épaisseur du dos."},"rowing-inverse":{"img":"Inverted_Row","s":["Sous une barre basse, corps tendu, talons au sol","Tire la poitrine vers la barre","Redescends jusqu'à bras tendus"],"tip":"Pieds plus en avant = plus difficile."},"souleve-de-terre":{"img":"Barbell_Deadlift","s":["Pieds sous la barre, mains juste à l'extérieur des jambes, dos plat","Pousse le sol avec les jambes et redresse les hanches en gardant la barre contre toi","Redescends la barre en reculant d'abord les hanches"],"tip":"Dos neutre avant tout : arrête la série si le bas du dos s'arrondit."},"souleve-de-terre-sumo":{"img":"Sumo_Deadlift","s":["Pieds très écartés, pointes vers l'extérieur, mains entre les jambes","Pousse les genoux vers l'extérieur et monte en gardant le buste redressé","Redescends en contrôle"],"tip":"Amplitude plus courte, plus de travail des adducteurs et quadriceps."},"souleve-de-terre-trap-bar":{"img":"Trap_Bar_Deadlift","s":["Debout au centre de la barre hexagonale, poignées en main","Pousse avec les jambes en gardant le dos plat","Redescends en contrôle"],"tip":"Plus facile à apprendre et plus doux pour le dos que la barre droite."},"rack-pull":{"img":"Rack_Pulls","s":["Barre posée sur les sécurités à hauteur des genoux","Tire en redressant les hanches jusqu'à être debout","Redescends sur les sécurités"],"tip":"Travaille la fin du soulevé de terre et le haut du dos avec plus de charge."},"developpe-militaire-debout":{"img":"Standing_Military_Press","s":["Debout, barre sur le haut de la poitrine, mains un peu plus larges que les épaules","Pousse la barre au-dessus de la tête en passant la tête légèrement en arrière","Redescends sur la poitrine"],"tip":"Serre fessiers et abdos pour ne pas cambrer."},"developpe-militaire-assis":{"img":"Seated_Barbell_Military_Press","s":["Assis, dos contre le dossier, barre devant le visage","Pousse au-dessus de la tête jusqu'à bras tendus","Redescends au niveau du menton"],"tip":"Le dossier limite la triche avec les jambes et le dos."},"developpe-halteres-assis":{"img":"Seated_Dumbbell_Press","s":["Assis, dos contre le dossier, haltères à hauteur d'oreilles","Pousse vers le haut en rapprochant légèrement les haltères","Redescends en contrôle"],"tip":"Garde les avant-bras verticaux."},"developpe-halteres-debout":{"img":"Standing_Dumbbell_Press","s":["Debout, haltères à hauteur d'épaules","Pousse au-dessus de la tête","Redescends lentement"],"tip":"Gainage indispensable : c'est aussi un exercice de tronc."},"developpe-arnold":{"img":"Arnold_Dumbbell_Press","s":["Assis, haltères devant le visage, paumes vers toi","Pousse en tournant les paumes vers l'avant","Redescends en refaisant la rotation inverse"],"tip":"La rotation augmente le travail de l'avant d'épaule."},"developpe-epaules-machine":{"img":"Machine_Shoulder_Military_Press","s":["Règle le siège : poignées à hauteur d'épaules","Pousse vers le haut jusqu'à bras presque tendus","Redescends lentement"],"tip":"Option sûre pour pousser lourd ou aller à l'échec."},"developpe-epaules-smith":{"img":"Smith_Machine_Overhead_Shoulder_Press","s":["Assis sous la barre guidée, barre devant le visage","Pousse jusqu'à bras tendus","Redescends au niveau du menton"],"tip":"Place le banc pour que la barre passe juste devant ton nez."},"z-press":{"img":null,"s":["Assis au sol, jambes tendues, barre sur le haut de la poitrine","Pousse la barre au-dessus de la tête sans t'appuyer sur rien","Redescends en contrôle"],"tip":"Exige beaucoup de gainage et de mobilité : commence léger."},"push-press":{"img":"Push_Press","s":["Debout, barre sur le haut de la poitrine","Fléchis légèrement les genoux puis pousse explosivement avec les jambes","Finis la poussée avec les bras au-dessus de la tête"],"tip":"L'impulsion des jambes permet de charger plus que le militaire strict."},"landmine-press":{"img":"Landmine_Linear_Jammer","s":["Bout d'une barre calée dans un coin, tenu à hauteur d'épaule","Pousse la barre vers le haut et l'avant","Redescends lentement"],"tip":"Trajectoire en arc, très douce pour les épaules sensibles."},"elevations-laterales-halteres":{"img":"Side_Lateral_Raise","s":["Debout, haltères le long du corps, coudes légèrement fléchis","Monte les bras sur les côtés jusqu'à hauteur d'épaules","Redescends lentement"],"tip":"Pense à écarter les haltères loin de toi plutôt qu'à les monter. Charge légère, pas d'élan."},"elevations-laterales-assis":{"img":"Seated_Side_Lateral_Raise","s":["Assis au bout du banc, haltères le long du corps","Monte les bras sur les côtés jusqu'à l'horizontale","Redescends en contrôle"],"tip":"Assis, impossible de tricher avec les jambes."},"elevations-laterales-poulie":{"img":"Standing_Low-Pulley_Deltoid_Raise","s":["De profil par rapport à la poulie basse, poignée dans la main opposée","Monte le bras sur le côté jusqu'à hauteur d'épaule","Redescends lentement"],"tip":"La poulie garde une tension en bas du mouvement, contrairement aux haltères."},"elevations-laterales-machine":{"img":null,"s":["Assis, bras contre les coussinets","Monte les bras sur les côtés jusqu'à l'horizontale","Redescends lentement"],"tip":"Aligne l'axe de la machine avec tes épaules."},"elevations-laterales-elastique":{"img":"Lateral_Raise_-_With_Bands","s":["Pieds sur l'élastique, extrémités en main","Monte les bras sur les côtés jusqu'à hauteur d'épaules","Redescends en contrôle"],"tip":"Pratique à la maison ou en voyage."},"elevations-laterales-penche-sur-banc":{"img":"One-Arm_Incline_Lateral_Raise","s":["Allongé sur le côté sur un banc incliné, haltère dans la main du dessus","Monte le bras jusqu'à la verticale","Redescends lentement"],"tip":"Change l'angle de résistance : le muscle travaille surtout en position étirée."},"elevations-frontales-halteres":{"img":"Front_Dumbbell_Raise","s":["Debout, haltères devant les cuisses","Monte un ou deux bras devant toi jusqu'à hauteur d'yeux","Redescends lentement"],"tip":"L'avant d'épaule travaille déjà beaucoup aux développés : volume modéré."},"elevations-frontales-disque":{"img":"Front_Plate_Raise","s":["Debout, disque tenu à deux mains devant les cuisses","Monte le disque bras tendus jusqu'à hauteur d'yeux","Redescends en contrôle"],"tip":"Ne cambre pas pour monter le disque."},"elevations-frontales-poulie":{"img":"Front_Cable_Raise","s":["Dos à la poulie basse, poignée entre les jambes","Monte le bras devant toi jusqu'à hauteur d'épaule","Redescends lentement"],"tip":"Tension constante sur tout le mouvement."},"oiseau-halteres":{"img":"Seated_Bent-Over_Rear_Delt_Raise","s":["Assis, buste penché sur les cuisses, haltères sous les jambes","Écarte les bras sur les côtés jusqu'à l'horizontale","Redescends lentement"],"tip":"Coudes légèrement fléchis, ne serre pas trop les omoplates : c'est l'arrière d'épaule qui doit tirer."},"oiseau-poulie":{"img":"Cable_Rear_Delt_Fly","s":["Entre deux poulies hautes, câbles croisés devant toi","Écarte les bras vers l'arrière à hauteur d'épaules","Reviens lentement"],"tip":"Garde les bras presque tendus, mouvement en arc."},"reverse-pec-deck":{"img":"Reverse_Machine_Flyes","s":["Assis face au dossier, poignées devant toi","Écarte les bras vers l'arrière jusqu'à l'alignement avec le buste","Reviens lentement"],"tip":"Excellent pour l'arrière d'épaule et la posture."},"face-pull":{"img":"Face_Pull","s":["Corde à la poulie haute, prise par en dessous","Tire la corde vers le visage en écartant les mains et en ouvrant les coudes","Reviens lentement"],"tip":"Finis le mouvement mains au niveau des oreilles, poitrine sortie. Très bon pour la santé des épaules."},"rowing-menton-barre":{"img":"Upright_Barbell_Row","s":["Debout, barre devant les cuisses, mains à largeur d'épaules","Tire la barre le long du corps jusqu'au bas de la poitrine, coudes hauts","Redescends lentement"],"tip":"Ne monte pas plus haut que la poitrine si les épaules pincent."},"rowing-menton-poulie":{"img":"Upright_Cable_Row","s":["Face à la poulie basse, barre droite en main","Tire jusqu'au bas de la poitrine, coudes au-dessus des mains","Redescends en contrôle"],"tip":"Prise un peu large : plus confortable pour les épaules."},"y-raise-banc-incline":{"img":null,"s":["Allongé à plat ventre sur un banc incliné, haltères légers","Monte les bras en Y, pouces vers le haut","Redescends lentement"],"tip":"Charge très légère : vise la qualité et le contrôle."},"cuban-press":{"img":"Cuban_Press","s":["Debout, haltères légers, coudes à hauteur d'épaules","Fais pivoter les avant-bras vers le haut puis pousse au-dessus de la tête","Refais le chemin inverse"],"tip":"Exercice de renforcement des rotateurs : jamais lourd."},"pompes-piquees-pike-push-up":{"img":null,"s":["Position en V inversé, hanches hautes, mains au sol","Descends la tête vers le sol entre les mains","Pousse jusqu'à bras tendus"],"tip":"Pieds surélevés pour rendre l'exercice plus difficile."},"pompes-en-equilibre-handstand-push-up":{"img":"Handstand_Push-Ups","s":["En équilibre sur les mains, pieds contre un mur","Descends la tête vers le sol","Pousse jusqu'à bras tendus"],"tip":"Mets un coussin sous la tête et maîtrise d'abord les pike push-ups."},"shrug-barre":{"img":"Barbell_Shrug","s":["Debout, barre devant les cuisses, bras tendus","Monte les épaules vers les oreilles","Marque une pause puis redescends lentement"],"tip":"Ne fais pas rouler les épaules, monte et descends simplement."},"shrug-halteres":{"img":"Dumbbell_Shrug","s":["Debout, haltères le long du corps","Monte les épaules vers les oreilles","Redescends en contrôle"],"tip":"Les haltères laissent une trajectoire plus naturelle que la barre."},"shrug-machine":{"img":"Leverage_Shrug","s":["Sous les poignées de la machine, bras tendus","Monte les épaules","Redescends lentement"],"tip":"Permet de charger lourd sans solliciter la prise."},"shrug-trap-bar":{"img":null,"s":["Au centre de la barre hexagonale, bras tendus","Monte les épaules vers les oreilles","Redescends en contrôle"],"tip":"Les poignées latérales donnent une position très naturelle."},"shrug-poulie":{"img":"Cable_Shrugs","s":["Face à la poulie basse, barre en main","Monte les épaules","Redescends lentement"],"tip":"Tension continue tout au long du mouvement."},"shrug-smith":{"img":"Smith_Machine_Behind_the_Back_Shrug","s":["Barre guidée derrière ou devant les cuisses","Monte les épaules","Redescends en contrôle"],"tip":"Trajectoire guidée : concentre-toi sur la contraction."},"curl-barre-droite":{"img":"Barbell_Curl","s":["Debout, barre en supination, mains à largeur d'épaules","Fléchis les coudes pour monter la barre vers les épaules","Redescends lentement jusqu'à bras tendus"],"tip":"Coudes collés au corps, pas de balancier du buste."},"curl-barre-ez":{"img":"EZ-Bar_Curl","s":["Debout, barre EZ sur les poignées inclinées","Monte la barre en fléchissant les coudes","Redescends en contrôle"],"tip":"Plus confortable pour les poignets que la barre droite."},"curl-halteres-alterne":{"img":"Dumbbell_Alternate_Bicep_Curl","s":["Debout, haltères le long du corps","Monte un haltère en tournant la paume vers le haut","Redescends puis alterne"],"tip":"Garde l'épaule immobile, seul l'avant-bras bouge."},"curl-halteres-simultane":{"img":"Dumbbell_Bicep_Curl","s":["Debout, haltères le long du corps","Monte les deux haltères en même temps","Redescends lentement"],"tip":"Contrôle la descente sur 2 à 3 secondes."},"curl-marteau":{"img":"Hammer_Curls","s":["Debout, haltères en prise neutre, paumes face à face","Monte les haltères sans tourner les poignets","Redescends en contrôle"],"tip":"Travaille le brachial et l'avant-bras : épaissit le bras."},"curl-marteau-corde":{"img":"Cable_Hammer_Curls_-_Rope_Attachment","s":["Face à la poulie basse, corde en prise neutre","Monte la corde vers les épaules","Redescends lentement"],"tip":"Tension constante sur tout le mouvement."},"curl-incline-halteres":{"img":"Incline_Dumbbell_Curl","s":["Assis sur un banc incliné à 45-60°, bras pendants","Monte les haltères en gardant les coudes en arrière","Redescends jusqu'à l'étirement complet"],"tip":"Le bras en arrière étire le biceps : charge plus légère qu'au curl debout."},"curl-pupitre-barre-ez-larry-scott":{"img":"Preacher_Curl","s":["Bras posés sur le pupitre, barre EZ en main","Monte la barre en fléchissant les coudes","Redescends presque jusqu'à bras tendus"],"tip":"Ne verrouille pas brutalement en bas pour ménager les coudes."},"curl-pupitre-haltere":{"img":"One_Arm_Dumbbell_Preacher_Curl","s":["Un bras posé sur le pupitre, haltère en main","Monte l'haltère","Redescends lentement"],"tip":"Idéal pour travailler chaque bras isolément."},"curl-pupitre-machine":{"img":"Machine_Preacher_Curls","s":["Règle le siège, bras sur le coussin","Fléchis les coudes","Reviens lentement"],"tip":"Aligne tes coudes sur l'axe de la machine."},"curl-concentre":{"img":"Concentration_Curls","s":["Assis, coude appuyé contre l'intérieur de la cuisse","Monte l'haltère vers l'épaule","Redescends lentement"],"tip":"Serre fort en haut une seconde."},"curl-poulie-basse":{"img":"Standing_Biceps_Cable_Curl","s":["Face à la poulie basse, barre en supination","Monte la barre vers les épaules","Redescends en contrôle"],"tip":"Bonne finition après les curls libres."},"curl-poulie-haute-double-biceps":{"img":"High_Cable_Curls","s":["Entre deux poulies hautes, bras écartés à l'horizontale","Ramène les poignées vers les oreilles en fléchissant les coudes","Reviens lentement"],"tip":"Garde les coudes à hauteur d'épaules."},"curl-bayesien-poulie-derriere":{"img":null,"s":["Dos à la poulie basse, un pas en avant, bras tiré vers l'arrière","Monte la poignée en gardant le coude derrière le buste","Redescends jusqu'à l'étirement complet"],"tip":"Travaille le biceps en position très étirée."},"curl-araignee-spider-curl":{"img":"Spider_Curl","s":["Allongé poitrine contre un banc incliné, bras pendants verticalement","Monte la barre ou les haltères","Redescends lentement"],"tip":"Aucune triche possible : contraction très forte en haut."},"curl-zottman":{"img":"Zottman_Curl","s":["Monte les haltères paumes vers le haut","En haut, tourne les paumes vers le bas","Redescends lentement en pronation"],"tip":"Travaille biceps à la montée et avant-bras à la descente."},"curl-drag":{"img":"Drag_Curl","s":["Debout, barre en supination","Monte la barre en la frottant contre ton corps, coudes qui reculent","Redescends de la même façon"],"tip":"Les coudes reculent : l'accent est mis sur le chef long."},"curl-21":{"img":"Barbell_Curl","s":["Fais 7 reps sur la moitié basse du mouvement","Enchaîne 7 reps sur la moitié haute","Termine par 7 reps complètes"],"tip":"Note 21 en reps : la brûlure est garantie, charge plus légère."},"curl-kettlebell":{"img":null,"s":["Debout, kettlebell tenue par la poignée","Monte en fléchissant le coude","Redescends lentement"],"tip":"Le poids décentré renforce aussi la prise."},"curl-elastique":{"img":null,"s":["Pieds sur l'élastique, extrémités en main","Monte les mains vers les épaules","Redescends en contrôle"],"tip":"La résistance augmente en haut du mouvement."},"curl-machine":{"img":"Machine_Bicep_Curl","s":["Règle le siège, bras sur le coussin","Fléchis les coudes","Reviens lentement"],"tip":"Pratique pour finir à l'échec sans risque."},"developpe-couche-prise-serree":{"img":"Close-Grip_Barbell_Bench_Press","s":["Allongé, mains à largeur d'épaules","Descends la barre vers le bas de la poitrine, coudes près du corps","Pousse jusqu'à bras tendus"],"tip":"Prise pas trop serrée : largeur d'épaules suffit, sinon les poignets souffrent."},"barre-au-front-skull-crusher":{"img":"EZ-Bar_Skullcrusher","s":["Allongé, barre EZ bras tendus au-dessus de la poitrine","Fléchis les coudes pour descendre la barre vers le front","Remonte en tendant les bras"],"tip":"Les coudes restent fixes et pointés vers le plafond."},"barre-au-front-halteres":{"img":"Lying_Dumbbell_Tricep_Extension","s":["Allongé, haltères bras tendus, paumes face à face","Descends les haltères de chaque côté de la tête","Remonte en tendant les bras"],"tip":"Prise neutre plus douce pour les coudes."},"extension-nuque-haltere":{"img":"Standing_Dumbbell_Triceps_Extension","s":["Assis ou debout, haltère tenu à deux mains au-dessus de la tête","Descends-le derrière la tête en fléchissant les coudes","Remonte jusqu'à bras tendus"],"tip":"Travaille le chef long du triceps en position étirée."},"extension-nuque-barre-ez":{"img":"Standing_Overhead_Barbell_Triceps_Extension","s":["Barre EZ au-dessus de la tête, bras tendus","Descends la barre derrière la tête","Remonte en tendant les bras"],"tip":"Garde les coudes serrés, pas écartés."},"extension-au-dessus-de-la-tete-poulie":{"img":"Triceps_Overhead_Extension_with_Rope","s":["Dos à la poulie, corde au-dessus de la tête","Tends les bras vers l'avant et le haut","Reviens lentement jusqu'à l'étirement"],"tip":"Un pas en avant et le buste légèrement penché pour la stabilité."},"extension-triceps-poulie-barre":{"img":"Triceps_Pushdown","s":["Face à la poulie haute, barre en pronation, coudes au corps","Pousse la barre vers le bas jusqu'à bras tendus","Remonte jusqu'à environ 90°"],"tip":"Seuls les avant-bras bougent."},"extension-triceps-corde":{"img":"Triceps_Pushdown_-_Rope_Attachment","s":["Face à la poulie haute, corde en main, coudes au corps","Pousse vers le bas en écartant la corde en fin de mouvement","Remonte lentement"],"tip":"Écarter la corde en bas renforce la contraction."},"extension-triceps-unilaterale-poulie":{"img":"Cable_One_Arm_Tricep_Extension","s":["Une poignée à la poulie haute","Pousse vers le bas jusqu'à bras tendu","Remonte lentement"],"tip":"Utile pour corriger un écart de force entre les bras."},"extension-triceps-machine":{"img":"Machine_Triceps_Extension","s":["Règle le siège, coudes sur le coussin","Tends les bras","Reviens en contrôle"],"tip":"Aligne tes coudes sur l'axe de la machine."},"kickback-haltere":{"img":"Tricep_Dumbbell_Kickback","s":["Buste penché, bras collé le long du corps, coude à 90°","Tends le bras vers l'arrière","Reviens lentement"],"tip":"Le bras reste immobile, seul l'avant-bras bouge. Charge légère."},"kickback-poulie":{"img":null,"s":["Buste penché face à la poulie basse, poignée en main","Tends le bras vers l'arrière","Reviens lentement"],"tip":"Meilleure tension en fin de mouvement qu'avec un haltère."},"jm-press":{"img":"JM_Press","s":["Allongé, prise serrée, barre au-dessus de la poitrine","Descends en laissant la barre aller vers le menton, coudes vers l'avant","Pousse jusqu'à bras tendus"],"tip":"Hybride entre développé serré et barre au front : progresse prudemment."},"tate-press":{"img":"Tate_Press","s":["Allongé, haltères au-dessus de la poitrine, paumes vers les pieds","Descends les haltères vers la poitrine en ouvrant les coudes","Remonte en tendant les bras"],"tip":"Les haltères se touchent presque en bas."},"dips":{"img":"Dips_-_Triceps_Version","s":["Aux barres parallèles, bras tendus, buste droit","Descends en fléchissant les coudes","Remonte jusqu'à bras tendus"],"tip":"Buste vertical : l'accent est sur les triceps."},"dips-entre-deux-bancs":{"img":"Bench_Dips","s":["Mains sur un banc derrière toi, pieds au sol ou sur un autre banc","Descends en fléchissant les coudes","Remonte en tendant les bras"],"tip":"Reste près du banc et ne descends pas trop bas pour les épaules."},"dips-machine":{"img":"Dip_Machine","s":["Assis, poignées de chaque côté","Pousse vers le bas jusqu'à bras tendus","Remonte lentement"],"tip":"Bonne alternative quand les dips au poids du corps sont trop durs."},"pompes-diamant":{"img":"Push-Ups_-_Close_Triceps_Position","s":["Mains rapprochées sous la poitrine, index et pouces formant un losange","Descends en gardant les coudes près du corps","Pousse jusqu'à bras tendus"],"tip":"Si les poignets tirent, écarte un peu les mains."},"curl-poignets-barre":{"img":"Seated_Palm-Up_Barbell_Wrist_Curl","s":["Assis, avant-bras sur les cuisses, paumes vers le haut","Laisse la barre descendre vers les doigts","Remonte en fléchissant les poignets"],"tip":"Amplitude complète, rythme lent."},"curl-poignets-inverse":{"img":"Seated_Palms-Down_Barbell_Wrist_Curl","s":["Assis, avant-bras sur les cuisses, paumes vers le bas","Monte les mains en relevant les poignets","Redescends lentement"],"tip":"Charge légère : les extenseurs sont plus faibles."},"curl-poignets-haltere":{"img":"Seated_Dumbbell_Palms-Up_Wrist_Curl","s":["Avant-bras posé sur la cuisse ou un banc, haltère en main","Fléchis le poignet vers le haut","Redescends en contrôle"],"tip":"Permet de travailler chaque bras séparément."},"curl-inverse-barre-ez":{"img":"Reverse_Barbell_Curl","s":["Debout, barre en pronation","Monte la barre en fléchissant les coudes","Redescends lentement"],"tip":"Travaille le brachio-radial et l'avant-bras."},"rouleau-de-poignet":{"img":"Wrist_Roller","s":["Bras tendus devant toi, rouleau en main, charge suspendue","Enroule la corde en tournant les poignets","Déroule lentement"],"tip":"Brûlure garantie dans les avant-bras."},"suspension-a-la-barre-dead-hang":{"img":null,"s":["Suspends-toi à une barre de traction, bras tendus","Tiens le plus longtemps possible","Garde les épaules légèrement engagées"],"tip":"Excellent pour la prise et la décompression du dos."},"pince-disque-plate-pinch":{"img":"Plate_Pinch","s":["Pince deux disques face lisse vers l'extérieur entre les doigts et le pouce","Tiens-les bras le long du corps","Tiens le plus longtemps possible"],"tip":"Note le poids total en +kg et la durée en secondes."},"crunch":{"img":"Crunches","s":["Allongé sur le dos, genoux pliés, mains derrière la tête ou sur la poitrine","Enroule le haut du dos pour décoller les épaules","Redescends lentement"],"tip":"Ne tire pas sur la nuque : regarde le plafond."},"crunch-poulie":{"img":"Cable_Crunch","s":["À genoux face à la poulie haute, corde près de la tête","Enroule le buste vers les genoux","Remonte lentement"],"tip":"Ce sont les abdos qui enroulent, pas les hanches qui s'assoient."},"crunch-machine":{"img":"Ab_Crunch_Machine","s":["Assis, poignées en main ou coussins sur la poitrine","Enroule le buste vers l'avant","Reviens lentement"],"tip":"Expire fort en enroulant."},"crunch-decline":{"img":"Decline_Crunch","s":["Allongé sur un banc décliné, pieds bloqués","Enroule le buste vers les genoux","Redescends en contrôle"],"tip":"Ajoute un disque contre la poitrine pour progresser."},"crunch-inverse":{"img":"Reverse_Crunch","s":["Allongé, genoux pliés au-dessus des hanches","Enroule le bassin pour ramener les genoux vers la poitrine","Redescends lentement"],"tip":"Le bassin doit décoller du sol, pas juste les jambes bouger."},"sit-up":{"img":"Sit-Up","s":["Allongé, genoux pliés, pieds au sol","Remonte jusqu'à être assis","Redescends en contrôle"],"tip":"Sollicite aussi les fléchisseurs de hanche."},"bicycle-crunch":{"img":"Air_Bike","s":["Allongé, mains derrière la tête, jambes levées","Ramène un coude vers le genou opposé en tendant l'autre jambe","Alterne en pédalant"],"tip":"Compte une rep par côté."},"releves-de-jambes-suspendu":{"img":"Hanging_Leg_Raise","s":["Suspendu à la barre, jambes tendues","Monte les jambes jusqu'à l'horizontale ou plus","Redescends lentement sans balancer"],"tip":"Enroule le bassin en haut pour vraiment travailler les abdos."},"releves-de-genoux-suspendu":{"img":null,"s":["Suspendu à la barre","Monte les genoux vers la poitrine","Redescends en contrôle"],"tip":"Version plus facile des relevés de jambes."},"releves-de-jambes-chaise-romaine":{"img":"Knee_Hip_Raise_On_Parallel_Bars","s":["Avant-bras sur les appuis, dos contre le dossier","Monte les genoux ou les jambes vers la poitrine","Redescends lentement"],"tip":"Le dossier empêche le balancement."},"releves-de-jambes-au-sol":{"img":"Flat_Bench_Lying_Leg_Raise","s":["Allongé, mains sous les fesses ou tenant un banc","Monte les jambes tendues jusqu'à la verticale","Redescends sans toucher le sol"],"tip":"Plaque le bas du dos au sol tout du long."},"toes-to-bar":{"img":"Hanging_Pike","s":["Suspendu à la barre","Monte les pieds jusqu'à toucher la barre","Redescends en contrôle"],"tip":"Exercice avancé : maîtrise d'abord les relevés de jambes."},"v-up":{"img":"Jackknife_Sit-Up","s":["Allongé, bras tendus derrière la tête","Monte en même temps buste et jambes pour toucher les pieds","Redescends lentement"],"tip":"Garde les jambes tendues autant que possible."},"dragon-flag":{"img":null,"s":["Allongé sur un banc, mains agrippées derrière la tête","Monte tout le corps droit en appui sur le haut du dos","Redescends lentement sans plier les hanches"],"tip":"Très avancé : commence par la descente seule."},"essuie-glaces-windshield-wipers":{"img":null,"s":["Allongé ou suspendu, jambes levées à la verticale","Fais basculer les jambes d'un côté puis de l'autre","Contrôle le mouvement"],"tip":"Travaille fort les obliques."},"roue-abdominale":{"img":"Ab_Roller","s":["À genoux, mains sur la roue","Roule vers l'avant en gardant le dos plat","Reviens en contractant les abdos"],"tip":"Ne laisse pas les reins se creuser : va seulement aussi loin que tu contrôles."},"russian-twist":{"img":"Russian_Twist","s":["Assis, buste incliné en arrière, pieds au sol ou levés","Tourne le buste d'un côté puis de l'autre","Garde le dos droit"],"tip":"Tiens un disque pour progresser."},"mountain-climbers":{"img":"Mountain_Climbers","s":["En position de pompe","Ramène un genou vers la poitrine puis l'autre, rapidement","Garde les hanches basses"],"tip":"Bon finisher cardio."},"dead-bug":{"img":"Dead_Bug","s":["Allongé, bras vers le plafond, genoux à 90°","Tends un bras et la jambe opposée vers le sol","Reviens et alterne"],"tip":"Le bas du dos reste collé au sol tout du long."},"planche-gainage":{"img":"Plank","s":["Appui sur les avant-bras et les pointes de pieds","Corps aligné de la tête aux talons","Tiens la position"],"tip":"Serre fessiers et abdos : pas de hanches qui tombent."},"gainage-lateral":{"img":"Side_Bridge","s":["Sur le côté, appui sur un avant-bras","Monte les hanches pour aligner le corps","Tiens puis change de côté"],"tip":"Note la durée par côté."},"hollow-hold":{"img":null,"s":["Allongé, bras tendus derrière la tête, jambes tendues","Décolle épaules et jambes du sol, bas du dos plaqué","Tiens la position"],"tip":"Plie les genoux pour faciliter."},"l-sit":{"img":null,"s":["Aux barres parallèles ou au sol, bras tendus","Monte les jambes tendues à l'horizontale","Tiens la position"],"tip":"Commence genoux pliés."},"woodchopper-poulie":{"img":"Standing_Cable_Wood_Chop","s":["De profil par rapport à la poulie haute, poignée à deux mains","Tire en diagonale vers la hanche opposée en tournant le buste","Reviens lentement"],"tip":"La rotation part du tronc, les bras restent quasi tendus."},"pallof-press":{"img":"Pallof_Press","s":["De profil par rapport à la poulie, poignée contre la poitrine","Pousse les bras devant toi sans laisser le buste tourner","Ramène la poignée"],"tip":"Exercice anti-rotation : le tronc doit rester immobile."},"extension-lombaire-banc-45":{"img":"Hyperextensions_Back_Extensions","s":["Hanches calées sur le coussin, pieds bloqués","Descends le buste en gardant le dos neutre","Remonte jusqu'à l'alignement avec les jambes"],"tip":"Ne te cambre pas au-delà de l'alignement."},"extension-lombaire-machine":{"img":null,"s":["Assis, dos contre le coussin","Pousse vers l'arrière en redressant le buste","Reviens lentement"],"tip":"Charge modérée, mouvement contrôlé."},"hyperextension-inversee":{"img":"Reverse_Hyperextension","s":["Allongé à plat ventre sur la machine, jambes pendantes","Monte les jambes jusqu'à l'alignement avec le buste","Redescends lentement"],"tip":"Décompresse le dos tout en travaillant lombaires et fessiers."},"superman":{"img":"Superman","s":["Allongé à plat ventre, bras tendus devant","Décolle en même temps bras, buste et jambes","Tiens une seconde puis redescends"],"tip":"Regarde le sol pour garder la nuque neutre."},"good-morning":{"img":"Good_Morning","s":["Debout, barre sur le haut du dos, genoux légèrement fléchis","Penche le buste en reculant les hanches, dos plat","Remonte en poussant les hanches vers l'avant"],"tip":"Commence léger : c'est un exercice exigeant pour le bas du dos."},"squat-barre-haute":{"img":"Barbell_Full_Squat","s":["Barre sur le haut des trapèzes, pieds largeur d'épaules","Descends en poussant les genoux dans l'axe des pieds, buste droit","Remonte en poussant le sol"],"tip":"Descends au moins jusqu'à ce que les cuisses soient parallèles au sol, dos neutre."},"squat-barre-basse":{"img":"Barbell_Squat","s":["Barre plus bas sur le dos, au niveau de l'arrière des épaules","Descends en reculant davantage les hanches, buste plus penché","Remonte en poussant le sol"],"tip":"Permet souvent de charger plus lourd, sollicite plus les fessiers et ischios."},"front-squat":{"img":"Front_Barbell_Squat","s":["Barre sur l'avant des épaules, coudes hauts","Descends en gardant le buste très droit","Remonte en gardant les coudes hauts"],"tip":"Si tu manques de souplesse aux poignets, croise les bras sur la barre."},"squat-pause":{"img":"Barbell_Full_Squat","s":["Squat classique","Marque une pause de 2 secondes en bas sans relâcher","Remonte explosivement"],"tip":"Supprime l'effet rebond : charge plus légère."},"box-squat":{"img":"Box_Squat","s":["Une box ou un banc derrière toi","Descends jusqu'à t'asseoir brièvement sur la box","Remonte en poussant fort"],"tip":"Ne te relâche pas complètement sur la box."},"zercher-squat":{"img":"Zercher_Squats","s":["Barre dans le creux des coudes","Descends en gardant le buste droit","Remonte en poussant le sol"],"tip":"Mets une serviette sur la barre pour le confort."},"squat-smith":{"img":"Smith_Machine_Squat","s":["Barre guidée sur le haut du dos, pieds légèrement devant","Descends","Remonte en poussant le sol"],"tip":"Avance les pieds pour insister sur les quadriceps tout en ménageant les genoux."},"hack-squat":{"img":"Hack_Squat","s":["Dos contre le dossier, épaules sous les coussins","Descends le plus bas possible","Remonte sans verrouiller les genoux"],"tip":"Pieds bas sur la plateforme = plus de quadriceps."},"pendulum-squat":{"img":null,"s":["Dos contre le dossier, épaules sous les coussins","Descends profondément en suivant la trajectoire en arc","Remonte en poussant le sol"],"tip":"Excellente amplitude pour les quadriceps."},"v-squat":{"img":null,"s":["Dos contre le dossier, épaules sous les coussins","Descends en contrôle","Remonte en poussant sur les talons"],"tip":"Trajectoire guidée confortable pour le dos."},"belt-squat":{"img":null,"s":["Ceinture accrochée à la charge, debout sur la plateforme","Descends en squat","Remonte en poussant le sol"],"tip":"Aucune charge sur la colonne : parfait si le dos est fatigué."},"presse-a-cuisses":{"img":"Leg_Press","s":["Dos et fessiers contre le dossier, pieds largeur d'épaules","Descends la plateforme jusqu'à ce que les genoux forment environ 90° ou plus","Pousse sans verrouiller les genoux"],"tip":"Ne laisse pas les fesses décoller du siège en bas."},"presse-a-cuisses-unilaterale":{"img":"Leg_Press","s":["Un seul pied au centre de la plateforme","Descends en contrôle","Pousse sans verrouiller le genou"],"tip":"Charge bien plus légère qu'à deux jambes."},"leg-extension":{"img":"Leg_Extensions","s":["Assis, coussin sur le bas des tibias, genoux alignés sur l'axe","Tends les jambes","Redescends lentement"],"tip":"Serre les quadriceps une seconde en haut."},"leg-extension-unilateral":{"img":"Single-Leg_Leg_Extension","s":["Une seule jambe sous le coussin","Tends la jambe","Redescends lentement"],"tip":"Utile pour corriger un déséquilibre."},"squat-goblet-haltere":{"img":"Goblet_Squat","s":["Haltère tenu verticalement contre la poitrine","Descends entre tes jambes, buste droit","Remonte en poussant le sol"],"tip":"Parfait pour apprendre le squat."},"squat-goblet-kettlebell":{"img":"Goblet_Squat","s":["Kettlebell tenue par les cornes contre la poitrine","Descends profondément","Remonte en poussant le sol"],"tip":"Les coudes peuvent pousser les genoux vers l'extérieur en bas."},"fentes-avant-halteres":{"img":"Dumbbell_Lunges","s":["Debout, haltères en main","Fais un grand pas en avant et descends le genou arrière près du sol","Repousse pour revenir et alterne"],"tip":"Le genou avant reste aligné avec le pied."},"fentes-arriere-halteres":{"img":"Dumbbell_Rear_Lunge","s":["Debout, haltères en main","Fais un grand pas en arrière et descends","Reviens en poussant sur la jambe avant"],"tip":"Plus doux pour les genoux que la fente avant."},"fentes-marchees-halteres":{"img":"Dumbbell_Lunges","s":["Haltères en main","Avance en enchaînant les fentes jambe après jambe","Garde le buste droit"],"tip":"Compte les reps par jambe."},"fentes-barre":{"img":"Barbell_Lunge","s":["Barre sur le haut du dos","Fais un pas en avant et descends","Reviens et alterne"],"tip":"Demande de l'équilibre : commence léger."},"fentes-smith":{"img":"Smith_Single-Leg_Split_Squat","s":["Barre guidée sur le dos, une jambe devant, une derrière","Descends verticalement","Remonte"],"tip":"La barre guidée aide à l'équilibre."},"fente-laterale":{"img":"Barbell_Side_Split_Squat","s":["Debout, pieds écartés","Descends sur une jambe en gardant l'autre tendue","Remonte et change de côté"],"tip":"Travaille aussi les adducteurs."},"squat-bulgare-halteres":{"img":"Split_Squat_with_Dumbbells","s":["Pied arrière posé sur un banc, haltères en main","Descends le genou arrière vers le sol","Remonte en poussant sur le pied avant"],"tip":"Buste penché = plus de fessiers ; buste droit = plus de quadriceps."},"squat-bulgare-smith":{"img":"Smith_Single-Leg_Split_Squat","s":["Pied arrière sur un banc, barre guidée sur le dos","Descends","Remonte en poussant sur le pied avant"],"tip":"Permet de charger plus lourd en sécurité."},"step-up-halteres":{"img":"Dumbbell_Step_Ups","s":["Face à un banc ou une box, haltères en main","Monte en poussant sur le pied posé sur la box","Redescends lentement"],"tip":"Ne pousse pas avec la jambe restée au sol."},"sissy-squat":{"img":"Weighted_Sissy_Squat","s":["Debout, tiens-toi à un support","Penche-toi en arrière en avançant les genoux, talons qui décollent","Remonte en contractant les quadriceps"],"tip":"Très intense pour les quadriceps : commence au poids du corps."},"squat-poids-du-corps":{"img":"Bodyweight_Squat","s":["Pieds largeur d'épaules, bras devant","Descends en reculant les hanches","Remonte en poussant le sol"],"tip":"Bon échauffement avant les squats chargés."},"squat-saute":{"img":"Freehand_Jump_Squat","s":["Squat poids du corps","Remonte en sautant explosivement","Réceptionne-toi en douceur et enchaîne"],"tip":"Travaille l'explosivité."},"pistol-squat":{"img":"Kettlebell_Pistol_Squat","s":["Debout sur une jambe, l'autre tendue devant","Descends le plus bas possible sur une jambe","Remonte"],"tip":"Commence en descendant sur un banc."},"chaise-contre-le-mur":{"img":null,"s":["Dos contre un mur, cuisses parallèles au sol","Tiens la position","Respire normalement"],"tip":"Note la durée en secondes."},"souleve-de-terre-roumain-barre":{"img":"Romanian_Deadlift","s":["Debout, barre en main, genoux légèrement fléchis","Descends la barre le long des jambes en reculant les hanches, dos plat","Remonte en poussant les hanches vers l'avant"],"tip":"Descends jusqu'à sentir l'étirement des ischios, généralement mi-tibia."},"souleve-de-terre-roumain-halteres":{"img":"Stiff-Legged_Dumbbell_Deadlift","s":["Debout, haltères devant les cuisses","Descends en reculant les hanches, dos plat","Remonte en serrant les fessiers"],"tip":"Garde les haltères proches des jambes."},"souleve-de-terre-roumain-unilateral":{"img":"Kettlebell_One-Legged_Deadlift","s":["Debout sur une jambe, poids dans la main opposée","Penche le buste en levant la jambe libre derrière","Remonte"],"tip":"Excellent pour l'équilibre et les fessiers."},"souleve-de-terre-jambes-tendues":{"img":"Stiff-Legged_Barbell_Deadlift","s":["Debout, barre en main, jambes presque tendues","Descends la barre en gardant le dos plat","Remonte"],"tip":"Plus d'étirement des ischios que le roumain : charge modérée."},"leg-curl-allonge":{"img":"Lying_Leg_Curls","s":["Allongé à plat ventre, coussin au-dessus des talons","Fléchis les genoux pour monter le coussin vers les fesses","Redescends lentement"],"tip":"Garde les hanches collées au banc."},"leg-curl-assis":{"img":"Seated_Leg_Curl","s":["Assis, coussin derrière les chevilles, cuisses bloquées","Fléchis les genoux","Reviens lentement"],"tip":"Penche le buste en avant pour étirer davantage les ischios."},"leg-curl-debout-unilateral":{"img":"Standing_Leg_Curl","s":["Debout, coussin derrière la cheville","Fléchis le genou vers les fesses","Redescends lentement"],"tip":"Une jambe à la fois."},"leg-curl-haltere":{"img":null,"s":["Allongé à plat ventre, haltère coincé entre les pieds","Fléchis les genoux","Redescends lentement"],"tip":"Fais-toi aider pour placer l'haltère."},"nordic-curl":{"img":"Natural_Glute_Ham_Raise","s":["À genoux, chevilles bloquées","Descends le buste vers l'avant le plus lentement possible","Rattrape-toi avec les mains et remonte"],"tip":"Excellent pour prévenir les blessures des ischios."},"glute-ham-raise":{"img":"Glute_Ham_Raise","s":["Sur le banc GHR, chevilles bloquées","Descends le buste à l'horizontale","Remonte en fléchissant les genoux"],"tip":"Exercice difficile : commence avec une assistance."},"leg-curl-swiss-ball":{"img":"Ball_Leg_Curl","s":["Allongé sur le dos, talons sur le ballon, hanches levées","Ramène le ballon vers les fesses","Reviens en gardant les hanches hautes"],"tip":"Bonne option sans machine."},"hip-thrust-barre":{"img":"Barbell_Hip_Thrust","s":["Haut du dos contre un banc, barre sur les hanches","Pousse les hanches vers le haut jusqu'à l'alignement","Serre les fessiers puis redescends"],"tip":"Menton rentré, regard vers l'avant en haut. Utilise un coussin sur la barre."},"hip-thrust-machine":{"img":null,"s":["Dos contre le coussin, ceinture sur les hanches","Pousse les hanches vers le haut","Redescends lentement"],"tip":"Très rapide à installer."},"hip-thrust-smith":{"img":"Smith_Machine_Hip_Raise","s":["Haut du dos contre un banc, barre guidée sur les hanches","Pousse les hanches vers le haut","Redescends"],"tip":"Plus stable que la barre libre."},"hip-thrust-unilateral":{"img":"Single_Leg_Glute_Bridge","s":["Haut du dos contre un banc, une jambe levée","Pousse les hanches vers le haut sur une jambe","Redescends"],"tip":"Garde le bassin bien horizontal."},"pont-fessier":{"img":"Butt_Lift_Bridge","s":["Allongé sur le dos, genoux pliés","Monte les hanches en serrant les fessiers","Redescends lentement"],"tip":"Pousse sur les talons."},"pont-fessier-barre":{"img":"Barbell_Glute_Bridge","s":["Allongé au sol, barre sur les hanches","Monte les hanches","Redescends"],"tip":"Amplitude plus courte que le hip thrust."},"kickback-fessier-poulie":{"img":"One-Legged_Cable_Kickback","s":["Cheville attachée à la poulie basse, face à la machine","Pousse la jambe vers l'arrière","Reviens lentement"],"tip":"Ne cambre pas le bas du dos."},"kickback-fessier-machine":{"img":null,"s":["En appui sur la machine, pied contre le plateau","Pousse la jambe vers l'arrière","Reviens lentement"],"tip":"Garde le dos neutre."},"abduction-machine":{"img":"Thigh_Abductor","s":["Assis, coussins à l'extérieur des genoux","Écarte les jambes","Reviens lentement"],"tip":"Penche le buste en avant pour cibler davantage les fessiers."},"abduction-poulie":{"img":null,"s":["Cheville attachée à la poulie basse, de profil","Écarte la jambe sur le côté","Reviens lentement"],"tip":"Garde le buste droit."},"abduction-elastique":{"img":null,"s":["Élastique autour des genoux, assis ou debout","Écarte les genoux contre la résistance","Reviens lentement"],"tip":"Bon échauffement avant squats et hip thrusts."},"pull-through-poulie":{"img":"Pull_Through","s":["Dos à la poulie basse, corde entre les jambes","Penche le buste en reculant les hanches","Redresse-toi en poussant les hanches vers l'avant"],"tip":"Le mouvement vient des hanches, pas des bras."},"extension-de-hanche-45-fessiers":{"img":"Hyperextensions_Back_Extensions","s":["Sur le banc 45°, pieds tournés vers l'extérieur, dos légèrement arrondi","Descends le buste","Remonte en serrant les fessiers"],"tip":"Le haut du dos reste arrondi pour cibler les fessiers."},"frog-pump":{"img":null,"s":["Allongé, plantes de pieds collées, genoux écartés","Monte les hanches en serrant les fessiers","Redescends"],"tip":"Enchaîne les reps rapidement."},"marche-laterale-elastique":{"img":"Monster_Walk","s":["Élastique autour des chevilles ou genoux, demi-squat","Fais des pas sur le côté","Garde la tension dans l'élastique"],"tip":"Compte les pas par côté."},"adduction-machine":{"img":"Thigh_Adductor","s":["Assis, coussins à l'intérieur des genoux","Serre les jambes","Reviens lentement"],"tip":"Contrôle l'ouverture : c'est là que les adducteurs travaillent le plus."},"adduction-poulie":{"img":"Cable_Hip_Adduction","s":["Cheville attachée à la poulie basse, de profil","Ramène la jambe vers l'autre en croisant devant","Reviens lentement"],"tip":"Tiens-toi à la machine."},"squat-sumo-haltere":{"img":"Plie_Dumbbell_Squat","s":["Pieds très écartés, haltère tenu entre les jambes","Descends en écartant les genoux","Remonte en poussant le sol"],"tip":"Garde le buste droit."},"squat-sumo-barre":{"img":"Wide_Stance_Barbell_Squat","s":["Barre sur le dos, pieds très écartés","Descends en écartant les genoux","Remonte"],"tip":"Pointes de pied vers l'extérieur."},"planche-copenhague":{"img":null,"s":["Gainage latéral, pied du dessus posé sur un banc","Monte les hanches","Tiens la position"],"tip":"Version facile : genou sur le banc au lieu du pied."},"mollets-debout-machine":{"img":"Standing_Calf_Raises","s":["Épaules sous les coussins, avant des pieds sur la marche","Monte sur la pointe des pieds","Redescends lentement sous la marche"],"tip":"Marque une pause en bas, étiré, sans rebondir."},"mollets-assis-machine":{"img":"Seated_Calf_Raise","s":["Assis, genoux sous le coussin, avant des pieds sur la marche","Monte sur la pointe des pieds","Redescends lentement"],"tip":"Genoux pliés : cible le soléaire."},"mollets-a-la-presse":{"img":"Calf_Press_On_The_Leg_Press_Machine","s":["Avant des pieds au bas de la plateforme","Pousse avec les chevilles","Reviens lentement"],"tip":"Garde les genoux tendus mais pas verrouillés."},"mollets-smith":{"img":"Smith_Machine_Calf_Raise","s":["Barre guidée sur le dos, avant des pieds sur une cale","Monte sur la pointe des pieds","Redescends lentement"],"tip":"Amplitude complète."},"mollets-donkey":{"img":"Donkey_Calf_Raises","s":["Buste penché, avant des pieds sur la marche","Monte sur la pointe des pieds","Redescends lentement"],"tip":"Bon étirement du mollet."},"mollets-unilateral-haltere":{"img":"Standing_Dumbbell_Calf_Raise","s":["Sur une marche, une jambe, haltère dans la main","Monte sur la pointe du pied","Redescends lentement"],"tip":"Tiens-toi à un support pour l'équilibre."},"mollets-poids-du-corps":{"img":null,"s":["Debout sur une marche, avant des pieds en appui","Monte sur la pointe des pieds","Redescends lentement sous la marche"],"tip":"Fais-les sur une jambe pour progresser."},"releveurs-tibial-raise":{"img":"Smith_Machine_Reverse_Calf_Raises","s":["Dos contre un mur, talons au sol","Relève les pointes de pieds vers les tibias","Redescends lentement"],"tip":"Renforce l'avant de la jambe et protège les genoux."},"epaule-power-clean":{"img":"Power_Clean","s":["Position de départ du soulevé de terre","Tire la barre explosivement en étendant hanches et genoux","Passe sous la barre et réceptionne-la sur les épaules"],"tip":"Technique avant tout : fais-toi coacher."},"hang-clean":{"img":"Hang_Clean","s":["Barre au-dessus des genoux","Saute en étendant les hanches","Réceptionne la barre sur les épaules"],"tip":"Bonne progression vers l'épaulé complet."},"epaule-jete":{"img":"Clean_and_Jerk","s":["Épaulé jusqu'aux épaules","Fléchis légèrement les jambes puis pousse","Réceptionne bras tendus au-dessus de la tête"],"tip":"Mouvement olympique complexe : charges légères au début."},"arrache":{"img":"Snatch","s":["Prise très large, barre au sol","Tire explosivement","Réceptionne la barre bras tendus au-dessus de la tête en squat"],"tip":"Le mouvement le plus technique : travaille avec un coach."},"thruster-barre":{"img":null,"s":["Barre sur l'avant des épaules","Descends en front squat","Remonte et pousse la barre au-dessus de la tête"],"tip":"Enchaîne sans pause."},"thruster-halteres":{"img":null,"s":["Haltères sur les épaules","Descends en squat","Remonte et pousse au-dessus de la tête"],"tip":"Très bon en circuit."},"clean-press-halteres":{"img":null,"s":["Haltères au sol","Monte-les sur les épaules d'un mouvement explosif","Pousse au-dessus de la tête"],"tip":"Exercice complet pour les circuits."},"man-maker":{"img":null,"s":["Pompe sur haltères","Rowing de chaque côté","Saute, monte les haltères aux épaules et pousse au-dessus de la tête"],"tip":"Très exigeant : charges légères."},"swing-kettlebell":{"img":"One-Arm_Kettlebell_Swings","s":["Kettlebell entre les jambes, dos plat","Projette les hanches vers l'avant pour lancer la kettlebell à hauteur de poitrine","Laisse-la redescendre entre les jambes"],"tip":"Mouvement de hanches, pas de squat ni de bras."},"snatch-kettlebell":{"img":"One-Arm_Kettlebell_Snatch","s":["Kettlebell entre les jambes","Swing puis tire jusqu'au-dessus de la tête bras tendu","Redescends et enchaîne"],"tip":"Laisse la kettlebell tourner autour du poignet, pas taper."},"turkish-get-up":{"img":"Kettlebell_Turkish_Get-Up_Squat_style","s":["Allongé, kettlebell bras tendu","Relève-toi jusqu'à être debout sans baisser le bras","Refais le chemin inverse"],"tip":"Regarde la kettlebell tout du long."},"wall-ball":{"img":null,"s":["Face à un mur, médecine-ball contre la poitrine","Descends en squat","Remonte et lance le ballon vers une cible haute"],"tip":"Rattrape le ballon et enchaîne directement."},"burpees":{"img":null,"s":["Debout, descends mains au sol","Saute en arrière en planche, pompe","Ramène les pieds et saute bras en l'air"],"tip":"Le classique du cardio au poids du corps."},"farmer-walk":{"img":"Farmers_Walk","s":["Haltères lourds en main, bras tendus","Marche à petits pas rapides","Garde le buste droit"],"tip":"Note le poids en +kg et la durée en secondes."},"poussee-de-traineau":{"img":"Sled_Push","s":["Mains sur les poignées du traîneau, buste penché","Pousse avec les jambes en faisant de petits pas puissants","Continue jusqu'au bout de la distance"],"tip":"Note la charge en +kg et la durée."},"tapis-de-course":{"img":"Running_Treadmill","s":["Règle la vitesse et la pente","Cours avec une foulée naturelle","Note distance et durée"],"tip":"Une pente de 1 % simule la course extérieure."},"course-a-pied-exterieur":{"img":null,"s":["Échauffe-toi quelques minutes","Cours à ton allure","Note distance et durée"],"tip":"Alterne sorties faciles et fractionné."},"marche-inclinee-tapis":{"img":"Walking_Treadmill","s":["Règle une pente de 8 à 15 %","Marche sans te tenir aux barres","Note distance et durée"],"tip":"Excellent cardio peu traumatisant."},"velo-stationnaire":{"img":"Bicycling_Stationary","s":["Règle la selle à hauteur de hanche","Pédale à résistance modérée","Note distance et durée"],"tip":"Jambe presque tendue en bas du coup de pédale."},"velo-exterieur":{"img":"Bicycling","s":["Vérifie ton vélo et ton équipement","Roule à ton allure","Note distance et durée"],"tip":"Porte un casque."},"rameur":{"img":"Rowing_Stationary","s":["Pieds sanglés, poignée en main","Pousse avec les jambes, puis bascule le buste, puis tire les bras","Reviens dans l'ordre inverse"],"tip":"Jambes 60 %, dos 20 %, bras 20 %."},"elliptique":{"img":"Elliptical_Trainer","s":["Monte sur les pédales, mains sur les poignées","Avance à un rythme régulier","Note distance et durée"],"tip":"Très doux pour les articulations."},"stairmaster":{"img":"Stairmaster","s":["Monte sur la machine","Monte les marches sans t'appuyer sur les barres","Note la durée"],"tip":"Garde le buste droit."},"assault-bike":{"img":null,"s":["Règle la selle","Pédale en poussant et tirant les bras","Note distance et durée"],"tip":"Parfait pour le fractionné court."},"skierg":{"img":null,"s":["Debout face à la machine, poignées en hauteur","Tire vers le bas en fléchissant hanches et genoux","Remonte et enchaîne"],"tip":"Le mouvement vient du buste et des jambes, pas seulement des bras."},"natation":{"img":null,"s":["Échauffe-toi quelques longueurs","Nage à ton allure","Note distance et durée"],"tip":"1 longueur de bassin olympique = 50 m."},"corde-a-sauter":{"img":"Rope_Jumping","s":["Poignées en main, coudes près du corps","Fais tourner la corde avec les poignets","Saute légèrement sur l'avant des pieds"],"tip":"Note la durée en secondes."}};
+const IMG='img/';
+const MEDIA_MODE='packs';
+function packOf(id){let h=0;for(const c of id)h=(h*31+c.charCodeAt(0))>>>0;return h%4}
+const packCache={},packLoading={};
+function loadPack(n){if(packCache[n])return Promise.resolve(packCache[n]);if(!packLoading[n])packLoading[n]=fetch('media/'+n+'.json').then(r=>r.json()).then(d=>(packCache[n]=d)).catch(()=>{delete packLoading[n];return null});return packLoading[n]}
+function imgAttr(id,f,thumb){if(MEDIA_MODE==='files')return`src="${IMG}${encodeURIComponent(id)}-${f}.jpg"`;return`data-m="${thumb?'thumbs':'p'+packOf(id)}|${esc(id)}-${f}"`}
+function hydrate(){if(MEDIA_MODE!=='packs')return;document.querySelectorAll('img[data-m]:not([src])').forEach(img=>{if(img.dataset.busy)return;img.dataset.busy='1';const[p,k]=img.dataset.m.split('|');loadPack(p).then(d=>{if(d&&d[k])img.src=d[k];else{const w=img.classList.contains('f0')&&img.closest('.media-wrap');w?w.remove():img.remove()}})})}
+const MUSCLES=['Pectoraux','Dos','Épaules','Trapèzes','Biceps','Triceps','Avant-bras','Abdos','Lombaires','Quadriceps','Ischios','Fessiers','Adducteurs','Mollets','Corps entier','Cardio'];
+const ABBR={'Pectoraux':'PEC','Dos':'DOS','Épaules':'ÉPA','Trapèzes':'TRA','Biceps':'BIC','Triceps':'TRI','Avant-bras':'AVB','Abdos':'ABS','Lombaires':'LOM','Quadriceps':'QUA','Ischios':'ISC','Fessiers':'FES','Adducteurs':'ADD','Mollets':'MOL','Corps entier':'FULL','Cardio':'CAR'};
+const EQUIP=['Barre','Haltères','Machine','Poulie','Poids du corps','Barre EZ','Smith','Kettlebell','Élastique','Autre'];
+const TYPES={w:{a:'kg',b:'reps',label:'Poids et répétitions'},b:{a:'+kg',b:'reps',label:'Poids du corps (lest optionnel)'},t:{a:'+kg',b:'sec',label:'Durée (lest optionnel)'},c:{a:'km',b:'min',label:'Cardio : distance et durée'}};
+const ALIAS={'bench':'developpe couche','sdt':'souleve de terre','deadlift':'souleve de terre','rdl':'roumain','ohp':'developpe militaire','pull up':'tractions','pullup':'tractions','chin up':'tractions supination','lat pulldown':'tirage vertical','pulldown':'tirage vertical','leg press':'presse a cuisses','calf':'mollets','fly':'ecarte','lateral raise':'elevations laterales','row':'rowing','squat bulgare':'bulgare','bss':'bulgare','hip':'hip thrust','press':'developpe','abs':'abdos','gainage':'planche'};
+
+/* ================= Utilitaires ================= */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const slug=s=>norm(s).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const num=v=>{if(v===''||v==null)return NaN;const n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:NaN};
+const fmt=n=>{n=+n;if(!isFinite(n))return'';return(Math.round(n*100)/100).toString().replace('.',',')};
+const fmtVol=n=>Math.round(n).toLocaleString('fr-FR')+' kg';
+const fmtDur=ms=>{const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`:`${m}:${String(x).padStart(2,'0')}`};
+const fmtDurLong=ms=>{const m=Math.max(1,Math.round(ms/60000));return m<60?m+' min':Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')};
+const fmtSec=s=>{s=Math.round(+s||0);return s<60?s+' s':Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const fmtRest=o=>o<60?o+' s':(o%60?`${Math.floor(o/60)} min ${o%60}`:`${o/60} min`);
+const fmtDay=t=>new Date(t).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+const fmtShort=t=>new Date(t).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+const fmtHour=t=>new Date(t).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+const e1rm=(a,b)=>b<=1?a:a*(1+b/30);
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+
+const IC={plus:'M12 5v14M5 12h14',check:'M5 12.5l4.5 4.5L19 7',search:'M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14zM20 20l-4.2-4.2',x:'M6 6l12 12M18 6L6 18',dots:'M5 12h.01M12 12h.01M19 12h.01','chev-down':'M6 9l6 6 6-6','chev-right':'M9 6l6 6-6 6',play:'M8 5.5v13l10.5-6.5z',clock:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7.5v4.5l3 2',list:'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',dumbbell:'M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11',sliders:'M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4',trophy:'M8 4h8v5a4 4 0 0 1-8 0zM8 6H5.5a2.5 2.5 0 0 0 2.6 4M16 6h2.5a2.5 2.5 0 0 1-2.6 4M12 13v4M8.5 20h7',timer:'M12 21a8 8 0 1 0 0-16a8 8 0 1 0 0 16zM12 9.5v3.5M10 2.5h4',weight:'M6 8h12l2 12H4zM9.5 8a2.5 2.5 0 1 1 5 0',layers:'M12 4l8 4-8 4-8-4zM4 12l8 4 8-4M4 16l8 4 8-4',check2:'M20 6L9 17l-5-5',info:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 11v5M12 7.5h.01',film:'M4 5h16v14H4zM8 5v14M16 5v14M4 9h4M4 15h4M16 9h4M16 15h4'};
+const icon=n=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true"${n==='dots'?' style="stroke-width:3.2"':''}><path d="${IC[n]}"${n==='play'?' fill="currentColor"':''}/></svg>`;
+
+/* ================= Données ================= */
+const BUILTIN=[];
+(()=>{let m='';for(const line of RAW.split('\n')){const l=line.trim();if(!l)continue;if(l[0]==='#'){m=l.slice(1).trim();continue}const[name,equip,t]=l.split('|');const type=t||(m==='Cardio'?'c':equip==='Poids du corps'?'b':'w');BUILTIN.push({id:slug(name),name,muscle:m,equip,type})}})();
+
+const KEY='carnet-fonte-v1';
+function exampleRoutines(){
+  const R=(name,list)=>({id:uid(),name,exercises:list.map(([n,k])=>({exId:slug(n),rest:90,sets:Array.from({length:k},()=>({t:'n',a:'',b:''}))}))});
+  return[
+    R('Push · exemple',[['Développé couché barre',4],['Développé incliné haltères',3],['Élévations latérales haltères',3],['Extension triceps corde',3],['Dips',3]]),
+    R('Pull · exemple',[['Tractions pronation',4],['Rowing barre buste penché',3],['Tirage vertical prise serrée',3],['Face pull',3],['Curl incliné haltères',3]]),
+    R('Legs · exemple',[['Squat barre haute',4],['Soulevé de terre roumain barre',3],['Presse à cuisses',3],['Leg curl assis',3],['Mollets debout machine',4]])
+  ];
+}
+const defaultSettings=()=>({rest:90,sound:true});
+const defaultState=()=>({v:1,settings:defaultSettings(),custom:[],routines:exampleRoutines(),history:[],active:null});
+function load(){try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&Array.isArray(d.history))return{...defaultState(),...d,settings:{...defaultSettings(),...(d.settings||{})}}}}catch(e){}return null}
+let S=load()||defaultState();
+let storageOK=true;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}catch(e){storageOK=false}}
+let saveT=null;function saveSoon(){clearTimeout(saveT);saveT=setTimeout(save,300)}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save()});
+
+let EXI={};
+function rebuildIndex(){EXI={};for(const e of BUILTIN)EXI[e.id]=e;for(const e of S.custom)EXI[e.id]={...e,custom:true}}
+rebuildIndex();
+const ex=id=>EXI[id]||{id,name:'Exercice supprimé',muscle:'—',equip:'—',type:'w'};
+const allEx=()=>Object.values(EXI);
+
+/* ================= UI state ================= */
+const ui={mediaSplit:false,tab:'seance',editorOpen:false,edMode:'workout',draft:null,picker:null,detail:[],xq:'',xMuscle:'Tous',xEquip:''};
+let MODAL=null;
+const edTarget=()=>ui.edMode==='workout'?S.active:ui.draft;
+const findE=u=>{const T=edTarget();return T?T.exercises.find(e=>e.uid===u):null};
+const defaultName=()=>{const h=new Date().getHours();return h<12?'Séance du matin':h<18?"Séance de l'après-midi":'Séance du soir'};
+
+/* ================= Calculs ================= */
+function prevSets(exId){for(const w of S.history){const e=w.exercises.filter(e=>e.exId===exId);if(e.length)return e.flatMap(x=>x.sets)}return[]}
+function setStr(s,type,short){const a=+s.a||0,b=+s.b||0;
+  if(type==='w')return`${fmt(a)} kg × ${b}`;
+  if(type==='b')return a?`+${fmt(a)} kg × ${b}`:`${b} reps`;
+  if(type==='t')return fmtSec(b)+(a?` · +${fmt(a)} kg`:'');
+  return[a?fmt(a)+' km':'',b?fmt(b)+' min':''].filter(Boolean).join(' · ')||'—'}
+function setVol(s,type){if(s.t==='w')return 0;if(type==='w'||type==='b')return(num(s.a)||0)*(num(s.b)||0);return 0}
+function wVolume(w){let v=0;for(const e of w.exercises){const T=ex(e.exId).type;for(const s of e.sets)if(s.done!==false)v+=setVol(s,T)}return v}
+function wSets(w){let n=0;for(const e of w.exercises)for(const s of e.sets)if(s.done!==false&&s.t!=='w')n++;return n}
+function activeStats(){let v=0,n=0;for(const e of S.active.exercises){const T=ex(e.exId).type;for(const s of e.sets)if(s.done){v+=setVol(s,T);if(s.t!=='w')n++}}return{v,n}}
+function score(type,sets){let best=0;for(const s of sets){if(s.t==='w')continue;const a=+s.a||0,b=+s.b||0;
+  if(type==='w'){if(a>0&&b>0)best=Math.max(best,e1rm(a,b))}else if(type==='b'||type==='t')best=Math.max(best,b);else best=Math.max(best,a||b)}return best}
+function maxA(sets){let m=0;for(const s of sets)if(s.t!=='w'&&(+s.b||0)>0)m=Math.max(m,+s.a||0);return m}
+function sessionsFor(id){return S.history.map(w=>{const sets=w.exercises.filter(e=>e.exId===id).flatMap(e=>e.sets);return sets.length?{w,sets}:null}).filter(Boolean)}
+function usesMap(){const m={};for(const w of S.history)for(const e of w.exercises)m[e.exId]=(m[e.exId]||0)+1;return m}
+function recentIds(){const seen=[];for(const w of S.history)for(const e of w.exercises)if(!seen.includes(e.exId))seen.push(e.exId);return seen}
+function computePRs(rec){const prs=[],seen=new Set();for(const e of rec.exercises){if(seen.has(e.exId))continue;seen.add(e.exId);const X=ex(e.exId);
+  const old=S.history.flatMap(w=>w.exercises.filter(x=>x.exId===e.exId).flatMap(x=>x.sets));if(!old.length)continue;
+  const now=rec.exercises.filter(x=>x.exId===e.exId).flatMap(x=>x.sets);
+  if(X.type==='w'){const na=maxA(now),oa=maxA(old);if(na>oa)prs.push({exId:e.exId,label:'Poids max',value:fmt(na)+' kg'});const ns=score('w',now),os=score('w',old);if(ns>os+0.05)prs.push({exId:e.exId,label:'1RM estimé',value:Math.round(ns)+' kg'})}
+  else{const ns=score(X.type,now),os=score(X.type,old);if(ns>os)prs.push({exId:e.exId,label:X.type==='b'?'Reps max':X.type==='t'?'Durée max':'Distance max',value:X.type==='b'?ns+' reps':X.type==='t'?fmtSec(ns):fmt(ns)+(X.type==='c'?' km':'')})}}
+  return prs}
+const monday=t=>{const d=new Date(t);d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getTime()};
+
+function filterEx(q,muscle,equip){
+  let L;
+  if(muscle==='Récents')L=recentIds().map(ex).filter(x=>EXI[x.id]);
+  else{L=allEx();if(muscle&&muscle!=='Tous')L=L.filter(x=>x.muscle===muscle)}
+  if(equip)L=L.filter(x=>x.equip===equip);
+  if(q&&q.trim()){let nq=norm(q.trim());for(const k in ALIAS)if(nq.includes(k))nq=nq.replace(k,ALIAS[k]);const toks=nq.split(/\s+/).filter(Boolean);L=L.filter(x=>{const h=norm(x.name+' '+x.muscle+' '+x.equip);return toks.every(t=>h.includes(t))})}
+  if(muscle!=='Récents')L.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  return L}
+
+/* ================= Rendu principal ================= */
+function renderAll(){renderMain();renderEditor();renderPicker(true);renderDetail();renderRestBar();renderDialog()}
+let lastTab=null;
+function renderMain(){
+  const m=$('#main');const st=lastTab===ui.tab?m.scrollTop:0;
+  m.innerHTML=ui.tab==='seance'?seanceView():ui.tab==='historique'?histView():ui.tab==='exercices'?exView():setView();
+  m.scrollTop=st;lastTab=ui.tab;
+  const tabs=[['seance','dumbbell','Séance'],['historique','clock','Historique'],['exercices','list','Exercices'],['reglages','sliders','Réglages']];
+  $('#tabbar').innerHTML=tabs.map(([k,i,l])=>`<button class="tab ${ui.tab===k?'on':''}" data-act="tab:${k}" aria-current="${ui.tab===k?'page':'false'}">${icon(i)}<span>${l}</span></button>`).join('');
+  renderResume()}
+function renderResume(){const r=$('#resume');
+  if(!S.active||(ui.editorOpen&&ui.edMode==='workout')){r.hidden=true;r.innerHTML='';return}
+  r.hidden=false;const rest=S.active.rest;
+  r.innerHTML=`<button class="resume" data-act="resume"><span class="dot"></span><span class="rn">${esc(S.active.name)} · <span class="num" data-elapsed>${fmtDur(Date.now()-S.active.start)}</span>${rest?` · repos <span class="num" data-restleft>${fmtDur(rest.end-Date.now()+999)}</span>`:''}</span><span class="go">Reprendre</span></button>`}
+
+function platesHTML(){return`<div class="plates" aria-hidden="true"><i style="height:34px;background:var(--fail)"></i><i style="height:30px;background:var(--drop)"></i><i style="height:26px;background:var(--warm)"></i><i style="height:22px;background:var(--done-ink)"></i></div>`}
+
+function seanceView(){
+  const wk=monday(Date.now());const thisWeek=S.history.filter(w=>w.start>=wk);
+  const R=S.routines;
+  return`<div class="wrap">
+  <header class="vh"><div><p class="eyebrow">${esc(cap(fmtDay(Date.now())))}</p><h1>Séance</h1></div></header>
+  <div class="today-line">
+    <div class="mini"><span class="k">Cette semaine</span><span class="v">${thisWeek.length} séance${thisWeek.length>1?'s':''}</span></div>
+    <div class="mini"><span class="k">Volume semaine</span><span class="v">${fmtVol(thisWeek.reduce((a,w)=>a+wVolume(w),0))}</span></div>
+  </div>
+  ${S.active?'':`<button class="btn btn-primary block lg" data-act="start-empty">${icon('plus')}Démarrer une séance vide</button>`}
+  ${S.active?`<button class="btn btn-primary block lg" data-act="resume">${icon('play')}Reprendre la séance en cours</button>`:''}
+  <div class="sec-head"><h2>Routines</h2><button class="btn-ghost" data-act="new-routine">${icon('plus')}Nouvelle</button></div>
+  ${R.length?`<div class="rgrid">${R.map(r=>{const n=r.exercises.reduce((a,e)=>a+e.sets.length,0);return`<article class="card rcard">
+    <div class="rc-top"><h3>${esc(r.name)}</h3><button class="icon-btn" data-act="routine-menu:${r.id}" aria-label="Options de la routine">${icon('dots')}</button></div>
+    <p class="rc-ex">${esc(r.exercises.map(e=>ex(e.exId).name).join(', '))||'Aucun exercice'}</p>
+    <div class="rc-meta num">${r.exercises.length} exercice${r.exercises.length>1?'s':''} · ${n} séries</div>
+    <button class="btn btn-soft block" data-act="start-routine:${r.id}">${icon('play')}Démarrer</button></article>`}).join('')}</div>`
+  :`<div class="empty">${platesHTML()}<b>Pas encore de routine</b>Crée ta première routine ou enregistre une séance terminée comme routine.</div>`}
+  ${!storageOK?`<p class="derr">Le stockage du navigateur est bloqué : tes données ne seront pas gardées. Ouvre l'app hors navigation privée.</p>`:''}
+  </div>`}
+
+function histView(){
+  const H=S.history;
+  const head=`<header class="vh"><div><p class="eyebrow">${H.length} séance${H.length>1?'s':''} au total</p><h1>Historique</h1></div></header>`;
+  if(!H.length)return`<div class="wrap">${head}<div class="empty">${platesHTML()}<b>Aucune séance pour l'instant</b>Termine ta première séance : elle apparaîtra ici avec sa durée, son volume et tes records.</div></div>`;
+  const wk=monday(Date.now());const thisWeek=H.filter(w=>w.start>=wk);
+  const weeks=[];for(let k=7;k>=0;k--){const d=new Date(wk);d.setDate(d.getDate()-7*k);weeks.push(d.getTime())}
+  const counts=weeks.map((s,i)=>{const e=i<7?weeks[i+1]:Infinity;return H.filter(w=>w.start>=s&&w.start<e).length});
+  const maxC=Math.max(3,...counts),W=330,Hh=104,top=16,bot=18,step=(W-20)/8,bw=Math.min(26,step-10);
+  const bars=counts.map((c,i)=>{const h=c?Math.max(4,c/maxC*(Hh-top-bot)):3;const x=10+i*step+(step-bw)/2,y=Hh-bot-h;const d=new Date(weeks[i]);
+    return`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw}" height="${h.toFixed(1)}" rx="4" class="${i===7?'b-on':'b-off'}"/>${c?`<text x="${(x+bw/2).toFixed(1)}" y="${(y-4).toFixed(1)}" text-anchor="middle" class="tv">${c}</text>`:''}<text x="${(x+bw/2).toFixed(1)}" y="${Hh-4}" text-anchor="middle" class="tx">${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</text>`}).join('');
+  let html='',cur='';
+  for(const w of H){const mk=new Date(w.start).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});if(mk!==cur){cur=mk;html+=`<div class="month">${esc(mk)}</div>`}
+    const exs=[];for(const e of w.exercises){const last=exs[exs.length-1];if(last&&last.id===e.exId)last.n+=e.sets.length;else exs.push({id:e.exId,n:e.sets.length})}
+    html+=`<button class="card hcard" data-act="hist-open:${w.id}"><div class="hc-top"><h3>${esc(w.name)}</h3><span class="hc-date">${esc(cap(fmtShort(w.start)))}</span></div>
+    <div class="hc-stats num"><span>${icon('clock')}${fmtDurLong(w.end-w.start)}</span><span>${icon('weight')}${fmtVol(wVolume(w))}</span><span>${icon('layers')}${wSets(w)} séries</span>${w.prs&&w.prs.length?`<span class="pr">${icon('trophy')}${w.prs.length} record${w.prs.length>1?'s':''}</span>`:''}</div>
+    <ul class="hc-ex">${exs.slice(0,4).map(e=>`<li><b>${e.n} ×</b>${esc(ex(e.id).name)}</li>`).join('')}${exs.length>4?`<li class="muted">+ ${exs.length-4} autre${exs.length>5?'s':''}</li>`:''}</ul></button>`}
+  return`<div class="wrap">${head}
+  <section class="card wk"><div class="wk-stats"><div class="mini"><span class="k">Cette semaine</span><span class="v">${thisWeek.length} séance${thisWeek.length>1?'s':''}</span></div><div class="mini"><span class="k">Volume</span><span class="v">${fmtVol(thisWeek.reduce((a,w)=>a+wVolume(w),0))}</span></div><div class="mini"><span class="k">Durée</span><span class="v">${thisWeek.length?fmtDurLong(thisWeek.reduce((a,w)=>a+(w.end-w.start),0)):'0 min'}</span></div></div>
+  <svg class="chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Séances par semaine sur 8 semaines">${bars}</svg></section>
+  ${html}</div>`}
+
+function equipSelect(f,val){return`<select class="sel" data-f="${f}" aria-label="Équipement"><option value="">Tout équipement</option>${EQUIP.map(e=>`<option ${e===val?'selected':''}>${e}</option>`).join('')}</select>`}
+function chipsHTML(act,val){return`<div class="chips">${['Tous','Récents',...MUSCLES].map(m=>`<button class="chip ${m===val?'on':''}" data-act="${act}:${m}">${m}</button>`).join('')}</div>`}
+function avHTML(X,cls){const inf=INFO[X.id];return`<span class="av ${cls||''}">${ABBR[X.muscle]||'•'}${inf&&inf.img?`<img ${imgAttr(inf.img,0,true)} alt="" loading="lazy" decoding="async" onerror="this.remove()">`:''}</span>`}
+function exItem(X,mode,selected,uses){const body=`${avHTML(X)}<span class="xt"><span class="t">${esc(X.name)}</span><span class="s">${esc(X.muscle)} · ${esc(X.equip)}${X.custom?' · perso':''}${uses?` · ${uses}×`:''}</span></span>`;
+  if(mode!=='pick')return`<button class="xi" data-act="x-open:${X.id}">${body}${icon('chev-right')}</button>`;
+  return`<div class="xi"><button class="xi-main" data-act="p-toggle:${X.id}">${body}<span class="tick ${selected?'on':''}">${selected?icon('check'):''}</span></button><button class="icon-btn" data-act="p-info:${X.id}" aria-label="Voir la fiche de ${esc(X.name)}">${icon('info')}</button></div>`}
+function exView(){return`<div class="wrap"><header class="vh"><div><p class="eyebrow">${allEx().length} exercices</p><h1>Exercices</h1></div><button class="btn btn-soft sm" data-act="x-create">${icon('plus')}Créer</button></header>
+  <label class="search">${icon('search')}<input type="search" data-f="xq" value="${esc(ui.xq)}" placeholder="Rechercher un exercice" autocomplete="off" aria-label="Rechercher"></label>
+  ${chipsHTML('x-muscle',ui.xMuscle)}${equipSelect('xequip',ui.xEquip)}<div id="xlist">${xlistHTML()}</div></div>`}
+function xlistHTML(){const L=filterEx(ui.xq,ui.xMuscle,ui.xEquip),U=usesMap();
+  if(!L.length)return`<div class="empty"><b>Aucun résultat</b>${ui.xMuscle==='Récents'?'Les exercices que tu fais apparaîtront ici.':'Essaie un autre mot ou crée ton propre exercice.'}<div style="margin-top:12px"><button class="btn btn-soft sm" data-act="x-create">${icon('plus')}Créer « ${esc(ui.xq||'un exercice')} »</button></div></div>`;
+  return`<div class="count-line">${L.length} exercice${L.length>1?'s':''}</div>`+L.map(X=>exItem(X,'browse',false,U[X.id])).join('')}
+function renderXList(){const l=$('#xlist');if(l)l.innerHTML=xlistHTML()}
+
+function setView(){
+  const standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
+  const opts=[0,30,45,60,75,90,120,150,180,240,300];
+  return`<div class="wrap"><header class="vh"><div><p class="eyebrow">Carnet de fonte</p><h1>Réglages</h1></div></header>
+  <section class="card setc"><h3>Minuteur de repos</h3>
+    <div class="setrow"><span>Repos par défaut</span><select class="sel" data-f="defrest">${opts.map(o=>`<option value="${o}" ${S.settings.rest===o?'selected':''}>${o?fmtRest(o):'Désactivé'}</option>`).join('')}</select></div>
+    <div class="setrow"><span>Son à la fin du repos</span><button class="toggle ${S.settings.sound?'on':''}" data-act="toggle-sound" role="switch" aria-checked="${S.settings.sound}" aria-label="Son à la fin du repos"></button></div>
+    <p class="dtext" style="font-size:13px">Sur iPhone, le son et la vibration ne marchent que si l'app est ouverte à l'écran.</p></section>
+  <section class="card setc"><h3>Sauvegarde</h3>
+    <p class="dtext">Tes données restent sur ce téléphone. Exporte-les de temps en temps pour ne rien perdre.</p>
+    <div class="btnrow"><button class="btn btn-primary" data-act="export">Exporter</button><button class="btn btn-soft" data-act="import-file">Importer un fichier</button><button class="btn btn-soft" data-act="import-paste">Coller une sauvegarde</button></div></section>
+  <section class="card setc"><h3>Installer sur l'iPhone</h3>
+    ${standalone?`<p class="okline">${icon('check')}L'app est installée sur ton écran d'accueil.</p>`:`<ol class="steps"><li>Ouvre l'app dans <b>Safari</b>.</li><li>Touche <b>Partager</b>, puis <b>Sur l'écran d'accueil</b>.</li><li>Lance-la depuis l'icône : elle s'ouvre en plein écran et marche hors ligne.</li></ol>`}</section>
+  <section class="card setc"><h3>Données</h3>
+    <div class="setrow"><span class="muted">Séances</span><b class="num">${S.history.length}</b></div>
+    <div class="setrow"><span class="muted">Routines</span><b class="num">${S.routines.length}</b></div>
+    <div class="setrow"><span class="muted">Exercices perso</span><b class="num">${S.custom.length}</b></div>
+    <button class="btn btn-danger block" data-act="wipe">Tout effacer</button></section>
+  </div>`}
+
+/* ================= Éditeur (séance / routine) ================= */
+function renderEditor(){const el=$('#ed');const T=ui.editorOpen?edTarget():null;
+  if(!T){el.hidden=true;el.innerHTML='';return}
+  const b=el.querySelector('.sheet-body');const st=b?b.scrollTop:0;
+  el.hidden=false;el.innerHTML=editorHTML(T);
+  const nb=el.querySelector('.sheet-body');if(nb)nb.scrollTop=st;
+  el.querySelectorAll('.ex-note').forEach(autosize)}
+function editorHTML(T){const W=ui.edMode==='workout';
+  let stats='';if(W){const{v,n}=activeStats();stats=`<div class="ed-stats"><div><span class="k">Volume</span><span class="v" id="st-vol">${fmtVol(v)}</span></div><div><span class="k">Séries</span><span class="v" id="st-sets">${n}</span></div><div><span class="k">Début</span><span class="v">${fmtHour(T.start)}</span></div></div>`}
+  return`<div class="sheet-head">
+    <button class="btn-ghost" data-act="ed-min">${W?icon('chev-down')+'Réduire':'Annuler'}</button>
+    ${W?`<div class="ed-clock">${icon('clock')}<span data-elapsed>${fmtDur(Date.now()-T.start)}</span></div>`:`<div class="sh-title">${ui.draft.id?'Modifier la routine':'Nouvelle routine'}</div>`}
+    <button class="btn btn-primary sm" data-act="ed-finish">${W?'Terminer':'Enregistrer'}</button></div>
+  <div class="sheet-body"><div class="wrapx ed-wrap">
+    <input class="ed-name" id="ed-name" data-f="ename" value="${esc(T.name)}" placeholder="${W?'Nom de la séance':'Nom de la routine'}" aria-label="Nom">
+    ${stats}
+    ${T.exercises.length?T.exercises.map(E=>exCardHTML(E,W)).join(''):`<div class="empty">${platesHTML()}<b>${W?'Séance vide':'Routine vide'}</b>Ajoute tes exercices depuis l'annuaire.</div>`}
+    <button class="btn btn-primary block" data-act="ed-add-ex">${icon('plus')}Ajouter des exercices</button>
+    ${W?`<button class="btn-ghost block danger" data-act="ed-cancel">Abandonner la séance</button>`:''}
+  </div></div>`}
+function ph(E,i){const p=prevSets(E.exId)[i];const s=E.sets[i];return{a:p&&+p.a?fmt(p.a):(s.ta||''),b:p&&+p.b?fmt(p.b):(s.tb||'')}}
+function exCardHTML(E,W){
+  const X=ex(E.exId),T=TYPES[X.type],prev=W?prevSets(E.exId):[];let n=0;
+  const rows=E.sets.map((s,i)=>{const lab=s.t==='n'?String(++n):s.t==='w'?'É':s.t==='d'?'D':'F';
+    const ia=`<input class="sin" data-f="a" data-u="${E.uid}" data-i="${i}" inputmode="decimal" enterkeyhint="next" autocomplete="off" value="${esc(s.a)}" placeholder="${W?esc(ph(E,i).a):'—'}" aria-label="${T.a} série ${i+1}">`;
+    const ib=`<input class="sin" data-f="b" data-u="${E.uid}" data-i="${i}" inputmode="${X.type==='c'?'decimal':'numeric'}" enterkeyhint="done" autocomplete="off" value="${esc(s.b)}" placeholder="${W?esc(ph(E,i).b):'—'}" aria-label="${T.b} série ${i+1}">`;
+    const lb=`<button class="slabel ${s.t}" data-act="set-type:${E.uid}:${i}" aria-label="Type de série ${i+1}">${lab}</button>`;
+    if(!W)return`<div class="srow r" data-row="${E.uid}-${i}">${lb}${ia}${ib}</div>`;
+    const pv=prev[i];
+    return`<div class="srow ${s.done?'done':''}" data-row="${E.uid}-${i}">${lb}<button class="prev" data-act="prev-copy:${E.uid}:${i}" ${pv?'':'disabled'} aria-label="Reprendre la série précédente">${pv?esc(setStr(pv,X.type)):'—'}</button>${ia}${ib}<button class="chk" data-act="set-done:${E.uid}:${i}" aria-label="Valider la série ${i+1}" aria-pressed="${!!s.done}">${icon('check')}</button></div>`});
+  const opts=[0,30,45,60,75,90,120,150,180,240,300];if(!opts.includes(+E.rest))opts.push(+E.rest),opts.sort((a,b)=>a-b);
+  return`<section class="excard">
+    <div class="ex-head"><button class="ex-name" data-act="ex-open:${X.id}">${avHTML(X,'sm')}<span><span class="t">${esc(X.name)}</span><span class="s">${esc(X.muscle)} · ${esc(X.equip)}</span></span></button><button class="icon-btn" data-act="ex-menu:${E.uid}" aria-label="Options de l'exercice">${icon('dots')}</button></div>
+    ${W?`<textarea class="ex-note" data-f="note" data-u="${E.uid}" rows="1" placeholder="Ajouter une note">${esc(E.note||'')}</textarea>`:''}
+    <label class="ex-rest">${icon('timer')}<span>Repos</span><select data-f="rest" data-u="${E.uid}" aria-label="Temps de repos">${opts.map(o=>`<option value="${o}" ${+E.rest===o?'selected':''}>${o?fmtRest(o):'désactivé'}</option>`).join('')}</select></label>
+    <div class="sets"><div class="srow shead ${W?'':'r'}"><span>Série</span>${W?'<span>Précédent</span>':''}<span>${T.a}</span><span>${T.b}</span>${W?`<span class="c">${icon('check')}</span>`:''}</div>${rows.join('')}</div>
+    <button class="btn btn-soft block sm" data-act="set-add:${E.uid}">${icon('plus')}Ajouter une série</button></section>`}
+function autosize(t){t.style.height='auto';t.style.height=t.scrollHeight+'px'}
+function updateStats(){if(ui.edMode!=='workout'||!S.active)return;const{v,n}=activeStats();const a=$('#st-vol'),b=$('#st-sets');if(a)a.textContent=fmtVol(v);if(b)b.textContent=n}
+function validSet(s,type){const a=num(s.a),b=num(s.b);if(s.a!==''&&isNaN(a))return false;if(type==='c')return a>0||b>0;if(!(b>0))return false;if(type==='w')return a>=0;return true}
+function toggleDone(u,i){const E=findE(u);if(!E)return;const s=E.sets[i];const X=ex(E.exId);
+  if(s.done){s.done=false;save();renderEditor();updateStats();return}
+  const p=ph(E,i);if(s.a===''&&p.a!=='')s.a=p.a;if(s.b===''&&p.b!=='')s.b=p.b;
+  if(!validSet(s,X.type)){const row=document.querySelector(`[data-row="${u}-${i}"]`);if(row){row.classList.remove('shake');void row.offsetWidth;row.classList.add('shake')}flash(X.type==='w'?'Indique le poids et les répétitions':X.type==='c'?'Indique une distance ou une durée':'Indique les '+TYPES[X.type].b);return}
+  s.done=true;try{navigator.vibrate&&navigator.vibrate(15)}catch(e){}
+  startRest(+E.rest||0);save();renderEditor();renderResume()}
+function newEx(id){const W=ui.edMode==='workout';const prev=W?prevSets(id):[];
+  const base=prev.length?prev.map(p=>({t:p.t||'n'})):[{t:'n'},{t:'n'},{t:'n'}];
+  return{uid:uid(),exId:id,rest:S.settings.rest,note:'',sets:base.map(b=>W?{t:b.t,a:'',b:'',done:false,ta:'',tb:''}:{t:b.t,a:'',b:''})}}
+
+function startFrom(tpl,routineId){
+  S.active={id:uid(),name:tpl.name||defaultName(),start:Date.now(),routineId:routineId||null,rest:null,
+    exercises:(tpl.exercises||[]).map(e=>({uid:uid(),exId:e.exId,rest:e.rest??S.settings.rest,note:'',
+      sets:(e.sets&&e.sets.length?e.sets:[{t:'n'}]).map(s=>({t:s.t||'n',a:'',b:'',done:false,ta:s.a!==''&&s.a!=null&&+s.a?fmt(s.a):'',tb:s.b!==''&&s.b!=null&&+s.b?fmt(s.b):''}))}))};
+  ui.edMode='workout';ui.editorOpen=true;ui.detail=[];ui.picker=null;save();renderAll();wake(true)}
+function ensureNoActive(fn){if(!S.active)return fn();
+  openDlg({title:'Séance déjà en cours',html:`<p class="dtext">« ${esc(S.active.name)} » est toujours ouverte.</p>`,buttons:[{label:'Reprendre la séance',kind:'primary',fn:()=>ACTS.resume()},{label:'Abandonner et démarrer',kind:'danger',fn:()=>{S.active=null;fn()}},{label:'Annuler',kind:'soft'}]})}
+
+function finishWorkout(){const A=S.active;if(!A)return;let done=0,filled=0;
+  for(const e of A.exercises)for(const s of e.sets){if(s.done)done++;else if(s.a!==''||s.b!=='')filled++}
+  if(!done&&!filled)return openDlg({title:'Aucune série validée',html:'<p class="dtext">Valide au moins une série avec le bouton ✓ pour enregistrer ta séance.</p>',buttons:[{label:'Continuer la séance',kind:'primary'},{label:'Abandonner la séance',kind:'danger',fn:discardWorkout}]});
+  if(filled)return openDlg({title:'Séries non validées',html:`<p class="dtext">${filled} série${filled>1?'s sont remplies mais pas validées':' est remplie mais pas validée'}.</p>`,buttons:[{label:'Les valider et terminer',kind:'primary',fn:()=>commit(true)},{label:'Les ignorer et terminer',kind:'soft',fn:()=>commit(false)},{label:'Retour à la séance',kind:'soft'}]});
+  openDlg({title:'Terminer la séance ?',html:`<p class="dtext">${done} série${done>1?'s':''} validée${done>1?'s':''} en ${fmtDurLong(Date.now()-A.start)}.</p>`,buttons:[{label:'Terminer',kind:'primary',fn:()=>commit(false)},{label:'Retour à la séance',kind:'soft'}]})}
+function commit(includeFilled){const A=S.active;
+  const rec={id:A.id,name:(A.name||'').trim()||defaultName(),start:A.start,end:Date.now(),routineId:A.routineId,exercises:[]};
+  for(const e of A.exercises){const X=ex(e.exId);const sets=e.sets.filter(s=>s.done||(includeFilled&&(s.a!==''||s.b!=='')&&validSet(s,X.type))).map(s=>({t:s.t,a:num(s.a)||0,b:num(s.b)||0}));
+    if(sets.length)rec.exercises.push({exId:e.exId,rest:e.rest,note:(e.note||'').trim(),sets})}
+  if(!rec.exercises.length){discardWorkout();flash('Aucune série valide : séance non enregistrée');return}
+  rec.prs=computePRs(rec);S.history.unshift(rec);S.history.sort((a,b)=>b.start-a.start);
+  S.active=null;ui.editorOpen=false;ui.picker=null;save();wake(false);ui.tab='historique';renderAll();summaryDlg(rec)}
+function discardWorkout(){S.active=null;ui.editorOpen=false;ui.picker=null;save();wake(false);renderAll()}
+function summaryDlg(rec){const n=rec.prs.length;
+  const hasR=rec.routineId&&S.routines.some(r=>r.id===rec.routineId);
+  openDlg({title:'Séance enregistrée',html:`<div class="sum"><div><span class="k">Durée</span><span class="v">${fmtDurLong(rec.end-rec.start)}</span></div><div><span class="k">Volume</span><span class="v">${fmtVol(wVolume(rec))}</span></div><div><span class="k">Séries</span><span class="v">${wSets(rec)}</span></div></div>
+  ${n?`<div class="prs"><p class="prs-h">${icon('trophy')}${n} record${n>1?'s':''} battu${n>1?'s':''}</p><ul>${rec.prs.map(p=>`<li><span>${esc(ex(p.exId).name)}</span><b>${esc(p.label)} · ${esc(p.value)}</b></li>`).join('')}</ul></div>`:''}`,
+  buttons:[hasR?{label:'Mettre à jour la routine',kind:'soft',fn:()=>{updateRoutineFrom(rec);flash('Routine mise à jour')}}:{label:'Enregistrer comme routine',kind:'soft',fn:()=>{routineFrom(rec);flash('Routine créée')}},{label:'Fermer',kind:'primary'}]})}
+const routineEx=w=>w.exercises.map(e=>({exId:e.exId,rest:e.rest??S.settings.rest,sets:e.sets.map(s=>({t:s.t,a:s.a||'',b:s.b||''}))}));
+function routineFrom(w){S.routines.push({id:uid(),name:w.name,exercises:routineEx(w)});save();renderMain()}
+function updateRoutineFrom(w){const r=S.routines.find(r=>r.id===w.routineId);if(r){r.exercises=routineEx(w);save();renderMain()}}
+function editRoutine(r){ui.draft={id:r.id,name:r.name,exercises:r.exercises.map(e=>({uid:uid(),exId:e.exId,rest:e.rest??S.settings.rest,note:'',sets:e.sets.map(s=>({t:s.t||'n',a:s.a===''||s.a==null?'':fmt(s.a),b:s.b===''||s.b==null?'':fmt(s.b)}))}))};ui.edMode='routine';ui.editorOpen=true;renderAll()}
+function saveDraft(){const D=ui.draft;if(!D.exercises.length)return openDlg({title:'Routine vide',html:'<p class="dtext">Ajoute au moins un exercice avant d\'enregistrer.</p>',buttons:[{label:'OK',kind:'primary'}]});
+  const r={id:D.id||uid(),name:D.name.trim()||'Ma routine',exercises:D.exercises.map(e=>({exId:e.exId,rest:e.rest,sets:e.sets.map(s=>({t:s.t,a:isNaN(num(s.a))?'':num(s.a),b:isNaN(num(s.b))?'':num(s.b)}))}))};
+  const i=S.routines.findIndex(x=>x.id===r.id);if(i>=0)S.routines[i]=r;else S.routines.push(r);
+  ui.draft=null;ui.editorOpen=false;ui.edMode='workout';save();ui.tab='seance';renderAll();flash('Routine enregistrée')}
+function closeDraft(){ui.draft=null;ui.editorOpen=false;ui.edMode='workout';renderAll()}
+
+/* ================= Sélecteur d'exercices ================= */
+function openPicker(mode,u){ui.picker={mode,uid:u||null,sel:[],q:'',muscle:'Tous',equip:''};renderPicker(true);renderRestBar()}
+function renderPicker(full){const el=$('#picker');const P=ui.picker;
+  if(!P){el.hidden=true;el.innerHTML='';return}
+  if(full||!el.innerHTML){el.hidden=false;
+    el.innerHTML=`<div class="sheet-head"><button class="btn-ghost" data-act="p-close">Fermer</button><div class="sh-title">${P.mode==='replace'?'Remplacer':'Ajouter'}</div><button class="btn-ghost" data-act="p-create">${icon('plus')}Créer</button></div>
+    <div class="pk-tools wrapx"><label class="search">${icon('search')}<input type="search" id="pq" data-f="pq" value="${esc(P.q)}" placeholder="Rechercher parmi ${allEx().length} exercices" autocomplete="off" aria-label="Rechercher"></label>${chipsHTML('p-muscle',P.muscle)}${equipSelect('pequip',P.equip)}</div>
+    <div class="sheet-body"><div class="wrapx" id="plist"></div></div><div id="pfoot"></div>`}
+  const L=filterEx(P.q,P.muscle,P.equip),U=usesMap();
+  $('#plist').innerHTML=L.length?`<div class="count-line">${L.length} exercice${L.length>1?'s':''}${P.sel.length?` · ${P.sel.length} sélectionné${P.sel.length>1?'s':''}`:''}</div>`+L.map(X=>exItem(X,'pick',P.sel.includes(X.id),U[X.id])).join('')
+    :`<div class="empty" style="margin-top:16px"><b>Aucun résultat</b>Cet exercice n'est pas dans l'annuaire.<div style="margin-top:12px"><button class="btn btn-soft sm" data-act="p-create">${icon('plus')}Créer « ${esc(P.q||'un exercice')} »</button></div></div>`;
+  $('#pfoot').innerHTML=P.mode==='add'?`<div class="pk-foot"><button class="btn btn-primary block" data-act="p-confirm" ${P.sel.length?'':'disabled'}>${P.sel.length?`Ajouter ${P.sel.length} exercice${P.sel.length>1?'s':''}`:'Sélectionne des exercices'}</button></div>`:''}
+function replaceWith(id){const E=findE(ui.picker.uid);if(E){E.exId=id;E.sets.forEach(s=>{s.a='';s.b='';if('done'in s){s.done=false;s.ta='';s.tb=''}})}ui.picker=null;save();renderAll()}
+
+/* ================= Fiches détail ================= */
+function pushDetail(d){ui.detail.push(d);renderDetail();renderRestBar()}
+function renderDetail(){const el=$('#detail');const d=ui.detail[ui.detail.length-1];
+  if(!d){el.hidden=true;el.innerHTML='';return}
+  if(d.kind==='w'&&!S.history.some(w=>w.id===d.id)){ui.detail.pop();return renderDetail()}
+  el.hidden=false;el.innerHTML=d.kind==='ex'?exDetailHTML(d.id):wDetailHTML(d.id);el.querySelector('.sheet-body').scrollTop=0}
+function slines(sets,type){let n=0;return`<div class="slist">${sets.map(s=>{const l=s.t==='n'?String(++n):s.t==='w'?'É':s.t==='d'?'D':'F';return`<div class="sline"><span class="l ${s.t}">${l}</span><span>${esc(setStr(s,type))}</span><span class="e">${type==='w'&&s.t!=='w'&&s.a&&s.b?'1RM ~'+Math.round(e1rm(s.a,s.b)):''}</span></div>`}).join('')}</div>`}
+function chartSVG(pts,unit){
+  if(pts.length<2)return`<p class="dtext" style="font-size:14px">Le graphique de progression apparaît après deux séances avec cet exercice.</p>`;
+  const W=330,H=160,L=38,R=12,T=14,B=24;const vs=pts.map(p=>p.v);let lo=Math.min(...vs),hi=Math.max(...vs);if(lo===hi){lo-=1;hi+=1}const pad=(hi-lo)*.12;lo=Math.max(0,lo-pad);hi+=pad;
+  const raw=(hi-lo)/3,mag=10**Math.floor(Math.log10(raw)),step=[1,2,2.5,5,10].map(m=>m*mag).find(s=>s>=raw);const t0=Math.floor(lo/step)*step,t1=Math.ceil(hi/step)*step;const ticks=[];for(let t=t0;t<=t1+1e-9;t+=step)ticks.push(+t.toFixed(4));lo=t0;hi=t1;
+  const x=i=>L+i/(pts.length-1)*(W-L-R),y=v=>T+(1-(v-lo)/(hi-lo))*(H-T-B);
+  const line=pts.map((p,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join('');
+  const area=`${line}L${x(pts.length-1).toFixed(1)},${H-B}L${L},${H-B}Z`;
+  const d=t=>{const z=new Date(t);return`${String(z.getDate()).padStart(2,'0')}/${String(z.getMonth()+1).padStart(2,'0')}`};
+  return`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Progression ${esc(unit)}">
+  ${ticks.map(t=>`<line x1="${L}" x2="${W-R}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" class="grid"/><text x="${L-6}" y="${(y(t)+3.5).toFixed(1)}" text-anchor="end" class="tx">${fmt(t)}</text>`).join('')}
+  <path d="${area}" class="ar"/><path d="${line}" class="ln"/>
+  ${pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="${i===pts.length-1?4.5:3}" class="pt ${i===pts.length-1?'end':''}"/>`).join('')}
+  <text x="${L}" y="${H-6}" class="tx">${d(pts[0].t)}</text><text x="${W-R}" y="${H-6}" text-anchor="end" class="tx">${d(pts[pts.length-1].t)}</text></svg>`}
+function mediaHTML(X){const inf=INFO[X.id];if(!inf||!inf.img)return'';
+  return`<figure class="media-wrap"><div class="media ${ui.mediaSplit?'split':''}" id="media"><img class="f0" ${imgAttr(inf.img,0)} alt="${esc(X.name)} : position de départ" onerror="this.closest('.media-wrap').remove()"><img class="f1" ${imgAttr(inf.img,1)} alt="${esc(X.name)} : position d'arrivée"></div>
+  <figcaption><button class="btn-ghost" data-act="media-mode">${icon('film')}<span id="media-lbl">${ui.mediaSplit?'Voir l\'animation':'Voir les 2 positions'}</span></button><span class="credit">Photos : Free Exercise DB</span></figcaption></figure>`}
+function howHTML(X){const inf=INFO[X.id];if(!inf)return X.custom?'':'';
+  return`<section class="how"><h2>Comment faire</h2><ol class="howl">${inf.s.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>${inf.tip?`<p class="tip"><b>Conseil</b>${esc(inf.tip)}</p>`:''}</section>`}
+function exDetailHTML(id){const X=ex(id),T=X.type,ses=sessionsFor(id),all=ses.flatMap(s=>s.sets).filter(s=>s.t!=='w');
+  let rec='',unit='';
+  if(T==='w'){let best=null,bestV=null;for(const s of all){if(!(s.b>0))continue;if(!best||s.a>best.a||(s.a===best.a&&s.b>best.b))best=s;if(!bestV||s.a*s.b>bestV.a*bestV.b)bestV=s}
+    rec=`<div><span class="k">Poids max</span><span class="v">${best?fmt(best.a)+' kg':'—'}</span><span class="sub">${best?'× '+best.b+' reps':'Pas encore de série'}</span></div><div><span class="k">1RM estimé</span><span class="v">${all.length?Math.round(score('w',all))+' kg':'—'}</span><span class="sub">Formule d'Epley</span></div><div><span class="k">Meilleure série</span><span class="v">${bestV?fmt(bestV.a)+' × '+bestV.b:'—'}</span><span class="sub">${bestV?fmtVol(bestV.a*bestV.b):'Volume d\'une série'}</span></div><div><span class="k">Séances</span><span class="v">${ses.length}</span><span class="sub">${ses.length?'Dernière : '+fmtShort(ses[0].w.start):'Jamais fait'}</span></div>`;unit='1RM estimé (kg)'}
+  else if(T==='b'||T==='t'){const mb=Math.max(0,...all.map(s=>s.b)),ma=Math.max(0,...all.map(s=>s.a)),tot=all.reduce((a,s)=>a+s.b,0);
+    rec=`<div><span class="k">${T==='b'?'Reps max':'Durée max'}</span><span class="v">${mb?(T==='b'?mb:fmtSec(mb)):'—'}</span></div><div><span class="k">Lest max</span><span class="v">${ma?'+'+fmt(ma)+' kg':'—'}</span></div><div><span class="k">${T==='b'?'Total reps':'Durée totale'}</span><span class="v">${tot?(T==='b'?tot:fmtSec(tot)):'—'}</span></div><div><span class="k">Séances</span><span class="v">${ses.length}</span></div>`;unit=T==='b'?'reps max':'durée max (s)'}
+  else{const ma=Math.max(0,...all.map(s=>s.a)),mb=Math.max(0,...all.map(s=>s.b)),tot=all.reduce((a,s)=>a+s.a,0);
+    rec=`<div><span class="k">Distance max</span><span class="v">${ma?fmt(ma)+' km':'—'}</span></div><div><span class="k">Durée max</span><span class="v">${mb?fmt(mb)+' min':'—'}</span></div><div><span class="k">Distance totale</span><span class="v">${tot?fmt(tot)+' km':'—'}</span></div><div><span class="k">Séances</span><span class="v">${ses.length}</span></div>`;unit='distance (km)'}
+  const pts=ses.slice().reverse().map(s=>({t:s.w.start,v:score(T,s.sets)})).filter(p=>p.v>0);
+  return`<div class="sheet-head"><button class="btn-ghost" data-act="d-close">${icon('chev-down')}Fermer</button><div class="sh-title">Exercice</div><span style="width:70px"></span></div>
+  <div class="sheet-body"><div class="wrapx dwrap">
+    <h2 style="font-size:28px">${esc(X.name)}</h2>
+    <div class="tags"><span class="tag">${esc(X.muscle)}</span><span class="tag">${esc(X.equip)}</span><span class="tag">${esc(TYPES[T].label)}</span>${X.custom?'<span class="tag">Perso</span>':''}</div>
+    ${mediaHTML(X)}
+    ${howHTML(X)}
+    <div class="rec">${rec}</div>
+    <section class="card dsec"><span class="k">Progression · ${esc(unit)}</span>${chartSVG(pts,unit)}</section>
+    <section class="dsec"><h2>Historique</h2>${ses.length?ses.map(s=>`<div class="dex"><div class="dex-h"><span class="t" style="color:var(--fg)">${esc(cap(fmtDay(s.w.start)))}</span><span class="s">${esc(s.w.name)}</span></div>${slines(s.sets,T)}</div>`).join(''):'<p class="dtext">Tu n\'as pas encore fait cet exercice.</p>'}</section>
+    ${X.custom?`<button class="btn btn-danger block" data-act="x-del:${X.id}">Supprimer cet exercice perso</button>`:''}
+  </div></div>`}
+function wDetailHTML(id){const w=S.history.find(w=>w.id===id);
+  return`<div class="sheet-head"><button class="btn-ghost" data-act="d-close">${icon('chev-down')}Fermer</button><div class="sh-title">Séance</div><span style="width:70px"></span></div>
+  <div class="sheet-body"><div class="wrapx dwrap">
+    <div><p class="eyebrow">${esc(cap(fmtDay(w.start)))} · ${fmtHour(w.start)}</p><h2 style="font-size:28px;margin-top:4px">${esc(w.name)}</h2></div>
+    <div class="sum"><div><span class="k">Durée</span><span class="v">${fmtDurLong(w.end-w.start)}</span></div><div><span class="k">Volume</span><span class="v">${fmtVol(wVolume(w))}</span></div><div><span class="k">Séries</span><span class="v">${wSets(w)}</span></div></div>
+    ${w.prs&&w.prs.length?`<div class="prs"><p class="prs-h">${icon('trophy')}Records</p><ul>${w.prs.map(p=>`<li><span>${esc(ex(p.exId).name)}</span><b>${esc(p.label)} · ${esc(p.value)}</b></li>`).join('')}</ul></div>`:''}
+    <section>${w.exercises.map(e=>{const X=ex(e.exId);return`<div class="dex"><div class="dex-h"><button class="t" data-act="ex-open:${X.id}">${esc(X.name)}</button><span class="s">${esc(X.muscle)}</span></div>${e.note?`<p class="note-txt">${esc(e.note)}</p>`:''}${slines(e.sets,X.type)}</div>`}).join('')}</section>
+    <button class="btn btn-primary block" data-act="w-redo:${w.id}">${icon('play')}Refaire cette séance</button>
+    <button class="btn btn-soft block" data-act="w-routine:${w.id}">Enregistrer comme routine</button>
+    <button class="btn-ghost block danger" data-act="w-del:${w.id}">Supprimer la séance</button>
+  </div></div>`}
+
+/* ================= Minuteur de repos ================= */
+function startRest(sec){if(!S.active||!sec)return;S.active.rest={end:Date.now()+sec*1000,total:sec};renderRestBar()}
+function renderRestBar(){const el=$('#restbar');const r=S.active&&S.active.rest;
+  const show=r&&ui.editorOpen&&ui.edMode==='workout'&&!ui.picker&&!ui.detail.length;
+  if(!show){el.hidden=true;el.innerHTML='';return}
+  el.hidden=false;const left=r.end-Date.now();
+  el.innerHTML=`<div class="rb-track"><div class="rb-fill" data-restfill style="transform:scaleX(${Math.max(0,Math.min(1,left/(r.total*1000)))})"></div></div>
+  <div class="rb-row"><button class="btn btn-soft sm" data-act="rest-adj:-15">−15 s</button><div class="rb-time"><span class="k">Repos</span><span data-restleft>${fmtDur(left+999)}</span></div><button class="btn btn-soft sm" data-act="rest-adj:15">+15 s</button><button class="btn btn-primary sm" data-act="rest-skip">Passer</button></div>`}
+let actx=null;
+function ensureAudio(){try{if(!actx){const C=window.AudioContext||window.webkitAudioContext;if(C)actx=new C()}if(actx&&actx.state==='suspended')actx.resume()}catch(e){}}
+document.addEventListener('pointerdown',ensureAudio,{passive:true});
+function beep(){if(!S.settings.sound||!actx)return;try{const t0=actx.currentTime;[0,.24,.48].forEach((d,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=i===2?1175:880;g.gain.setValueAtTime(.0001,t0+d);g.gain.exponentialRampToValueAtTime(.4,t0+d+.012);g.gain.exponentialRampToValueAtTime(.0001,t0+d+.2);o.connect(g).connect(actx.destination);o.start(t0+d);o.stop(t0+d+.22)})}catch(e){}}
+function tick(){if(!S.active)return;
+  const t=fmtDur(Date.now()-S.active.start);document.querySelectorAll('[data-elapsed]').forEach(e=>{if(e.textContent!==t)e.textContent=t});
+  const r=S.active.rest;if(!r)return;const left=r.end-Date.now();
+  if(left<=0){S.active.rest=null;save();beep();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}renderRestBar();renderResume();flash('Repos terminé, série suivante !');return}
+  const txt=fmtDur(left+999);document.querySelectorAll('[data-restleft]').forEach(e=>{if(e.textContent!==txt)e.textContent=txt});
+  document.querySelectorAll('[data-restfill]').forEach(e=>e.style.transform=`scaleX(${Math.max(0,Math.min(1,left/(r.total*1000)))})`)}
+setInterval(tick,250);
+let wl=null;
+async function wake(on){try{if(on&&!wl&&navigator.wakeLock){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>{wl=null})}else if(!on&&wl){await wl.release();wl=null}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){if(S.active&&ui.editorOpen)wake(true);tick()}});
+
+/* ================= Dialogues ================= */
+function openSheet(title,items){MODAL={kind:'sheet',title,items};renderDialog()}
+function openDlg(o){MODAL={kind:'dlg',...o};renderDialog();setTimeout(()=>{const f=$('#dlg [autofocus]');if(f)f.focus()},60)}
+function closeDlg(){MODAL=null;renderDialog()}
+function confirmDlg(title,text,ok,fn){openDlg({title,html:`<p class="dtext">${esc(text)}</p>`,buttons:[{label:ok,kind:'danger',fn},{label:'Annuler',kind:'soft'}]})}
+function renderDialog(){const el=$('#dlg');if(!MODAL){el.hidden=true;el.innerHTML='';return}el.hidden=false;const m=MODAL;
+  const b=m.kind==='sheet'?m.items.map((it,i)=>`<button class="sh-item ${it.danger?'danger':''}" data-act="modal:${i}">${esc(it.label)}</button>`).join('')+`<button class="sh-item cancel" data-act="modal-close">Annuler</button>`
+    :m.buttons.map((x,i)=>`<button class="btn block ${x.kind==='danger'?'btn-danger':x.kind==='primary'?'btn-primary':'btn-soft'}" data-act="modal:${i}">${esc(x.label)}</button>`).join('');
+  el.innerHTML=`<div class="scrim" data-act="modal-close"></div><div class="dlg" role="dialog" aria-modal="true" aria-label="${esc(m.title||'Options')}">${m.title?`<h3 class="dtitle">${esc(m.title)}</h3>`:''}${m.html||''}<div class="dbtns ${m.kind}">${b}</div></div>`}
+let flashT=null;
+function flash(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;t.classList.remove('show');void t.offsetWidth;t.classList.add('show');clearTimeout(flashT);flashT=setTimeout(()=>{t.hidden=true},2300)}
+function createExerciseDlg(prefill,muscle){
+  openDlg({title:'Nouvel exercice',html:`<label class="fld"><span>Nom</span><input id="ce-name" type="text" autofocus value="${esc(prefill||'')}" placeholder="ex. Rowing landmine" autocomplete="off"></label>
+  <label class="fld"><span>Muscle principal</span><select id="ce-m">${MUSCLES.map(m=>`<option ${m===muscle?'selected':''}>${m}</option>`).join('')}</select></label>
+  <label class="fld"><span>Équipement</span><select id="ce-e">${EQUIP.map(e=>`<option>${e}</option>`).join('')}</select></label>
+  <label class="fld"><span>Ce que tu notes</span><select id="ce-t">${Object.entries(TYPES).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('')}</select></label>
+  <p class="derr" id="ce-err" hidden></p>`,
+  buttons:[{label:'Créer l\'exercice',kind:'primary',fn:()=>{const name=$('#ce-name').value.trim();
+    if(!name){const er=$('#ce-err');er.textContent='Donne un nom à ton exercice.';er.hidden=false;return false}
+    if(allEx().some(x=>norm(x.name)===norm(name))){const er=$('#ce-err');er.textContent='Un exercice porte déjà ce nom. Cherche-le dans l\'annuaire.';er.hidden=false;return false}
+    const id='c-'+uid();S.custom.push({id,name,muscle:$('#ce-m').value,equip:$('#ce-e').value,type:$('#ce-t').value});rebuildIndex();save();flash('Exercice créé');
+    if(ui.picker){if(ui.picker.mode==='replace'){replaceWith(id);return}ui.picker.sel.push(id);ui.picker.q='';ui.picker.muscle='Tous';renderPicker(true)}else{ui.xq='';renderMain()}}},{label:'Annuler',kind:'soft'}]})}
+function copyText(txt){try{navigator.clipboard.writeText(txt).then(()=>flash('Copié dans le presse-papiers'),()=>{const ta=$('#exp');if(ta){ta.focus();ta.select()}flash('Sélectionné : copie-le manuellement')})}catch(e){const ta=$('#exp');if(ta){ta.focus();ta.select()}}}
+function download(txt){try{const b=new Blob([txt],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`carnet-fonte-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}catch(e){flash('Téléchargement impossible ici : utilise Copier')}}
+function applyImport(txt){let d;try{d=JSON.parse(txt)}catch(e){return flash('Ce texte n\'est pas une sauvegarde valide')}
+  if(!d||!Array.isArray(d.history)||!Array.isArray(d.routines))return flash('Sauvegarde non reconnue');
+  confirmDlg('Remplacer tes données ?',`La sauvegarde contient ${d.history.length} séance(s) et ${d.routines.length} routine(s). Tes données actuelles seront remplacées.`,'Importer',()=>{S={...defaultState(),...d,settings:{...defaultSettings(),...(d.settings||{})}};rebuildIndex();save();ui.editorOpen=false;ui.picker=null;ui.detail=[];renderAll();flash('Sauvegarde importée')})}
+
+/* ================= Actions ================= */
+const ACTS={
+  tab(t){ui.tab=t;renderMain()},
+  'start-empty'(){ensureNoActive(()=>startFrom({name:defaultName(),exercises:[]},null))},
+  'start-routine'(id){const r=S.routines.find(r=>r.id===id);if(r)ensureNoActive(()=>startFrom(r,r.id))},
+  'routine-menu'(id){const i=S.routines.findIndex(r=>r.id===id),r=S.routines[i];if(!r)return;
+    openSheet(r.name,[{label:'Modifier la routine',fn:()=>editRoutine(r)},{label:'Dupliquer',fn:()=>{S.routines.splice(i+1,0,{...clone(r),id:uid(),name:r.name+' (copie)'});save();renderMain()}},
+      {label:'Supprimer',danger:true,fn:()=>confirmDlg('Supprimer la routine ?',`« ${r.name} » sera supprimée. Ton historique ne change pas.`,'Supprimer',()=>{S.routines=S.routines.filter(x=>x.id!==id);save();renderMain()})}])},
+  'new-routine'(){ui.draft={id:null,name:'',exercises:[]};ui.edMode='routine';ui.editorOpen=true;renderAll();setTimeout(()=>{const n=$('#ed-name');if(n)n.focus()},80)},
+  resume(){if(!S.active)return;ui.edMode='workout';ui.editorOpen=true;ui.draft=null;renderAll();wake(true)},
+  'ed-min'(){if(ui.edMode==='routine'){if(ui.draft.exercises.length)return confirmDlg('Quitter sans enregistrer ?','Les modifications de la routine seront perdues.','Quitter',closeDraft);return closeDraft()}
+    ui.editorOpen=false;save();wake(false);renderAll()},
+  'ed-finish'(){ui.edMode==='workout'?finishWorkout():saveDraft()},
+  'ed-cancel'(){confirmDlg('Abandonner la séance ?','Les séries saisies ne seront pas enregistrées.','Abandonner',discardWorkout)},
+  'ed-add-ex'(){openPicker('add')},
+  'ex-menu'(u){const T=edTarget(),i=T.exercises.findIndex(e=>e.uid===u),E=T.exercises[i];if(!E)return;
+    const items=[{label:'Remplacer l\'exercice',fn:()=>openPicker('replace',u)}];
+    if(i>0)items.push({label:'Monter',fn:()=>{T.exercises.splice(i,1);T.exercises.splice(i-1,0,E);save();renderEditor()}});
+    if(i<T.exercises.length-1)items.push({label:'Descendre',fn:()=>{T.exercises.splice(i,1);T.exercises.splice(i+1,0,E);save();renderEditor()}});
+    items.push({label:'Retirer l\'exercice',danger:true,fn:()=>{T.exercises.splice(i,1);save();renderEditor();updateStats()}});
+    openSheet(ex(E.exId).name,items)},
+  'set-type'(u,i){const E=findE(u);if(!E)return;i=+i;const s=E.sets[i];const set=t=>()=>{s.t=t;save();renderEditor();updateStats()};
+    openSheet('Série',[{label:(s.t==='n'?'✓ ':'')+'Série normale',fn:set('n')},{label:(s.t==='w'?'✓ ':'')+'Échauffement (É)',fn:set('w')},{label:(s.t==='d'?'✓ ':'')+'Drop set (D)',fn:set('d')},{label:(s.t==='f'?'✓ ':'')+'Jusqu\'à l\'échec (F)',fn:set('f')},
+      {label:'Supprimer la série',danger:true,fn:()=>{E.sets.splice(i,1);save();renderEditor();updateStats()}}])},
+  'set-done'(u,i){toggleDone(u,+i)},
+  'set-add'(u){const E=findE(u);if(!E)return;const l=E.sets[E.sets.length-1];
+    E.sets.push(ui.edMode==='workout'?{t:'n',a:'',b:'',done:false,ta:l?(l.a||l.ta||''):'',tb:l?(l.b||l.tb||''):''}:{t:'n',a:l?l.a:'',b:l?l.b:''});save();renderEditor()},
+  'prev-copy'(u,i){const E=findE(u);if(!E)return;const s=E.sets[+i],p=prevSets(E.exId)[+i];if(!p||s.done)return;s.a=+p.a?fmt(p.a):'';s.b=+p.b?fmt(p.b):'';save();renderEditor()},
+  'ex-open'(id){pushDetail({kind:'ex',id})},
+  'p-toggle'(id){const P=ui.picker;if(P.mode==='replace')return replaceWith(id);const k=P.sel.indexOf(id);k>=0?P.sel.splice(k,1):P.sel.push(id);renderPicker(false)},
+  'p-muscle'(m){ui.picker.muscle=m;renderPicker(true);const c=$('#picker .chip.on');if(c)c.scrollIntoView({inline:'center',block:'nearest'})},
+  'p-confirm'(){const T=edTarget();for(const id of ui.picker.sel)T.exercises.push(newEx(id));ui.picker=null;save();renderAll();const b=$('#ed .sheet-body');if(b)b.scrollTop=b.scrollHeight},
+  'p-close'(){ui.picker=null;renderPicker();renderRestBar()},
+  'p-create'(){const P=ui.picker;createExerciseDlg(P.q,MUSCLES.includes(P.muscle)?P.muscle:'')},
+  'p-info'(id){pushDetail({kind:'ex',id})},
+  'media-mode'(){ui.mediaSplit=!ui.mediaSplit;const m=$('#media'),l=$('#media-lbl');if(m)m.classList.toggle('split',ui.mediaSplit);if(l)l.textContent=ui.mediaSplit?"Voir l'animation":'Voir les 2 positions'},
+  'x-muscle'(m){ui.xMuscle=m;renderMain();const c=$('#main .chip.on');if(c)c.scrollIntoView({inline:'center',block:'nearest'})},
+  'x-open'(id){pushDetail({kind:'ex',id})},
+  'x-create'(){createExerciseDlg(ui.xq,MUSCLES.includes(ui.xMuscle)?ui.xMuscle:'')},
+  'x-del'(id){confirmDlg('Supprimer cet exercice ?','Il disparaîtra de l\'annuaire. Les séances passées gardent leurs séries.','Supprimer',()=>{S.custom=S.custom.filter(x=>x.id!==id);rebuildIndex();save();ui.detail.pop();renderAll()})},
+  'hist-open'(id){pushDetail({kind:'w',id})},
+  'd-close'(){ui.detail.pop();renderDetail();renderRestBar()},
+  'w-redo'(id){const w=S.history.find(w=>w.id===id);if(w)ensureNoActive(()=>startFrom({name:w.name,exercises:w.exercises},null))},
+  'w-routine'(id){const w=S.history.find(w=>w.id===id);if(w){routineFrom(w);flash('Routine créée')}},
+  'w-del'(id){confirmDlg('Supprimer la séance ?','Elle sera retirée de ton historique et de tes records.','Supprimer',()=>{S.history=S.history.filter(w=>w.id!==id);save();ui.detail.pop();renderAll()})},
+  'rest-adj'(d){const r=S.active&&S.active.rest;if(!r)return;d=+d;r.end+=d*1000;r.total=Math.max(1,r.total+d);if(r.end<=Date.now())S.active.rest=null;save();renderRestBar();tick()},
+  'rest-skip'(){if(S.active)S.active.rest=null;save();renderRestBar();renderResume()},
+  'toggle-sound'(){S.settings.sound=!S.settings.sound;save();renderMain();if(S.settings.sound){ensureAudio();beep()}},
+  export(){const txt=JSON.stringify(S);openDlg({title:'Exporter mes données',html:`<p class="dtext">Garde ce texte ou ce fichier en lieu sûr. Il contient tes séances, routines et exercices perso.</p><textarea id="exp" class="ta" readonly rows="5">${esc(txt)}</textarea>`,
+    buttons:[{label:'Copier',kind:'primary',fn:()=>{copyText(txt);return false}},...(document.querySelector('link[rel="manifest"]')?[{label:'Télécharger le fichier',kind:'soft',fn:()=>{download(txt);return false}}]:[]),{label:'Fermer',kind:'soft'}]})},
+  'import-file'(){$('#fileIn').click()},
+  'import-paste'(){openDlg({title:'Coller une sauvegarde',html:`<p class="dtext">Colle ici le texte exporté depuis l'app.</p><textarea id="imp" class="ta" rows="6" autofocus></textarea>`,buttons:[{label:'Importer',kind:'primary',fn:()=>{const v=$('#imp').value.trim();if(!v)return false;applyImport(v)}},{label:'Annuler',kind:'soft'}]})},
+  wipe(){confirmDlg('Tout effacer ?','Séances, routines et exercices perso seront supprimés de ce téléphone. Exporte d\'abord si tu veux les garder.','Tout effacer',()=>{S=defaultState();rebuildIndex();save();ui.editorOpen=false;ui.picker=null;ui.detail=[];renderAll();flash('Données effacées')})},
+  modal(i){const m=MODAL;if(!m)return;const it=(m.kind==='sheet'?m.items:m.buttons)[+i];if(!it)return;if(m.kind==='sheet'){closeDlg();it.fn&&it.fn();return}const r=it.fn?it.fn():undefined;if(r!==false&&MODAL===m)closeDlg()},
+  'modal-close'(){closeDlg()}
+};
+document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled)return;const[a,...args]=el.dataset.act.split(':');const fn=ACTS[a];if(fn){e.preventDefault();fn(...args)}});
+document.addEventListener('input',e=>{const el=e.target,f=el.dataset&&el.dataset.f;if(!f||el.tagName==='SELECT')return;
+  if(f==='a'||f==='b'){const E=findE(el.dataset.u);if(!E)return;const s=E.sets[+el.dataset.i];if(!s)return;s[f]=el.value.replace(/[^0-9.,]/g,'');if(s[f]!==el.value)el.value=s[f];saveSoon();updateStats()}
+  else if(f==='note'){const E=findE(el.dataset.u);if(E){E.note=el.value;saveSoon()}autosize(el)}
+  else if(f==='ename'){const T=edTarget();if(T){T.name=el.value;saveSoon()}}
+  else if(f==='pq'){ui.picker.q=el.value;renderPicker(false)}
+  else if(f==='xq'){ui.xq=el.value;renderXList()}});
+document.addEventListener('change',e=>{const el=e.target,f=el.dataset&&el.dataset.f;
+  if(f==='rest'){const E=findE(el.dataset.u);if(E){E.rest=+el.value;save()}}
+  else if(f==='pequip'){ui.picker.equip=el.value;renderPicker(false)}
+  else if(f==='xequip'){ui.xEquip=el.value;renderXList()}
+  else if(f==='defrest'){S.settings.rest=+el.value;save()}
+  else if(el.id==='fileIn'){const file=el.files&&el.files[0];el.value='';if(!file)return;const r=new FileReader();r.onload=()=>applyImport(String(r.result));r.onerror=()=>flash('Lecture du fichier impossible');r.readAsText(file)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(MODAL)closeDlg();else if(ui.detail.length)ACTS['d-close']();else if(ui.picker)ACTS['p-close']()}
+  if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('sin')){e.preventDefault();const all=[...document.querySelectorAll('#ed .sin')];const k=all.indexOf(e.target);if(k>=0&&all[k+1])all[k+1].focus();else e.target.blur()}});
+
+/* ================= Démarrage ================= */
+if(S.active&&S.active.rest&&S.active.rest.end<Date.now())S.active.rest=null;
+if(S.active){ui.edMode='workout';ui.editorOpen=true}
+renderAll();save();
+if(MEDIA_MODE==='packs'){new MutationObserver(hydrate).observe(document.body,{childList:true,subtree:true});hydrate()}
+if('serviceWorker'in navigator&&document.querySelector('link[rel="manifest"]')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+
+</body>
+</html>
