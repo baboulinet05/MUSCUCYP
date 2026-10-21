@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#0E1012" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}[hidden]{display:none!important}img{max-width:100%}</style>
+<style>:root{color-scheme:light;box-sizing:border-box}[hidden]{display:none!important}img{max-width:100%}html,body{height:100%;overscroll-behavior:none}#app{position:fixed;inset:0;padding-top:env(safe-area-inset-top,0px)}.tabbar{padding-bottom:max(4px,env(safe-area-inset-bottom,0px))}</style>
 <title>Carnet de fonte</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -142,7 +142,7 @@ h3{margin:0;font:700 20px/1.15 var(--f-display);letter-spacing:.01em}
 .count-line{font-size:13px;color:var(--muted);padding:6px 0 2px}
 
 /* Sheets */
-.sheet{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);animation:rise .22s ease-out}
+.sheet{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);animation:rise .22s ease-out}
 #picker{z-index:30}#detail{z-index:40}
 @keyframes rise{from{transform:translateY(18px);opacity:.4}}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:56px;background:var(--surface);border-bottom:1px solid var(--line);padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
@@ -150,7 +150,7 @@ h3{margin:0;font:700 20px/1.15 var(--f-display);letter-spacing:.01em}
 .sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .pk-tools{display:flex;flex-direction:column;gap:10px;padding-block:12px 8px;background:var(--surface);border-bottom:1px solid var(--line);max-width:none}
 .pk-tools > *{width:100%;max-width:608px;margin-inline:auto}
-.pk-foot{padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--surface);border-top:1px solid var(--line)}
+.pk-foot{padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--surface);border-top:1px solid var(--line)}
 .pk-foot .btn{max-width:608px;margin:0 auto;display:flex}
 
 /* Editor */
@@ -250,7 +250,7 @@ h3{margin:0;font:700 20px/1.15 var(--f-display);letter-spacing:.01em}
 .hc-ex b{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600;margin-right:4px}
 
 /* Detail */
-.dwrap{display:flex;flex-direction:column;gap:14px;padding-block:18px 40px}
+.dwrap{display:flex;flex-direction:column;gap:14px;padding-top:18px;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
 .tags{display:flex;gap:6px;flex-wrap:wrap}
 .tag{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:var(--raised);border-radius:999px;padding:4px 10px;color:var(--muted)}
 .rec{display:grid;grid-template-columns:1fr 1fr;gap:8px}
