@@ -1,0 +1,7 @@
+node_modules/
+www/
+*.jks
+*.keystore
+keystore.properties
+android/app/release/
+build-debug.log
