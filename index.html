@@ -157,6 +157,8 @@ h3{margin:0;font:700 20px/1.15 var(--f-display);letter-spacing:.01em}
 .wu-row:not(:has(.media-wrap)){grid-template-columns:1fr;justify-items:center}
 .wu-timer{width:132px;height:132px}.wu-bg{fill:none;stroke:var(--raised);stroke-width:8}.wu-fg{fill:none;stroke:var(--accent);stroke-width:8;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .9s linear}
 .wu-timer text{font:700 36px var(--f-display);fill:var(--fg)}.wu-next{color:var(--muted);font-size:15px;margin:0}.btnrow.wu-btns{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:8px;flex-wrap:nowrap}.wu-btns .btn{width:100%;min-width:0;padding:0 6px}
+.btn-google{background:#fff;color:#1f1f1f;border:1px solid #dadce0;align-self:flex-start;gap:10px;font-weight:600}.btn-google .i{width:20px;height:20px}
+.sep{height:1px;background:var(--line);margin:4px 0}.okline .i[viewBox]{flex:none}
 .kcal-line{display:flex;align-items:center;gap:6px;font-size:15px;margin:-4px 0 0}.kcal-line .i{color:var(--warm)}
 .swatches{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.sw{width:30px;height:30px;border-radius:50%;background:var(--c);border:3px solid transparent;box-shadow:0 0 0 1px var(--line)}.sw.on{border-color:var(--surface);box-shadow:0 0 0 2px var(--c)}
 .mnav{display:flex;align-items:center;justify-content:space-between;gap:8px}.mnav h2{font-size:26px;text-align:center;flex:1}.mnav .icon-btn[disabled]{opacity:.3}
@@ -1565,7 +1567,7 @@ const BUILTIN=[];
   for(const id in EDB_ANIM){const k=EDB_ANIM[id];if(INFO[id])INFO[id].gif=k;else INFO[id]={s:EDB_STEPS[id]||[],gif:k}}})();
 
 const KEY='carnet-fonte-v1';
-const APP_VERSION='2.7';
+const APP_VERSION='2.8';
 /* ================= Appli Android (Capacitor) ================= */
 const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const CP=NATIVE?window.Capacitor.Plugins:{};
@@ -1591,7 +1593,7 @@ function exampleRoutines(){
     R('Legs · exemple',[['Squat barre haute',4],['Soulevé de terre roumain barre',3],['Presse à cuisses',3],['Leg curl assis',3],['Mollets debout machine',4]])
   ];
 }
-const defaultSettings=()=>({accent:'rouge',lastReport:'',lbGist:'',lbName:'',showRare:false,mediaOffline:0,theme:'auto',gistId:'',ghLogin:'',lastSync:0,rest:90,sound:true,weekGoal:0,suggest:true,repLo:8,repHi:12,lastExport:0,backupSnooze:0});
+const defaultSettings=()=>({fbUid:'',fbEmail:'',fbName:'',lbFb:false,accent:'rouge',lastReport:'',lbGist:'',lbName:'',showRare:false,mediaOffline:0,theme:'auto',gistId:'',ghLogin:'',lastSync:0,rest:90,sound:true,weekGoal:0,suggest:true,repLo:8,repHi:12,lastExport:0,backupSnooze:0});
 const defaultState=()=>({v:1,settings:defaultSettings(),fav:[],friends:[],plan:{},vids:{},custom:[],routines:exampleRoutines(),history:[],active:null,body:[],goals:{},measures:[]});
 function load(){try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&Array.isArray(d.history))return{...defaultState(),...d,settings:{...defaultSettings(),...(d.settings||{})}}}}catch(e){}return null}
 let S=load()||defaultState();
@@ -1925,7 +1927,7 @@ function histView(){
   <section class="card wk"><div class="wk-stats"><div class="mini"><span class="k">Cette semaine</span><span class="v">${thisWeek.length} séance${thisWeek.length>1?'s':''}</span></div><div class="mini"><span class="k">Volume</span><span class="v">${fmtVol(thisWeek.reduce((a,w)=>a+wVolume(w),0))}</span></div><div class="mini"><span class="k">Durée</span><span class="v">${thisWeek.length?fmtDurLong(thisWeek.reduce((a,w)=>a+(w.end-w.start),0)):'0 min'}</span></div></div>
   <svg class="chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Séances par semaine sur 8 semaines">${bars}</svg></section>
   ${badgesCardHTML()}
-  <button class="card lbcard" data-act="lb-open">${icon('crown')}<span><b>Classement entre potes</b><span class="muted">${S.settings.lbGist?((S.friends||[]).length?(S.friends.length+' pote'+(S.friends.length>1?'s':'')):'Ajoute tes potes'):'Compare-toi à tes amis'}</span></span>${icon('chevr')}</button>
+  <button class="card lbcard" data-act="lb-open">${icon('crown')}<span><b>Classement entre potes</b><span class="muted">${lbOn()?((S.friends||[]).length?(S.friends.length+' pote'+(S.friends.length>1?'s':'')):'Ajoute tes potes'):'Compare-toi à tes amis'}</span></span>${icon('chevr')}</button>
   ${statsHTML()}
   ${muscleHTML()}
   ${calendarHTML()}
@@ -2289,6 +2291,9 @@ const ACTS={
   programs(){pushDetail({kind:'programs'})},
   'prog-add'(i){const P=PROGRAMS[+i];const R=progRoutines(P);S.routines.push(...R);save();ui.detail=[];renderAll();ui.tab='seance';renderMain();flash(R.length>1?`${R.length} routines ajoutées`:'Routine ajoutée')},
   'cloud-connect'(){cloudDlg()},
+  'fb-login'(){fbSignIn()},'fb-push'(){if(!fbOn()){flash('Connexion à Google en cours, réessaie dans un instant');return}fbPush('flash')},
+  'fb-pull'(){openDlg({title:'Récupérer la sauvegarde ?',html:'<p class="dtext">Les données de ce téléphone seront remplacées par la dernière sauvegarde de ton compte Google.</p>',buttons:[{label:'Récupérer',kind:'danger',fn:async()=>{try{const d=await fbRead();applyCloud(d);flash('Données récupérées')}catch(e){openDlg({title:'Récupération impossible',html:`<p class="dtext">${esc(/introuvable/.test(e.message)?'Aucune sauvegarde sur ce compte.':fbErr(e))}</p>`,buttons:[{label:'OK',kind:'primary'}]})}}},{label:'Annuler',kind:'soft'}]})},
+  'fb-off'(){confirmDlg('Se déconnecter de Google ?','Ta sauvegarde reste sur ton compte. Ce téléphone arrêtera simplement de se synchroniser.','Se déconnecter',()=>fbSignOut())},
   'cloud-push'(){cloudPush(true)},
   'cloud-pull'(){openDlg({title:'Récupérer depuis le cloud ?',html:'<p class="dtext">Les données de ce téléphone seront remplacées par ta dernière sauvegarde GitHub.</p>',buttons:[{label:'Récupérer',kind:'danger',fn:async()=>{try{const d=await cloudRead(S.settings.gistId);applyCloud(d);flash('Données récupérées')}catch(e){openDlg({title:'Échec',html:`<p class="dtext">${esc(e.message)}</p>`,buttons:[{label:'OK',kind:'primary'}]})}}},{label:'Annuler',kind:'soft'}]})},
   'cloud-off'(){confirmDlg('Déconnecter GitHub ?','La sauvegarde reste sur ton GitHub. Ce téléphone arrêtera simplement de se synchroniser.','Déconnecter',()=>{setGhToken('');S.settings.gistId='';S.settings.ghLogin='';save();renderMain()})},
@@ -2318,7 +2323,7 @@ const ACTS={
   'lb-setup'(){lbSetupDlg()},'lb-add'(){lbAddDlg()},'lb-invite'(){lbInviteDlg()},'lb-refresh'(){lbRefresh(true);flash('Actualisation…')},
   'lb-tab'(k){ui.lbTab=k;renderDetail()},
   'lb-del'(id){const f=(S.friends||[]).find(f=>f.id===id);confirmDlg('Retirer ce pote ?',`${(lbFriends[id]&&lbFriends[id].p&&lbFriends[id].p.name)||(f&&f.name)||'Ce pote'} ne sera plus dans ton classement.`,'Retirer',()=>{S.friends=S.friends.filter(f=>f.id!==id);save();renderDetail()})},
-  'lb-off'(){confirmDlg('Quitter le classement ?','Ton profil public sera supprimé de GitHub et tes potes ne verront plus tes stats.','Quitter',async()=>{const id=S.settings.lbGist;S.settings.lbGist='';save();renderDetail();try{await gh('/gists/'+id,{method:'DELETE'})}catch(e){}flash('Tu as quitté le classement')})},
+  'lb-off'(){confirmDlg('Quitter le classement ?','Ton profil public sera supprimé et tes potes ne verront plus tes stats.','Quitter',async()=>{const id=S.settings.lbGist,wasFb=S.settings.lbFb;S.settings.lbGist='';S.settings.lbFb=false;save();renderDetail();if(wasFb&&fbOn()){try{await FB.fs.deleteDoc(FB.fs.doc(FB.D,'profiles',fbUser.uid))}catch(e){}}if(id){try{await gh('/gists/'+id,{method:'DELETE'})}catch(e){}}flash('Tu as quitté le classement')})},
   'lb-open'(){pushDetail({kind:'lb'});lbRefresh()},
   'accent'(k){if(!ACCENTS[k])return;S.settings.accent=k;save();applyTheme();renderMain()},
   'toggle-rare'(){S.settings.showRare=!S.settings.showRare;save();renderMain()},
@@ -2593,6 +2598,51 @@ function vidDlg(id){const X=ex(id),cur=(S.vids||{})[id]||'';openDlg({title:'Vid�
   buttons:[{label:'Enregistrer',kind:'primary',fn:()=>{const v=$('#vid-u').value.trim();if(v&&!/^https?:\/\/\S+\.\S+/.test(v)){const e=$('#vid-err');e.textContent='Colle un lien complet qui commence par https://';e.hidden=false;return false}
     S.vids=S.vids||{};if(v)S.vids[id]=v;else delete S.vids[id];save();renderDetail();flash(v?'Vidéo liée':'Vidéo retirée')}},...(cur?[{label:'Retirer ma vidéo',kind:'danger',fn:()=>{delete S.vids[id];save();renderDetail()}}]:[]),{label:'Annuler',kind:'soft'}]})}
 
+
+/* ================= Compte Google (Firebase) =================
+   Connexion Google, sauvegarde de toutes les données dans Firestore (users/{uid}, découpée en morceaux),
+   profil public du classement dans profiles/{uid}. Le SDK n'est chargé que si on s'en sert. */
+const FB_CFG={apiKey:"AIzaSyB0fistX1NNnG_HcausCgfNKbSyRd13eZo",authDomain:"carnet-de-fonte-472c8.firebaseapp.com",projectId:"carnet-de-fonte-472c8",storageBucket:"carnet-de-fonte-472c8.firebasestorage.app",messagingSenderId:"812422167533",appId:"1:812422167533:web:3897c46ed8f069cc4a05e4"};
+const FB_V='13.1.0',FB_CHUNK=700000;
+let FB=null,fbUser=null,fbTimer=null,fbBusy=false,fbPending=false,fbReady=null;
+const fbOn=()=>!!(fbUser&&S.settings.fbUid&&fbUser.uid===S.settings.fbUid);
+function fbFlag(v){try{v?localStorage.setItem('fonte-fb','1'):localStorage.removeItem('fonte-fb')}catch(e){}}
+function fbWanted(){try{return localStorage.getItem('fonte-fb')==='1'}catch(e){return false}}
+function fbLoad(){if(fbReady)return fbReady;const b=`https://www.gstatic.com/firebasejs/${FB_V}/`;
+  fbReady=Promise.all([import(b+'firebase-app.js'),import(b+'firebase-auth.js'),import(b+'firebase-firestore.js')]).then(([ap,au,fs])=>{const app=ap.initializeApp(FB_CFG);
+    FB={au,fs,A:au.getAuth(app),D:fs.getFirestore(app)};try{FB.A.languageCode='fr'}catch(e){}
+    return new Promise(ok=>{let first=true;au.onAuthStateChanged(FB.A,u=>{fbUser=u||null;if(first){first=false;ok(FB)}if(ui.tab==='reglages')renderMain()})})})
+    .catch(e=>{fbReady=null;throw new Error('Impossible de joindre Google. Vérifie ta connexion internet.')});return fbReady}
+async function fbSignIn(){const b=document.querySelector('[data-act="fb-login"]');if(b){b.disabled=true;b.textContent='Connexion…'}
+  try{await fbLoad();const p=new FB.au.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
+    let cred;try{cred=await FB.au.signInWithPopup(FB.A,p)}catch(e){if(/popup-blocked|operation-not-supported/.test(e.code||'')){await FB.au.signInWithRedirect(FB.A,p);return}throw e}
+    await fbAfterLogin(cred.user)}
+  catch(e){if(b){b.disabled=false}renderMain();if(/popup-closed|cancelled-popup/.test(e.code||''))return;
+    openDlg({title:'Connexion impossible',html:`<p class="dtext">${esc(fbErr(e))}</p>`,buttons:[{label:'OK',kind:'primary'}]})}}
+function fbErr(e){const c=e&&e.code||'';if(/unauthorized-domain/.test(c))return'Ce site n\'est pas autorisé dans Firebase : ajoute baboulinet05.github.io dans Authentication → Paramètres → Domaines autorisés.';
+  if(/operation-not-allowed/.test(c))return'La connexion Google n\'est pas activée dans Firebase (Authentication → Sign-in method → Google).';if(/permission-denied/.test(c))return'Firebase a refusé l\'accès : vérifie les règles Firestore.';
+  if(/network/.test(c))return'Pas de connexion internet.';return(e&&e.message)||'Erreur inconnue.'}
+async function fbAfterLogin(u){fbUser=u;S.settings.fbUid=u.uid;S.settings.fbEmail=u.email||'';S.settings.fbName=u.displayName||'';fbFlag(true);save();
+  let d=null;try{d=await fbRead()}catch(e){if(!/introuvable/.test(e.message))throw e}
+  if(!d){await fbPush(true);renderMain();return openDlg({title:'Compte Google connecté',html:`<p class="dtext">Connecté avec <b>${esc(u.email||'ton compte Google')}</b>. Tes données sont maintenant sauvegardées automatiquement après chaque modification.</p>`,buttons:[{label:'Super',kind:'primary'}]})}
+  const n=(d.history||[]).length;if(!S.history.length){applyCloud(d);return flash(`${n} séance${n>1?'s':''} restaurée${n>1?'s':''}`)}
+  openDlg({title:'Sauvegarde trouvée',html:`<p class="dtext">Ton compte Google contient déjà une sauvegarde : <b>${n} séance${n>1?'s':''}</b>. Ce téléphone en a <b>${S.history.length}</b>.</p>`,
+    buttons:[{label:'Récupérer la sauvegarde',kind:'primary',fn:()=>{applyCloud(d);flash('Données récupérées')}},{label:'Garder ce téléphone',kind:'soft',fn:()=>{fbPush(true)}}]})}
+async function fbPush(manual){if(!fbOn())return;if(fbBusy){fbPending=true;return}fbBusy=true;clearTimeout(fbTimer);
+  try{const{fs,D}=FB,uid=fbUser.uid,txt=cloudPayload(),parts=[];for(let i=0;i<txt.length;i+=FB_CHUNK)parts.push(txt.slice(i,i+FB_CHUNK));
+    const meta=await fs.getDoc(fs.doc(D,'users',uid));const oldN=meta.exists()?(meta.data().n||0):0;
+    const bt=fs.writeBatch(D);parts.forEach((p,i)=>bt.set(fs.doc(D,'users',uid,'chunks',String(i)),{d:p}));for(let i=parts.length;i<oldN;i++)bt.delete(fs.doc(D,'users',uid,'chunks',String(i)));
+    bt.set(fs.doc(D,'users',uid),{n:parts.length,saved:Date.now(),ver:APP_VERSION,sessions:S.history.length});await bt.commit();
+    S.settings.lastSync=Date.now();S.settings.lastExport=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(manual===true&&ui.tab==='reglages')renderMain();if(manual==='flash')flash('Sauvegardé sur ton compte Google')}
+  catch(e){if(manual)openDlg({title:'Sauvegarde impossible',html:`<p class="dtext">${esc(fbErr(e))}</p>`,buttons:[{label:'OK',kind:'primary'}]})}
+  finally{fbBusy=false;if(fbPending){fbPending=false;fbTimer=setTimeout(()=>fbPush(),3000)}}}
+async function fbRead(){await fbLoad();const{fs,D}=FB,uid=fbUser.uid;const m=await fs.getDoc(fs.doc(D,'users',uid));if(!m.exists())throw new Error('introuvable');
+  const n=m.data().n||0;const P=await Promise.all(Array.from({length:n},(_,i)=>fs.getDoc(fs.doc(D,'users',uid,'chunks',String(i)))));const txt=P.map(x=>x.exists()?x.data().d:'').join('');const j=JSON.parse(txt);return j.data||j}
+async function fbSignOut(){try{await fbLoad();await FB.au.signOut(FB.A)}catch(e){}fbUser=null;S.settings.fbUid='';S.settings.fbEmail='';S.settings.fbName='';fbFlag(false);save();renderMain()}
+/* au démarrage : retrouver la session Google et finir une connexion par redirection */
+if(!NATIVE&&fbWanted())setTimeout(()=>{fbLoad().then(async()=>{try{const r=await FB.au.getRedirectResult(FB.A);if(r&&r.user)await fbAfterLogin(r.user)}catch(e){}
+  if(fbUser&&!S.settings.fbUid){S.settings.fbUid=fbUser.uid;save()}if(fbOn()&&(!S.settings.lastSync||Date.now()-S.settings.lastSync>6*36e5))fbPush()}).catch(()=>{})},1200);
+
 /* ================= Classement entre potes =================
    Chacun publie un petit profil public (stats de la semaine, régularité, records) dans un gist public de son GitHub.
    Les potes s'ajoutent avec le code (identifiant du gist), par lien ou QR code. Aucune séance détaillée n'est partagée. */
@@ -2604,29 +2654,38 @@ function lbProfile(){const wk=monday(Date.now()),H=S.history,W=H.filter(w=>w.sta
     w:{n:W.length,vol:Math.round(W.reduce((a,w)=>a+wVolume(w),0)),kcal:Math.round(W.reduce((a,w)=>a+kcalFor(w),0))},m:{n:M.length,vol:Math.round(M.reduce((a,w)=>a+wVolume(w),0))},
     streak:weekStreaks().cur,total:H.length,best}}
 let lbFriends={},lbBusy=false,lbLast=0;
-async function lbPublish(){if(!ghToken()||!S.settings.lbGist)return;try{await gh('/gists/'+S.settings.lbGist,{method:'PATCH',body:JSON.stringify({files:{[LB_FILE]:{content:JSON.stringify(lbProfile())}}})})}catch(e){}}
-async function lbFetch(id){const r=await fetch(GH_API+'/gists/'+id,{headers:Object.assign({'Accept':'application/vnd.github+json'},ghToken()?{'Authorization':'Bearer '+ghToken()}:{})});
+const lbMyId=()=>S.settings.lbFb?S.settings.fbUid:S.settings.lbGist;
+const lbOn=()=>!!(S.settings.lbFb||S.settings.lbGist);
+const isGist=id=>/^[a-f0-9]{32}$/i.test(id);
+async function lbPublish(){if(S.settings.lbFb){if(!fbOn())return;try{await FB.fs.setDoc(FB.fs.doc(FB.D,'profiles',fbUser.uid),lbProfile())}catch(e){}return}if(!ghToken()||!S.settings.lbGist)return;try{await gh('/gists/'+S.settings.lbGist,{method:'PATCH',body:JSON.stringify({files:{[LB_FILE]:{content:JSON.stringify(lbProfile())}}})})}catch(e){}}
+async function lbFetch(id){if(!isGist(id)){await fbLoad();if(!fbUser)throw new Error('connecte-toi avec Google');const d=await FB.fs.getDoc(FB.fs.doc(FB.D,'profiles',id));if(!d.exists())throw new Error('introuvable');const p=d.data();if(p.app!=='carnet-fonte-profil')throw new Error('pas un profil');return p}
+  const r=await fetch(GH_API+'/gists/'+id,{headers:Object.assign({'Accept':'application/vnd.github+json'},ghToken()?{'Authorization':'Bearer '+ghToken()}:{})});
   if(r.status===404)throw new Error('introuvable');if(!r.ok)throw new Error('GitHub '+r.status);const g=await r.json();const f=g.files&&g.files[LB_FILE];if(!f)throw new Error('pas un profil');
   let txt=f.content;if(f.truncated)txt=await (await fetch(f.raw_url)).text();const p=JSON.parse(txt);if(p.app!=='carnet-fonte-profil')throw new Error('pas un profil');return p}
-async function lbRefresh(force){if(lbBusy||(!force&&Date.now()-lbLast<60000))return;lbBusy=true;lbLast=Date.now();await lbPublish();
+async function lbRefresh(force){if(lbBusy||(!force&&Date.now()-lbLast<60000))return;lbBusy=true;lbLast=Date.now();if(S.settings.lbFb||(S.friends||[]).some(f=>!isGist(f.id))){try{await fbLoad()}catch(e){}}await lbPublish();
   await Promise.all((S.friends||[]).map(f=>lbFetch(f.id).then(p=>{lbFriends[f.id]={p}}).catch(e=>{lbFriends[f.id]={err:e.message}})));lbBusy=false;
   if(ui.detail.length&&ui.detail[ui.detail.length-1].kind==='lb')renderDetail()}
-function lbLink(){return SHARE_BASE+'#ami='+S.settings.lbGist+'.'+b64e(S.settings.lbName||S.settings.ghLogin||'')}
-async function lbEnable(){const name=($('#lb-name')||{}).value;S.settings.lbName=String(name||S.settings.ghLogin||'').trim().slice(0,24)||'Moi';save();
-  try{if(!S.settings.lbGist){const g=await gh('/gists',{method:'POST',body:JSON.stringify({description:LB_DESC,public:true,files:{[LB_FILE]:{content:JSON.stringify(lbProfile())}}})});S.settings.lbGist=g.id;save()}else await lbPublish();closeDlg();renderDetail();lbRefresh(true);flash('Classement activé')}
-  catch(e){const er=$('#lb-err');if(er){er.textContent=e.message||'Connexion impossible';er.hidden=false}}}
-function lbSetupDlg(){if(!ghToken())return openDlg({title:'Classement entre potes',html:`<p class="dtext">Le classement passe par ton compte GitHub, comme la synchro cloud. Connecte d'abord GitHub dans <b>Réglages → Synchro cloud</b>, puis reviens ici.</p>`,buttons:[{label:'Aller aux réglages',kind:'primary',fn:()=>{ui.detail=[];renderDetail();ui.tab='reglages';renderMain()}},{label:'Annuler',kind:'soft'}]});
-  openDlg({title:'Rejoindre le classement',html:`<p class="dtext">Ton pseudo et ces stats seront visibles par les potes qui ont ton code : séances et volume de la semaine et du mois, semaines d'affilée, total de séances et 1RM estimés (couché, squat, soulevé de terre, militaire). <b>Rien d'autre</b> : ni tes séances détaillées, ni ton poids.</p><label class="fld"><span>Pseudo</span><input id="lb-name" type="text" maxlength="24" value="${esc(S.settings.lbName||S.settings.ghLogin||'')}" autofocus></label><p class="derr" id="lb-err" hidden></p>`,
+function lbLink(){return SHARE_BASE+'#ami='+lbMyId()+'.'+b64e(S.settings.lbName||S.settings.fbName||S.settings.ghLogin||'')}
+
+async function lbEnable(){const name=($('#lb-name')||{}).value;S.settings.lbName=String(name||S.settings.fbName||S.settings.ghLogin||'').trim().slice(0,24)||'Moi';save();
+  try{if(fbOn()){S.settings.lbFb=true;save();await FB.fs.setDoc(FB.fs.doc(FB.D,'profiles',fbUser.uid),lbProfile())}
+    else if(!S.settings.lbGist){const g=await gh('/gists',{method:'POST',body:JSON.stringify({description:LB_DESC,public:true,files:{[LB_FILE]:{content:JSON.stringify(lbProfile())}}})});S.settings.lbGist=g.id;save()}else await lbPublish();
+    closeDlg();renderDetail();lbRefresh(true);flash('Classement activé')}
+  catch(e){if(S.settings.lbFb&&!S.settings.lbGist){S.settings.lbFb=false;save()}const er=$('#lb-err');if(er){er.textContent=fbErr(e);er.hidden=false}}}
+
+function lbSetupDlg(){if(!fbOn()&&!ghToken())return openDlg({title:'Classement entre potes',html:`<p class="dtext">Pour comparer vos stats, connecte-toi d'abord avec ton compte Google dans <b>Réglages → Synchro cloud</b>. Ça sauvegarde aussi tes séances.</p>`,buttons:[{label:'Aller aux réglages',kind:'primary',fn:()=>{ui.detail=[];renderDetail();ui.tab='reglages';renderMain()}},{label:'Annuler',kind:'soft'}]});
+  openDlg({title:'Rejoindre le classement',html:`<p class="dtext">Ton pseudo et ces stats seront visibles par les potes qui ont ton code : séances et volume de la semaine et du mois, semaines d'affilée, total de séances et 1RM estimés (couché, squat, soulevé de terre, militaire). <b>Rien d'autre</b> : ni tes séances détaillées, ni ton poids, ni ton e-mail.</p><label class="fld"><span>Pseudo</span><input id="lb-name" type="text" maxlength="24" value="${esc(S.settings.lbName||S.settings.fbName||S.settings.ghLogin||'')}" autofocus></label><p class="derr" id="lb-err" hidden></p>`,
   buttons:[{label:'Activer',kind:'primary',fn:()=>{lbEnable();return false}},{label:'Annuler',kind:'soft'}]})}
-function lbAddFriend(id,name){id=String(id||'').trim().replace(/^.*#ami=/,'').split('.')[0].replace(/[^a-f0-9]/gi,'');if(!/^[a-f0-9]{20,40}$/i.test(id))return'Code invalide : il fait une trentaine de caractères (chiffres et lettres a à f).';
-  if(id===S.settings.lbGist)return'C\'est ton propre code.';S.friends=S.friends||[];if(S.friends.some(f=>f.id===id))return'Ce pote est déjà dans ta liste.';
+
+function lbAddFriend(id,name){id=String(id||'').trim().replace(/^.*#ami=/,'').split('.')[0].replace(/[^A-Za-z0-9]/g,'');if(!/^[A-Za-z0-9]{20,40}$/.test(id))return'Code invalide : colle le lien complet envoyé par ton pote.';
+  if(id===lbMyId()||id===S.settings.lbGist||id===S.settings.fbUid)return'C\'est ton propre code.';S.friends=S.friends||[];if(S.friends.some(f=>f.id===id))return'Ce pote est déjà dans ta liste.';
   S.friends.push({id,name:String(name||'').slice(0,24)});save();lbFetch(id).then(p=>{lbFriends[id]={p};const f=S.friends.find(f=>f.id===id);if(f&&p.name){f.name=p.name;save()}renderDetail()}).catch(e=>{lbFriends[id]={err:e.message};renderDetail()});return null}
 function lbAddDlg(){const err=t=>{const e=$('#lba-err');e.textContent=t;e.hidden=false;return false};openDlg({title:'Ajouter un pote',html:`<p class="dtext">Colle le lien ou le code que ton pote t'a envoyé (Classement → Inviter).</p><input id="lba" class="ta" style="height:48px" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus><p class="derr" id="lba-err" hidden></p>`,
   buttons:[{label:'Ajouter',kind:'primary',fn:()=>{const e=lbAddFriend($('#lba').value);if(e)return err(e);flash('Pote ajouté')}},{label:'Annuler',kind:'soft'}]})}
 function lbInviteDlg(){const link=lbLink();openDlg({title:'Inviter un pote',html:`<p class="dtext">Ton pote scanne ce QR code ou ouvre le lien : tu apparaîtras dans son classement. Pour le voir dans le tien, ajoute aussi son code.</p><div class="qrbox" id="qrbox"><span class="muted">QR code…</span></div><textarea class="ta" rows="3" readonly id="lbl">${esc(link)}</textarea>`,
   buttons:[...(navigator.share?[{label:'Envoyer…',kind:'primary',fn:()=>{navigator.share({text:'Ajoute-moi dans Carnet de fonte : '+link}).catch(()=>{});return false}}]:[]),{label:'Copier',kind:navigator.share?'soft':'primary',fn:()=>{try{navigator.clipboard.writeText(link).then(()=>flash('Lien copié'))}catch(e){}return false}},{label:'Fermer',kind:'soft'}]});
   loadQR().then(()=>{const b=$('#qrbox');if(b)b.innerHTML=qrSVG(link)}).catch(()=>{const b=$('#qrbox');if(b)b.remove()})}
-function lbHTML(){const on=S.settings.lbGist,me=lbProfile(),wk=monday(Date.now());const tab=ui.lbTab||'w';
+function lbHTML(){const on=lbOn(),me=lbProfile(),wk=monday(Date.now());const tab=ui.lbTab||'w';
   const rows=[{me:true,p:me,id:'moi'}].concat((S.friends||[]).map(f=>({id:f.id,name:f.name,...(lbFriends[f.id]||{})})));
   const val=r=>{const p=r.p;if(!p)return-1;const cur=p.week===wk;return tab==='w'?(cur?p.w.n*1e9+p.w.vol:0):tab==='m'?(mKey(p.updated)===mKey(Date.now())?p.m.vol:0):tab==='s'?p.streak*1e6+p.total:tab==='b'?Object.values(p.best||{}).reduce((a,b)=>a+b,0):0};
   rows.sort((a,b)=>val(b)-val(a));
@@ -2646,7 +2705,7 @@ function lbHTML(){const on=S.settings.lbGist,me=lbProfile(),wk=monday(Date.now()
     <button class="btn-ghost danger" data-act="lb-off" style="align-self:flex-start">Quitter le classement</button>`
   :`<div class="empty">${icon('crown')}<b>Compare-toi à tes potes</b>Séances de la semaine, volume du mois, régularité et force : un classement rien qu'entre vous.</div><button class="btn btn-primary block" data-act="lb-setup">Rejoindre le classement</button>`}
   </div></div>`}
-function checkFriendLink(){const h=location.hash;const m=h.match(/^#ami=([a-f0-9]{20,40})(?:\.([A-Za-z0-9_-]*))?/i);if(!m)return;try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+function checkFriendLink(){const h=location.hash;const m=h.match(/^#ami=([A-Za-z0-9]{20,40})(?:\.([A-Za-z0-9_-]*))?/);if(!m)return;try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
   let nm='';try{nm=m[2]?b64d(m[2]):''}catch(e){}
   openDlg({title:'Ajouter un pote',html:`<p class="dtext">Ajouter <b>${esc(nm||'ce pote')}</b> à ton classement ?</p>`,buttons:[{label:'Ajouter',kind:'primary',fn:()=>{const e=lbAddFriend(m[1],nm);flash(e||'Pote ajouté');if(!e){ui.tab='historique';renderMain();pushDetail({kind:'lb'});lbRefresh(true)}}},{label:'Plus tard',kind:'soft'}]})}
 window.addEventListener('hashchange',checkFriendLink);
@@ -2804,13 +2863,13 @@ async function gh(path,opt={}){const r=await fetch(GH_API+path,{...opt,headers:{
   if(r.status===401)throw new Error('Jeton refusé par GitHub : vérifie-le ou crée-en un nouveau.');if(r.status===403||r.status===404)throw new Error('Ce jeton n\'a pas le droit « gist ». Recrée-le en cochant « gist ».');if(!r.ok)throw new Error('GitHub a répondu une erreur ('+r.status+'). Réessaie plus tard.');return r.status===204?null:r.json()}
 function cloudPayload(){const c=JSON.parse(JSON.stringify(S));c.active=null;return JSON.stringify({app:'carnet-fonte',saved:Date.now(),data:c})}
 let cloudTimer=null,cloudBusy=false,cloudPending=false;
-function cloudDirty(){if(!ghToken()||!S.settings.gistId)return;clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>cloudPush(),15000)}
+function cloudDirty(){if(fbOn()){clearTimeout(fbTimer);fbTimer=setTimeout(()=>fbPush(),15000)}if(!ghToken()||!S.settings.gistId)return;clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>cloudPush(),15000)}
 async function cloudPush(manual){if(!ghToken()||!S.settings.gistId)return;if(cloudBusy){cloudPending=true;return}cloudBusy=true;clearTimeout(cloudTimer);
   try{await gh('/gists/'+S.settings.gistId,{method:'PATCH',body:JSON.stringify({files:{[GIST_FILE]:{content:cloudPayload()}}})});S.settings.lastSync=Date.now();S.settings.lastExport=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(manual)flash('Sauvegardé dans le cloud');if(ui.tab==='reglages')renderMain()}
   catch(e){if(manual)openDlg({title:'Synchro impossible',html:`<p class="dtext">${esc(e.message||'Pas de connexion.')}</p>`,buttons:[{label:'OK',kind:'primary'}]})}
   finally{cloudBusy=false;if(cloudPending){cloudPending=false;cloudTimer=setTimeout(()=>cloudPush(),3000)}}}
 async function cloudRead(id){const g=await gh('/gists/'+id);const f=g.files&&g.files[GIST_FILE];if(!f)throw new Error('Fichier de sauvegarde introuvable.');let txt=f.content;if(f.truncated){const r=await fetch(f.raw_url);txt=await r.text()}const j=JSON.parse(txt);return j.data||j}
-function applyCloud(d){const keep={gistId:S.settings.gistId,ghLogin:S.settings.ghLogin,lbGist:S.settings.lbGist,lbName:S.settings.lbName};S={...defaultState(),...d,settings:{...defaultSettings(),...(d.settings||{}),...keep,lastSync:Date.now()}};rebuildIndex();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}applyTheme();ui.editorOpen=false;ui.picker=null;ui.detail=[];renderAll()}
+function applyCloud(d){const keep={gistId:S.settings.gistId,ghLogin:S.settings.ghLogin,lbGist:S.settings.lbGist,lbName:S.settings.lbName,lbFb:S.settings.lbFb,fbUid:S.settings.fbUid,fbEmail:S.settings.fbEmail,fbName:S.settings.fbName};S={...defaultState(),...d,settings:{...defaultSettings(),...(d.settings||{}),...keep,lastSync:Date.now()}};rebuildIndex();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}applyTheme();ui.editorOpen=false;ui.picker=null;ui.detail=[];renderAll()}
 async function cloudConnect(tok){setGhToken(tok.trim());
   try{const me=await gh('/user');S.settings.ghLogin=me.login;let gist=null;let page=1;
     while(!gist&&page<=5){const L=await gh('/gists?per_page=100&page='+page);gist=L.find(g=>g.files&&g.files[GIST_FILE]&&g.description===GIST_DESC);if(L.length<100)break;page++}
@@ -2824,11 +2883,19 @@ async function cloudConnect(tok){setGhToken(tok.trim());
 function cloudDlg(){openDlg({title:'Connecter GitHub',html:`<ol class="steps"><li>Ouvre <a href="https://github.com/settings/tokens/new?scopes=gist&description=Carnet%20de%20fonte" target="_blank" rel="noopener">github.com/settings/tokens/new</a> (connecté à ton compte).</li><li>Dans « Expiration », choisis <b>No expiration</b>. Vérifie que <b>gist</b> est coché.</li><li>Touche <b>Generate token</b>, copie le code qui commence par <b>ghp_</b> et colle-le ici.</li></ol>
   <label class="fld"><span>Jeton GitHub</span><input id="gh-tok" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ghp_…"></label><p class="dtext" style="font-size:13px">Le jeton reste sur ce téléphone. Il ne sert qu'à lire et écrire ta sauvegarde, et n'est jamais inclus dans tes exports.</p><p class="derr" id="gh-err" hidden></p>`,
   buttons:[{label:'Connecter',kind:'primary',fn:()=>{const v=$('#gh-tok').value.trim();if(v.length<20){const e=$('#gh-err');e.textContent='Colle le jeton complet.';e.hidden=false;return false}const b=document.querySelector('#dlg .btn-primary');if(b){b.textContent='Connexion…';b.disabled=true}cloudConnect(v);return false}},{label:'Annuler',kind:'soft'}]})}
-function cloudCardHTML(){const on=ghToken()&&S.settings.gistId;const ago=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`};
-  return`<section class="card setc"><h3>Synchro cloud</h3>${on?`<p class="okline">${icon('cloud')}Connecté à @${esc(S.settings.ghLogin||'GitHub')}</p><p class="dtext">Sauvegarde automatique après chaque modification. Dernière synchro : ${S.settings.lastSync?ago(S.settings.lastSync):'jamais'}.</p>
-    <div class="btnrow"><button class="btn btn-primary" data-act="cloud-push">Synchroniser maintenant</button><button class="btn btn-soft" data-act="cloud-pull">Récupérer depuis le cloud</button></div><button class="btn-ghost danger" data-act="cloud-off" style="align-self:flex-start">Déconnecter ce téléphone</button>`
-    :`<p class="dtext">Sauvegarde automatique dans un fichier privé de ton compte GitHub (gratuit). Pratique si tu changes de téléphone. Chaque personne utilise son propre compte.</p><button class="btn btn-primary" data-act="cloud-connect" style="align-self:flex-start">${icon('cloud')}Connecter GitHub</button>`}</section>`}
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&cloudTimer){clearTimeout(cloudTimer);cloudPush()}});
+function cloudCardHTML(){const gOn=ghToken()&&S.settings.gistId;const ago=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'à l\'instant':m<60?`il y a ${m} min`:m<1440?`il y a ${Math.round(m/60)} h`:`il y a ${Math.round(m/1440)} j`};
+  const last=`Dernière sauvegarde : ${S.settings.lastSync?ago(S.settings.lastSync):'jamais'}.`;
+  const gBlock=gOn?`<p class="okline">${icon('cloud')}GitHub : @${esc(S.settings.ghLogin||'GitHub')}</p><div class="btnrow"><button class="btn btn-soft sm" data-act="cloud-push">Synchroniser GitHub</button><button class="btn btn-soft sm" data-act="cloud-pull">Récupérer depuis GitHub</button></div><button class="btn-ghost danger" data-act="cloud-off" style="align-self:flex-start">Déconnecter GitHub</button>`
+    :`<button class="btn-ghost" data-act="cloud-connect" style="align-self:flex-start">${icon('cloud')}Utiliser GitHub à la place</button>`;
+  if(NATIVE)return`<section class="card setc"><h3>Synchro cloud</h3><p class="dtext">La connexion Google arrive bientôt dans l'appli Android. En attendant, tu peux sauvegarder avec GitHub.</p>${gBlock.replace('Utiliser GitHub à la place','Connecter GitHub')}</section>`;
+  const fbW=fbWanted()&&S.settings.fbUid;
+  const gg=`<svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="stroke:none"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="#FBBC05" d="M6.4 14a6 6 0 0 1 0-3.9V7.5H3.1a10 10 0 0 0 0 9z"/><path fill="#EA4335" d="M12 6c1.5 0 2.8.5 3.8 1.5l2.8-2.8A10 10 0 0 0 3.1 7.5L6.4 10C7.2 7.8 9.4 6 12 6z"/></svg>`;
+  return`<section class="card setc"><h3>Synchro cloud</h3>${fbW?`<p class="okline">${gg}${esc(S.settings.fbEmail||'Compte Google')}${fbUser?'':' <span class="muted">(connexion…)</span>'}</p><p class="dtext">Sauvegarde automatique après chaque modification. ${last}</p>
+    <div class="btnrow"><button class="btn btn-primary" data-act="fb-push">Sauvegarder maintenant</button><button class="btn btn-soft" data-act="fb-pull">Récupérer la sauvegarde</button></div><button class="btn-ghost danger" data-act="fb-off" style="align-self:flex-start">Se déconnecter de Google</button>`
+    :`<p class="dtext">Sauvegarde automatique de tes séances sur ton compte Google. Pratique si tu changes de téléphone, et nécessaire pour le classement entre potes.</p><button class="btn btn-google" data-act="fb-login">${gg}Se connecter avec Google</button>`}
+    ${gOn||!fbW?`<div class="sep"></div>${gBlock}`:''}</section>`}
+
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&cloudTimer){clearTimeout(cloudTimer);cloudPush()}if(document.visibilityState==='hidden'&&fbTimer){clearTimeout(fbTimer);fbPush()}});
 
 /* ================= Clavier iOS : garder la fenêtre visible ================= */
 (function(){const vv=window.visualViewport;if(!vv)return;const fit=()=>{const d=document.getElementById('dlg');if(!d)return;d.style.top=vv.offsetTop+'px';d.style.height=vv.height+'px';d.style.bottom='auto'};vv.addEventListener('resize',fit);vv.addEventListener('scroll',fit);fit()})();

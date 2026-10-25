@@ -1,0 +1,30 @@
+rules_version = '2';
+// Règles Firestore de Carnet de fonte : à coller dans la console Firebase
+// (Firestore Database → Règles → Publier).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Sauvegarde personnelle : chacun ne lit et n'écrit que la sienne.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      match /chunks/{part} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // Profil du classement : lisible par les utilisateurs connectés,
+    // modifiable uniquement par son propriétaire, et limité aux stats prévues.
+    match /profiles/{uid} {
+      allow read: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['app', 'v', 'name', 'updated', 'week', 'w', 'm', 'streak', 'total', 'best'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24;
+    }
+
+    // Tout le reste est fermé.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
