@@ -5,7 +5,7 @@ quand tu modifies `index.html`, tu recopies et tu recompiles (voir « Mettre à 
 
 ## Ce qui est déjà prêt
 
-- Le projet Android : identifiant `io.github.baboulinet05.fonte`, cible Android 16 (API 36), version 2.3.
+- Le projet Android : identifiant `io.github.baboulinet05.fonte`, cible Android 16 (API 36), version 2.4.
 - L'icône, l'écran de démarrage et l'icône de notification.
 - La notification de fin de repos quand l'écran est verrouillé, le bouton retour d'Android, l'export de
   sauvegarde par le menu Partager.
