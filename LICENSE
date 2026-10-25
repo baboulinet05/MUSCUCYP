@@ -1,0 +1,18 @@
+Carnet de fonte
+Copyright (c) 2026 baboulinet. Tous droits réservés.
+
+Le code source, le design et les textes de cette application sont la propriété
+exclusive de baboulinet. Ce dépôt est consultable publiquement, mais aucune
+licence n'est accordée : il est interdit de copier, modifier, redistribuer,
+republier ou utiliser tout ou partie de ce projet, à des fins commerciales ou
+non, sans l'autorisation écrite préalable de l'auteur.
+
+Contenus tiers inclus, qui restent soumis à leurs propres conditions :
+- Photos d'exercices : Free Exercise DB (domaine public).
+- Animations d'exercices : © Gym visual — https://gymvisual.com/
+- Illustrations d'exercices : Exercise data by RepDB (repdb.co).
+- Génération de QR codes (lib/qrcode.js) : qrcode-generator, licence MIT,
+  © Kazuhiko Arase.
+
+All rights reserved. No license is granted to use, copy, modify or distribute
+this project without prior written permission from the author.

@@ -9,3 +9,5 @@ Animations et exercices supplémentaires : ExerciseDB, via [exercises-dataset](h
 Illustrations de certains exercices : Exercise data by RepDB ([repdb.co](https://repdb.co)).
 QR codes : [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (licence MIT, Kazuhiko Arase).
 Les données d'entraînement restent sur le téléphone (Réglages → Exporter pour les sauvegarder).
+
+© 2026 baboulinet — tous droits réservés. Voir [LICENSE](LICENSE).
