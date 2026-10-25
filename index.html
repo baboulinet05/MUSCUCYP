@@ -166,6 +166,13 @@ h3{margin:0;font:700 20px/1.15 var(--f-display);letter-spacing:.01em}
 .rir{font-style:normal;font-size:12px;color:var(--muted);margin-left:4px}
 .sugg{margin:0;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--done-ink)}.sugg svg.i{width:16px;height:16px}
 .sugg.plat{color:var(--warm)}
+.chr{font:700 72px/1 var(--f-display);text-align:center;font-variant-numeric:tabular-nums;padding:6px 0}
+.chr.ok{color:var(--done-ink)}
+.chr-track{height:6px;border-radius:3px;background:var(--raised);overflow:hidden}
+.chr-fill{height:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .25s linear}
+.negc,.nextc{display:flex;flex-direction:column;gap:10px}
+.negl{display:flex;flex-wrap:wrap;gap:6px}
+.nextc{border-color:var(--accent)}
 .plat-c{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warm);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:4px}
 .plat-c b{font:700 18px var(--f-display);text-transform:uppercase;color:var(--warm)}
 .plat-c .dtext b{font:inherit;font-weight:700;text-transform:none;color:var(--fg)}
@@ -1501,7 +1508,7 @@ const BUILTIN=[];
 (()=>{let m='';for(const line of RAW.split('\n')){const l=line.trim();if(!l)continue;if(l[0]==='#'){m=l.slice(1).trim();continue}const[name,equip,t]=l.split('|');const type=t||(m==='Cardio'?'c':m==='Mobilité'?'t':equip==='Poids du corps'?'b':'w');BUILTIN.push({id:slug(name),name,muscle:m,equip,type})}})();
 
 const KEY='carnet-fonte-v1';
-const APP_VERSION='2.1';
+const APP_VERSION='2.2';
 function exampleRoutines(){
   const R=(name,list)=>({id:uid(),name,exercises:list.map(([n,k])=>({exId:slug(n),rest:90,sets:Array.from({length:k},()=>({t:'n',a:'',b:''}))}))});
   return[
@@ -1793,13 +1800,15 @@ function seanceView(){
   ${backupDue()?`<div class="bkp"><p><b>Sauvegarde tes données</b>${S.settings.lastExport?`Dernier export il y a ${Math.floor((Date.now()-S.settings.lastExport)/864e5)} jours.`:'Tu n\'as encore jamais exporté.'} Tout est stocké sur ce téléphone.</p><div class="btnrow"><button class="btn btn-primary sm" data-act="export">Exporter</button><button class="btn btn-soft sm" data-act="bkp-later">Plus tard</button></div></div>`:''}
   ${S.active?'':`<button class="btn btn-primary block lg" data-act="start-empty">${icon('plus')}Démarrer une séance vide</button>`}
   ${S.active?`<button class="btn btn-primary block lg" data-act="resume">${icon('play')}Reprendre la séance en cours</button>`:''}
-  <div class="sec-head"><h2>Routines</h2><span class="btnrow" style="flex:none;gap:2px"><button class="btn-ghost" data-act="programs">${icon('layers')}Programmes</button><button class="btn-ghost" data-act="new-routine">${icon('plus')}Nouvelle</button></span></div>
+  ${nextHTML()}
+  <div class="sec-head"><h2>Routines</h2><span class="btnrow" style="flex:none;gap:2px"><button class="btn-ghost" data-act="import-routine">${icon('link')}Importer</button><button class="btn-ghost" data-act="programs">${icon('layers')}Programmes</button><button class="icon-btn" data-act="new-routine" aria-label="Nouvelle routine" title="Nouvelle routine">${icon('plus')}</button></span></div>
   ${R.length?`<div class="rgrid">${R.map(r=>{const n=r.exercises.reduce((a,e)=>a+e.sets.length,0);return`<article class="card rcard">
     <div class="rc-top"><h3>${esc(r.name)}</h3><button class="icon-btn" data-act="routine-menu:${r.id}" aria-label="Options de la routine">${icon('dots')}</button></div>
     <p class="rc-ex">${esc(r.exercises.map(e=>ex(e.exId).name).join(', '))||'Aucun exercice'}</p>
     <div class="rc-meta num">${r.exercises.length} exercice${r.exercises.length>1?'s':''} · ${n} séries</div>
     <button class="btn btn-soft block" data-act="start-routine:${r.id}">${icon('play')}Démarrer</button></article>`}).join('')}</div>`
   :`<div class="empty">${platesHTML()}<b>Pas encore de routine</b>Crée ta première routine ou enregistre une séance terminée comme routine.</div>`}
+  ${neglectHTML()}
   ${Object.keys(S.goals||{}).length?`<div class="sec-head"><h2>Objectifs</h2></div><div class="goals">${Object.keys(S.goals).map(id=>{const X=ex(id);return`<button class="card grow" data-act="ex-open:${id}">${avHTML(X,'sm')}<span class="gr-m"><span class="t">${esc(X.name)}</span>${goalBar(id)}</span></button>`}).join('')}</div>`:''}
   <div class="sec-head"><h2>Corps</h2></div>
   ${bodyCardHTML()}
@@ -1922,6 +1931,7 @@ function exCardHTML(E,W,L){L=L||{};const ssOn=E.ss&&(E.ss in L);
     ${W&&S.settings.suggest&&(upInc||upRep)&&!(!E.sets.some(x=>x.done)&&plateauFor(E.exId))?`<p class="sugg">${icon('trend')}${upInc?`Tu as atteint ${S.settings.repHi} reps : passe à +${fmt(upInc)} kg`:`Objectif : 1 rep de plus que la dernière fois`}</p>`:''}
     <label class="ex-rest">${icon('timer')}<span>Repos</span><select data-f="rest" data-u="${E.uid}" aria-label="Temps de repos">${opts.map(o=>`<option value="${o}" ${+E.rest===o?'selected':''}>${o?fmtRest(o):'désactivé'}</option>`).join('')}</select></label>
     <div class="sets"><div class="srow shead ${W?'':'r'}"><span>Série</span>${W?'<span>Précédent</span>':''}<span>${T.a}</span><span>${T.b}</span>${W?`<span class="c">${icon('check')}</span>`:''}</div>${rows.join('')}</div>
+    ${W&&X.type==='t'&&E.sets.some(z=>!z.done)?`<button class="btn btn-primary block sm" data-act="chrono:${E.uid}">${icon('timer')}Lancer le chrono</button>`:''}
     <button class="btn btn-soft block sm" data-act="set-add:${E.uid}">${icon('plus')}Ajouter une série</button></section>`}
 function autosize(t){t.style.height='auto';t.style.height=t.scrollHeight+'px'}
 function updateStats(){if(ui.edMode!=='workout'||!S.active)return;const{v,n}=activeStats();const a=$('#st-vol'),b=$('#st-sets');if(a)a.textContent=fmtVol(v);if(b)b.textContent=n}
@@ -1977,7 +1987,7 @@ function updateRoutineFrom(w){const r=S.routines.find(r=>r.id===w.routineId);if(
 function editRoutine(r){ui.draft={id:r.id,name:r.name,exercises:r.exercises.map(e=>({uid:uid(),exId:e.exId,ss:e.ss||null,rest:e.rest??S.settings.rest,note:'',sets:e.sets.map(s=>({t:s.t||'n',a:s.a===''||s.a==null?'':fmt(s.a),b:s.b===''||s.b==null?'':fmt(s.b)}))}))};ui.edMode='routine';ui.editorOpen=true;renderAll()}
 function saveDraft(){const D=ui.draft;if(!D.exercises.length)return openDlg({title:'Routine vide',html:'<p class="dtext">Ajoute au moins un exercice avant d\'enregistrer.</p>',buttons:[{label:'OK',kind:'primary'}]});
   const r={id:D.id||uid(),name:D.name.trim()||'Ma routine',exercises:D.exercises.map(e=>({exId:e.exId,ss:e.ss||null,rest:e.rest,sets:e.sets.map(s=>({t:s.t,a:isNaN(num(s.a))?'':num(s.a),b:isNaN(num(s.b))?'':num(s.b)}))}))};
-  const i=S.routines.findIndex(x=>x.id===r.id);if(i>=0)S.routines[i]=r;else S.routines.push(r);
+  const i=S.routines.findIndex(x=>x.id===r.id);if(i>=0&&S.routines[i].prog)r.prog=S.routines[i].prog;if(i>=0)S.routines[i]=r;else S.routines.push(r);
   ui.draft=null;ui.editorOpen=false;ui.edMode='workout';save();ui.tab='seance';renderAll();flash('Routine enregistrée')}
 function closeDraft(){ui.draft=null;ui.editorOpen=false;ui.edMode='workout';renderAll()}
 
@@ -2115,8 +2125,11 @@ const ACTS={
   'start-empty'(){ensureNoActive(()=>startFrom({name:defaultName(),exercises:[]},null))},
   'start-routine'(id){const r=S.routines.find(r=>r.id===id);if(r)ensureNoActive(()=>startFrom(r,r.id))},
   'routine-menu'(id){const i=S.routines.findIndex(r=>r.id===id),r=S.routines[i];if(!r)return;
-    openSheet(r.name,[{label:'Modifier la routine',fn:()=>editRoutine(r)},{label:'Dupliquer',fn:()=>{S.routines.splice(i+1,0,{...clone(r),id:uid(),name:r.name+' (copie)'});save();renderMain()}},
+    openSheet(r.name,[{label:'Modifier la routine',fn:()=>editRoutine(r)},{label:'Partager avec un collègue',fn:()=>shareRoutine(r)},{label:'Dupliquer',fn:()=>{S.routines.splice(i+1,0,{...clone(r),id:uid(),name:r.name+' (copie)',prog:undefined});save();renderMain()}},
       {label:'Supprimer',danger:true,fn:()=>confirmDlg('Supprimer la routine ?',`« ${r.name} » sera supprimée. Ton historique ne change pas.`,'Supprimer',()=>{S.routines=S.routines.filter(x=>x.id!==id);save();renderMain()})}])},
+  'import-routine'(){importRoutineDlg()},
+  chrono(u){const E=findE(u);if(!E)return;const i=E.sets.findIndex(z=>!z.done);if(i<0)return flash('Toutes les séries sont validées : ajoute une série');chronoStart(u,i)},
+  'neg-open'(m){ui.tab='exercices';ui.xMuscle=m;ui.xq='';ui.xEquip='';renderMain()},
   'new-routine'(){ui.draft={id:null,name:'',exercises:[]};ui.edMode='routine';ui.editorOpen=true;renderAll();setTimeout(()=>{const n=$('#ed-name');if(n)n.focus()},80)},
   resume(){if(!S.active)return;ui.edMode='workout';ui.editorOpen=true;ui.draft=null;renderAll();wake(true)},
   'ed-min'(){if(ui.edMode==='routine'){if(ui.draft.exercises.length)return confirmDlg('Quitter sans enregistrer ?','Les modifications de la routine seront perdues.','Quitter',closeDraft);return closeDraft()}
@@ -2277,6 +2290,57 @@ function statsHTML(){const H=S.history;if(!H.length)return'';const vol=H.reduce(
   <div><span class="k">Semaines d'affilée</span><span class="v">${st.cur}</span></div><div><span class="k">Record d'affilée</span><span class="v">${st.best} sem.</span></div><div><span class="k">Moyenne / sem.</span><span class="v">${fmt(Math.round(H.length/Math.max(1,(Date.now()-H[H.length-1].start)/(7*864e5))*10)/10)}</span></div></div>
   <span class="k">Volume par mois (nombre de séances au-dessus)</span><svg class="chart" viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="Volume par mois sur 6 mois">${bars}</svg></section>`}
 
+/* ================= Partage de routine ================= */
+const b64e=t=>btoa(unescape(encodeURIComponent(t))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const b64d=t=>decodeURIComponent(escape(atob(t.replace(/-/g,'+').replace(/_/g,'/'))));
+function routineCode(r){const cus={};const e=r.exercises.map(x=>{const X=ex(x.exId);if(X.custom)cus[x.exId]={n:X.name,m:X.muscle,q:X.equip,t:X.type};return[x.exId,x.sets.map(z=>[z.t||'n',z.b===''||z.b==null?'':+z.b]),x.rest??S.settings.rest,x.ss||0]});
+  return'FONTE1:'+b64e(JSON.stringify({v:1,n:r.name,e,c:cus}))}
+function shareRoutine(r){const txt=`Routine « ${r.name} » pour Carnet de fonte.\nDans l'appli : Séance → Importer, puis colle tout ce message.\n${routineCode(r)}`;
+  const copy=()=>{const t=$('#shr');try{navigator.clipboard.writeText(txt).then(()=>flash('Copié : colle-le dans un message'),()=>{t.focus();t.select();flash('Sélectionné : copie-le manuellement')})}catch(e){t.focus();t.select()}return false};
+  openDlg({title:'Partager la routine',html:`<p class="dtext">Envoie ce message à ton collègue : il le colle dans <b>Séance → Importer</b>. Seuls les exercices, les séries et les reps visées sont partagés, pas tes charges.</p><textarea id="shr" class="ta" rows="5" readonly>${esc(txt)}</textarea>`,
+  buttons:[...(navigator.share?[{label:'Envoyer…',kind:'primary',fn:()=>{navigator.share({text:txt}).catch(()=>{});return false}}]:[]),{label:'Copier',kind:navigator.share?'soft':'primary',fn:copy},{label:'Fermer',kind:'soft'}]})}
+function parseRoutineCode(txt){const m=String(txt).match(/FONTE1:([A-Za-z0-9_-]+)/);if(!m)return null;try{const d=JSON.parse(b64d(m[1]));return d&&Array.isArray(d.e)?d:null}catch(e){return null}}
+function importRoutineDlg(){const err=t=>{const e=$('#rimp-err');e.textContent=t;e.hidden=false;return false};
+  openDlg({title:'Importer une routine',html:`<p class="dtext">Colle le message reçu d'un collègue : il contient un code qui commence par FONTE1.</p><textarea id="rimp" class="ta" rows="5" autofocus></textarea><p class="derr" id="rimp-err" hidden></p>`,
+  buttons:[{label:'Importer',kind:'primary',fn:()=>{const d=parseRoutineCode($('#rimp').value);if(!d)return err('Code introuvable ou abîmé : vérifie que tout le message a été collé.');
+    const map={};for(const id in (d.c||{})){if(EXI[id]&&!EXI[id].custom)continue;const c=d.c[id]||{};const same=allEx().find(x=>norm(x.name)===norm(c.n||''));if(same){map[id]=same.id;continue}
+      if(!c.n||!MUSCLES.includes(c.m)||!TYPES[c.t])continue;const nid='c-'+uid();S.custom.push({id:nid,name:String(c.n).slice(0,80),muscle:c.m,equip:EQUIP.includes(c.q)?c.q:'Autre',type:c.t});map[id]=nid;rebuildIndex()}
+    let skip=0;const exs=d.e.map(([id,sets,rest,ss])=>{id=map[id]||id;if(!EXI[id]){skip++;return null}
+      return{exId:id,ss:ss?String(ss):null,rest:Number.isFinite(+rest)?+rest:S.settings.rest,sets:(Array.isArray(sets)&&sets.length?sets:[['n','']]).slice(0,20).map(([t,b])=>({t:['n','w','d','f'].includes(t)?t:'n',a:'',b:b===''||b==null||!Number.isFinite(+b)?'':+b}))}}).filter(Boolean);
+    if(!exs.length)return err('Aucun exercice de cette routine n\'a été reconnu.');
+    const base=String(d.n||'Routine partagée').slice(0,60);let name=base,k=2;while(S.routines.some(r=>r.name===name))name=`${base} (${k++})`;
+    const R={id:uid(),name,exercises:exs};ssClean(R);S.routines.push(R);save();ui.tab='seance';renderAll();flash(skip?`Routine importée (${skip} exercice${skip>1?'s':''} ignoré${skip>1?'s':''})`:'Routine importée')}},{label:'Annuler',kind:'soft'}]})}
+
+/* ================= Chrono des séries en durée ================= */
+const fmtClock=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
+function chronoStart(u,i){const E=findE(u);if(!E)return;const X=ex(E.exId);const st=E.sets[i];if(!st)return;const tgt=num(st.b)||num(ph(E,i).b)||0;
+  ui.chrono={u,i,start:Date.now(),tgt,beeped:false};ensureAudio();
+  openDlg({title:'Chrono',html:`<p class="dtext">${esc(X.name)} · série ${i+1}${tgt?` · objectif ${fmtSec(tgt)}`:''}</p><div class="chr" id="chr-t">0:00</div>${tgt?'<div class="chr-track"><div class="chr-fill" id="chr-f"></div></div>':''}`,
+  buttons:[{label:'Arrêter et valider la série',kind:'primary',fn:()=>{const C=ui.chrono;ui.chrono=null;if(!C)return;const E2=findE(C.u);const s2=E2&&E2.sets[C.i];if(!s2)return;
+      s2.b=String(Math.max(1,Math.round((Date.now()-C.start)/1000)));if(s2.done){save();renderEditor();return}toggleDone(C.u,C.i)}},{label:'Annuler',kind:'soft',fn:()=>{ui.chrono=null}}]})}
+function chronoTick(){const C=ui.chrono;if(!C)return;if(!MODAL){ui.chrono=null;return}const sec=Math.floor((Date.now()-C.start)/1000);const el=$('#chr-t');if(el){const t=fmtClock(sec);if(el.textContent!==t)el.textContent=t}
+  const f=$('#chr-f');if(f)f.style.transform=`scaleX(${Math.min(1,sec/C.tgt)})`;
+  if(C.tgt&&!C.beeped&&sec>=C.tgt){C.beeped=true;beep();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}if(el)el.classList.add('ok')}}
+setInterval(chronoTick,250);
+
+/* ================= Muscles négligés ================= */
+const NEG_M=['Pectoraux','Dos','Épaules','Biceps','Triceps','Quadriceps','Ischios','Fessiers','Mollets','Abdos'];
+function neglected(){const H=S.history;if(H.length<4||Date.now()-H[H.length-1].start<14*864e5)return[];const last={};
+  for(const w of H)for(const e of w.exercises){const m=ex(e.exId).muscle;if(!(m in last)&&e.sets.some(z=>z.t!=='w'))last[m]=w.start}
+  return NEG_M.map(m=>({m,d:last[m]?Math.floor((Date.now()-last[m])/864e5):null})).filter(x=>x.d===null||x.d>=10).sort((a,b)=>(b.d??1e9)-(a.d??1e9)).slice(0,5)}
+function neglectHTML(){const L=neglected();if(!L.length)return'';
+  return`<section class="card negc"><div class="mini"><span class="k">Muscles à travailler</span><span class="s">Pas entraînés depuis au moins 10 jours</span></div><div class="negl">${L.map(x=>`<button class="chip" data-act="neg-open:${esc(x.m)}">${esc(x.m)} · ${x.d===null?'jamais':x.d+' j'}</button>`).join('')}</div></section>`}
+
+/* ================= Prochaine séance ================= */
+const isRoutineW=(w,r)=>w.routineId?w.routineId===r.id:w.name===r.name;
+function routineLast(r){const w=S.history.find(w=>isRoutineW(w,r));return w?w.start:0}
+function nextRoutine(){const R=S.routines;if(R.length<2||!S.history.length)return null;
+  const lw=S.history.find(w=>R.some(r=>isRoutineW(w,r)));if(!lw)return null;const lr=R.find(r=>isRoutineW(lw,r));
+  const cyc=lr.prog?R.filter(r=>r.prog===lr.prog):R.filter(r=>!r.prog&&routineLast(r)>Date.now()-45*864e5);if(cyc.length<2)return null;
+  let best=null,bt=Infinity;for(const r of cyc){if(r===lr)continue;const t=routineLast(r);if(t<bt){bt=t;best=r}}return best?{r:best,t:bt}:null}
+function nextHTML(){if(S.active)return'';const n=nextRoutine();if(!n)return'';const r=n.r,d=n.t?Math.floor((Date.now()-n.t)/864e5):null;
+  return`<section class="card nextc"><div class="mini"><span class="k">Prochaine séance</span><span class="v">${esc(r.name)}</span><span class="s">${d===null?'Pas encore faite':d===0?'Faite aujourd\'hui':`Dernière fois il y a ${d} jour${d>1?'s':''}`} · ${r.exercises.length} exercice${r.exercises.length>1?'s':''}</span></div><button class="btn btn-primary block" data-act="start-routine:${r.id}">${icon('play')}Démarrer</button></section>`}
+
 /* ================= Programmes ================= */
 const PROGRAMS=[
  {name:'Full body',desc:'3 séances par semaine, alterne A et B. Idéal pour débuter ou reprendre.',r:[['Full body A',[['Squat barre haute',3],['Développé couché barre',3],['Rowing barre buste penché',3],['Développé haltères assis',3],['Curl barre EZ',2],['Planche (gainage)',3]]],['Full body B',[['Soulevé de terre',3],['Développé incliné haltères',3],['Tractions pronation',3],['Fentes marchées haltères',3],['Extension triceps corde',2],['Relevés de jambes suspendu',3]]]]},
@@ -2290,7 +2354,7 @@ const PROGRAMS=[
  {name:'Dos et posture',desc:'Pour le haut du dos, les épaules et le cou. Bon complément si tu travailles assis.',r:[['Dos et posture',[['Face pull',3],['Upper back machine (rowing haut du dos)',3],['Rotation externe poulie',3],['Bird dog',2],['Cou isométrique avant et arrière',2],['Cou isométrique latéral',2]]]]},
  {name:'Mobilité 15 min',desc:'Étirements à faire après la séance ou les jours de repos. Note la durée tenue (30 à 45 s).',r:[['Mobilité',[["World's greatest stretch",2],['Chat-vache',2],['Étirement fléchisseurs de hanche à genou',2],['Étirement piriforme (cheville sur genou)',2],['Étirement ischios 90/90',2],['Étirement pectoraux et épaules au bâton',2],["Posture de l'enfant",1]]]]},
  {name:'Poids du corps',desc:'Sans matériel, juste une barre de traction.',r:[['Poids du corps',[['Pompes',4],['Tractions pronation',4],['Squat poids du corps',4],['Dips',3],['Fentes marchées poids du corps',3],['Planche (gainage)',3],['Relevés de genoux suspendu',3]]]]}];
-function progRoutines(P){return P.r.map(([n,L])=>({id:uid(),name:n,exercises:L.map(([e,k])=>({exId:slugify(e),rest:S.settings.rest,sets:Array.from({length:k},()=>({t:'n',a:'',b:''}))})).filter(e=>EXI[e.exId])}))}
+function progRoutines(P){return P.r.map(([n,L])=>({id:uid(),name:n,prog:P.name,exercises:L.map(([e,k])=>({exId:slugify(e),rest:S.settings.rest,sets:Array.from({length:k},()=>({t:'n',a:'',b:''}))})).filter(e=>EXI[e.exId])}))}
 function programsHTML(){return`<div class="sheet-head"><button class="btn-ghost" data-act="d-close">${icon('chev-down')}Fermer</button><div class="sh-title">Programmes</div><span style="width:70px"></span></div>
   <div class="sheet-body"><div class="wrapx dwrap"><p class="dtext">Ajoute un programme : ses séances deviennent des routines que tu peux modifier.</p>
   ${PROGRAMS.map((P,i)=>`<section class="card prog"><div class="rc-top"><h3>${esc(P.name)}</h3><span class="tag">${P.r.length} séance${P.r.length>1?'s':''}</span></div><p class="dtext">${esc(P.desc)}</p>
