@@ -5,3 +5,4 @@ www/
 keystore.properties
 android/app/release/
 build-debug.log
+android/app/google-services.json

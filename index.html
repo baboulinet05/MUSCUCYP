@@ -159,6 +159,9 @@ h3{margin:0;font:700 20px/1.15 var(--f-display);letter-spacing:.01em}
 .wu-timer text{font:700 36px var(--f-display);fill:var(--fg)}.wu-next{color:var(--muted);font-size:15px;margin:0}.btnrow.wu-btns{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:8px;flex-wrap:nowrap}.wu-btns .btn{width:100%;min-width:0;padding:0 6px}
 .btn-google{background:#fff;color:#1f1f1f;border:1px solid #dadce0;align-self:flex-start;gap:10px;font-weight:600}.btn-google .i{width:20px;height:20px}
 .sep{height:1px;background:var(--line);margin:4px 0}.okline .i[viewBox]{flex:none}
+.onb-hero{text-align:center;padding:12px 0 4px}.onb-hero h1{font-size:40px;margin:10px 0 6px}.onb-hero p{color:var(--muted);margin:0}.onb-hero .plates{justify-content:center}
+.onb-q{font-size:28px;margin:4px 0}.onb-opts{display:flex;flex-direction:column;gap:10px}.onb-opt{text-align:left;padding:16px;border-radius:14px;background:var(--raised);font-size:17px;font-weight:600;border:2px solid transparent}
+.onb-opt.on{border-color:var(--accent);background:var(--accent-soft)}.onb-r{display:flex;flex-direction:column;gap:4px}.onb-rh{display:flex;justify-content:space-between;gap:8px}.onb-r .rc-ex{margin:0}
 .kcal-line{display:flex;align-items:center;gap:6px;font-size:15px;margin:-4px 0 0}.kcal-line .i{color:var(--warm)}
 .swatches{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.sw{width:30px;height:30px;border-radius:50%;background:var(--c);border:3px solid transparent;box-shadow:0 0 0 1px var(--line)}.sw.on{border-color:var(--surface);box-shadow:0 0 0 2px var(--c)}
 .mnav{display:flex;align-items:center;justify-content:space-between;gap:8px}.mnav h2{font-size:26px;text-align:center;flex:1}.mnav .icon-btn[disabled]{opacity:.3}
@@ -1567,7 +1570,7 @@ const BUILTIN=[];
   for(const id in EDB_ANIM){const k=EDB_ANIM[id];if(INFO[id])INFO[id].gif=k;else INFO[id]={s:EDB_STEPS[id]||[],gif:k}}})();
 
 const KEY='carnet-fonte-v1';
-const APP_VERSION='2.8';
+const APP_VERSION='2.9';
 /* ================= Appli Android (Capacitor) ================= */
 const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const CP=NATIVE?window.Capacitor.Plugins:{};
@@ -1593,7 +1596,7 @@ function exampleRoutines(){
     R('Legs · exemple',[['Squat barre haute',4],['Soulevé de terre roumain barre',3],['Presse à cuisses',3],['Leg curl assis',3],['Mollets debout machine',4]])
   ];
 }
-const defaultSettings=()=>({fbUid:'',fbEmail:'',fbName:'',lbFb:false,accent:'rouge',lastReport:'',lbGist:'',lbName:'',showRare:false,mediaOffline:0,theme:'auto',gistId:'',ghLogin:'',lastSync:0,rest:90,sound:true,weekGoal:0,suggest:true,repLo:8,repHi:12,lastExport:0,backupSnooze:0});
+const defaultSettings=()=>({onboarded:0,profile:null,fbUid:'',fbEmail:'',fbName:'',lbFb:false,accent:'rouge',lastReport:'',lbGist:'',lbName:'',showRare:false,mediaOffline:0,theme:'auto',gistId:'',ghLogin:'',lastSync:0,rest:90,sound:true,weekGoal:0,suggest:true,repLo:8,repHi:12,lastExport:0,backupSnooze:0});
 const defaultState=()=>({v:1,settings:defaultSettings(),fav:[],friends:[],plan:{},vids:{},custom:[],routines:exampleRoutines(),history:[],active:null,body:[],goals:{},measures:[]});
 function load(){try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&Array.isArray(d.history))return{...defaultState(),...d,settings:{...defaultSettings(),...(d.settings||{})}}}}catch(e){}return null}
 let S=load()||defaultState();
@@ -1982,6 +1985,7 @@ function setView(){
     <div class="setrow"><span class="muted">Séances</span><b class="num">${S.history.length}</b></div>
     <div class="setrow"><span class="muted">Routines</span><b class="num">${S.routines.length}</b></div>
     <div class="setrow"><span class="muted">Exercices perso</span><b class="num">${S.custom.length}</b></div>
+    <button class="btn btn-soft block" data-act="onb-redo">Refaire le questionnaire (nouveau programme)</button>
     <button class="btn btn-danger block" data-act="wipe">Tout effacer</button></section>
   </div>`}
 
@@ -2109,7 +2113,7 @@ function pushDetail(d){ui.detail.push(d);renderDetail();renderRestBar()}
 function renderDetail(){const el=$('#detail');const d=ui.detail[ui.detail.length-1];
   if(!d){el.hidden=true;el.innerHTML='';return}
   if(d.kind==='w'&&!S.history.some(w=>w.id===d.id)){ui.detail.pop();return renderDetail()}
-  el.hidden=false;el.innerHTML=d.kind==='ex'?exDetailHTML(d.id):d.kind==='body'?bodyDetailHTML():d.kind==='meas'?measDetailHTML(d.id):d.kind==='records'?recordsHTML():d.kind==='programs'?programsHTML():d.kind==='month'?monthHTML(d.id):d.kind==='warm'?warmHTML():d.kind==='rec'?recHTML():d.kind==='plan'?planHTML():d.kind==='badges'?badgesHTML():d.kind==='lb'?lbHTML():wDetailHTML(d.id);el.querySelector('.sheet-body').scrollTop=0}
+  el.hidden=false;el.innerHTML=d.kind==='ex'?exDetailHTML(d.id):d.kind==='body'?bodyDetailHTML():d.kind==='meas'?measDetailHTML(d.id):d.kind==='records'?recordsHTML():d.kind==='programs'?programsHTML():d.kind==='month'?monthHTML(d.id):d.kind==='onb'?onbHTML():d.kind==='warm'?warmHTML():d.kind==='rec'?recHTML():d.kind==='plan'?planHTML():d.kind==='badges'?badgesHTML():d.kind==='lb'?lbHTML():wDetailHTML(d.id);el.querySelector('.sheet-body').scrollTop=0}
 function slines(sets,type){let n=0;return`<div class="slist">${sets.map(s=>{const l=s.t==='n'?String(++n):s.t==='w'?'É':s.t==='d'?'D':'F';return`<div class="sline"><span class="l ${s.t}">${l}</span><span>${esc(setStr(s,type))}${s.rir!=null?` <em class="rir">RIR ${s.rir}</em>`:''}</span><span class="e">${type==='w'&&s.t!=='w'&&s.a&&s.b?'1RM ~'+Math.round(e1rm(s.a,s.b)):''}</span></div>`}).join('')}</div>`}
 function chartSVG(pts,unit){
   if(pts.length<2)return`<p class="dtext" style="font-size:14px">Le graphique de progression apparaît après deux séances avec cet exercice.</p>`;
@@ -2291,8 +2295,17 @@ const ACTS={
   programs(){pushDetail({kind:'programs'})},
   'prog-add'(i){const P=PROGRAMS[+i];const R=progRoutines(P);S.routines.push(...R);save();ui.detail=[];renderAll();ui.tab='seance';renderMain();flash(R.length>1?`${R.length} routines ajoutées`:'Routine ajoutée')},
   'cloud-connect'(){cloudDlg()},
+  'onb-next'(){ui.onb.step++;renderDetail()},'onb-back'(){ui.onb.step--;renderDetail()},
+  'onb-pick'(k,v){ui.onb.a[k]=v;if(ui.onb.step<ONB_Q.length){ui.onb.step++;renderDetail()}else renderDetail()},
+  'onb-build'(){const kg=$('#onb-kg');if(kg)ui.onb.a.kg=kg.value;const a=ui.onb.a;if(!a.goal||!a.lvl||!a.where||!a.days){flash('Réponds à toutes les questions');return}ui.onb.prog=onbProgram(a);ui.onb.step=ONB_Q.length+1;renderDetail()},
+  'onb-go'(){onbSave();const r=S.routines.find(r=>r.id===ui.onb.prog[0].id);ui.detail=[];renderDetail();ui.tab='seance';renderMain();if(r)startFrom(r,r.id)},
+  'onb-done'(){onbSave();ui.detail=[];renderDetail();ui.tab='seance';renderMain();flash('Programme enregistré')},
+  'onb-skip'(){S.settings.onboarded=1;save();ui.detail=[];renderDetail()},
+  'onb-restore'(){S.settings.onboarded=1;save();ui.detail=[];renderDetail();ui.tab='reglages';renderMain()},
+  'onb-redo'(){onbStart()},
   'fb-login'(){fbSignIn()},'fb-push'(){if(!fbOn()){flash('Connexion à Google en cours, réessaie dans un instant');return}fbPush('flash')},
   'fb-pull'(){openDlg({title:'Récupérer la sauvegarde ?',html:'<p class="dtext">Les données de ce téléphone seront remplacées par la dernière sauvegarde de ton compte Google.</p>',buttons:[{label:'Récupérer',kind:'danger',fn:async()=>{try{const d=await fbRead();applyCloud(d);flash('Données récupérées')}catch(e){openDlg({title:'Récupération impossible',html:`<p class="dtext">${esc(/introuvable/.test(e.message)?'Aucune sauvegarde sur ce compte.':fbErr(e))}</p>`,buttons:[{label:'OK',kind:'primary'}]})}}},{label:'Annuler',kind:'soft'}]})},
+  'fb-delete'(){confirmDlg('Supprimer ton compte ?','Ta sauvegarde en ligne et ton profil du classement seront définitivement supprimés. Tes séances restent sur ce téléphone.','Supprimer définitivement',()=>fbDeleteAccount())},
   'fb-off'(){confirmDlg('Se déconnecter de Google ?','Ta sauvegarde reste sur ton compte. Ce téléphone arrêtera simplement de se synchroniser.','Se déconnecter',()=>fbSignOut())},
   'cloud-push'(){cloudPush(true)},
   'cloud-pull'(){openDlg({title:'Récupérer depuis le cloud ?',html:'<p class="dtext">Les données de ce téléphone seront remplacées par ta dernière sauvegarde GitHub.</p>',buttons:[{label:'Récupérer',kind:'danger',fn:async()=>{try{const d=await cloudRead(S.settings.gistId);applyCloud(d);flash('Données récupérées')}catch(e){openDlg({title:'Échec',html:`<p class="dtext">${esc(e.message)}</p>`,buttons:[{label:'OK',kind:'primary'}]})}}},{label:'Annuler',kind:'soft'}]})},
@@ -2613,8 +2626,10 @@ function fbLoad(){if(fbReady)return fbReady;const b=`https://www.gstatic.com/fir
     FB={au,fs,A:au.getAuth(app),D:fs.getFirestore(app)};try{FB.A.languageCode='fr'}catch(e){}
     return new Promise(ok=>{let first=true;au.onAuthStateChanged(FB.A,u=>{fbUser=u||null;if(first){first=false;ok(FB)}if(ui.tab==='reglages')renderMain()})})})
     .catch(e=>{fbReady=null;throw new Error('Impossible de joindre Google. Vérifie ta connexion internet.')});return fbReady}
+const NATIVE_G=()=>!!(NATIVE&&CP.FirebaseAuthentication);
+async function fbNativeCred(){const r=await CP.FirebaseAuthentication.signInWithGoogle();const t=r&&r.credential&&r.credential.idToken;if(!t)throw new Error('Connexion Google annulée.');return FB.au.GoogleAuthProvider.credential(t)}
 async function fbSignIn(){const b=document.querySelector('[data-act="fb-login"]');if(b){b.disabled=true;b.textContent='Connexion…'}
-  try{await fbLoad();const p=new FB.au.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
+  try{await fbLoad();if(NATIVE_G()){const c=await fbNativeCred();const r=await FB.au.signInWithCredential(FB.A,c);await fbAfterLogin(r.user);return}const p=new FB.au.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
     let cred;try{cred=await FB.au.signInWithPopup(FB.A,p)}catch(e){if(/popup-blocked|operation-not-supported/.test(e.code||'')){await FB.au.signInWithRedirect(FB.A,p);return}throw e}
     await fbAfterLogin(cred.user)}
   catch(e){if(b){b.disabled=false}renderMain();if(/popup-closed|cancelled-popup/.test(e.code||''))return;
@@ -2638,10 +2653,52 @@ async function fbPush(manual){if(!fbOn())return;if(fbBusy){fbPending=true;return
   finally{fbBusy=false;if(fbPending){fbPending=false;fbTimer=setTimeout(()=>fbPush(),3000)}}}
 async function fbRead(){await fbLoad();const{fs,D}=FB,uid=fbUser.uid;const m=await fs.getDoc(fs.doc(D,'users',uid));if(!m.exists())throw new Error('introuvable');
   const n=m.data().n||0;const P=await Promise.all(Array.from({length:n},(_,i)=>fs.getDoc(fs.doc(D,'users',uid,'chunks',String(i)))));const txt=P.map(x=>x.exists()?x.data().d:'').join('');const j=JSON.parse(txt);return j.data||j}
-async function fbSignOut(){try{await fbLoad();await FB.au.signOut(FB.A)}catch(e){}fbUser=null;S.settings.fbUid='';S.settings.fbEmail='';S.settings.fbName='';fbFlag(false);save();renderMain()}
+async function fbDeleteAccount(){if(!fbOn())return flash('Connecte-toi d\'abord avec Google');const{fs,D,au,A}=FB,uid=fbUser.uid;
+  try{const m=await fs.getDoc(fs.doc(D,'users',uid));const n=m.exists()?(m.data().n||0):0;const bt=fs.writeBatch(D);for(let i=0;i<Math.max(n,8);i++)bt.delete(fs.doc(D,'users',uid,'chunks',String(i)));
+    bt.delete(fs.doc(D,'users',uid));bt.delete(fs.doc(D,'profiles',uid));await bt.commit();
+    try{await au.deleteUser(fbUser)}catch(e){if(!/requires-recent-login/.test(e.code||''))throw e;
+      const c=NATIVE_G()?await fbNativeCred():null;if(c)await au.reauthenticateWithCredential(fbUser,c);else{const p=new au.GoogleAuthProvider();await au.reauthenticateWithPopup(fbUser,p)}await au.deleteUser(fbUser)}
+    S.settings.lbFb=false;await fbSignOut();openDlg({title:'Compte supprimé',html:'<p class="dtext">Ton compte et toutes tes données en ligne (sauvegarde et profil du classement) ont été supprimés. Tes séances restent sur ce téléphone : utilise <b>Tout effacer</b> si tu veux aussi les retirer.</p>',buttons:[{label:'OK',kind:'primary'}]})}
+  catch(e){openDlg({title:'Suppression impossible',html:`<p class="dtext">${esc(fbErr(e))}</p>`,buttons:[{label:'OK',kind:'primary'}]})}}
+async function fbSignOut(){try{await fbLoad();await FB.au.signOut(FB.A)}catch(e){}try{if(NATIVE_G())await CP.FirebaseAuthentication.signOut()}catch(e){}fbUser=null;S.settings.fbUid='';S.settings.fbEmail='';S.settings.fbName='';fbFlag(false);save();renderMain()}
 /* au démarrage : retrouver la session Google et finir une connexion par redirection */
-if(!NATIVE&&fbWanted())setTimeout(()=>{fbLoad().then(async()=>{try{const r=await FB.au.getRedirectResult(FB.A);if(r&&r.user)await fbAfterLogin(r.user)}catch(e){}
+if((!NATIVE||NATIVE_G())&&fbWanted())setTimeout(()=>{fbLoad().then(async()=>{try{const r=await FB.au.getRedirectResult(FB.A);if(r&&r.user)await fbAfterLogin(r.user)}catch(e){}
   if(fbUser&&!S.settings.fbUid){S.settings.fbUid=fbUser.uid;save()}if(fbOn()&&(!S.settings.lastSync||Date.now()-S.settings.lastSync>6*36e5))fbPush()}).catch(()=>{})},1200);
+
+
+/* ================= Accueil guidé : 4 questions → un programme ================= */
+const ONB_Q=[
+ ['goal','Ton objectif ?',[['muscle','💪 Prendre du muscle'],['force','🏋️ Gagner en force'],['seche','🔥 Perdre du gras'],['forme','🌿 Garder la forme']]],
+ ['lvl','Ton niveau ?',[['deb','Débutant · moins de 6 mois'],['inter','Intermédiaire · 6 mois à 2 ans'],['conf','Confirmé · plus de 2 ans']]],
+ ['where','Où t\'entraînes-tu ?',[['salle','Salle de sport complète'],['maison','Maison avec haltères'],['pdc','Au poids du corps']]],
+ ['days','Combien de séances par semaine ?',[['2','2 séances'],['3','3 séances'],['4','4 séances'],['5','5 séances'],['6','6 séances']]]];
+const ONB_EQ={salle:GEN_EQ.map(x=>x[0]),maison:['Haltères','Poids du corps','Élastique','Kettlebell'],pdc:['Poids du corps','Élastique']};
+const ONB_DAYS={2:[0,3],3:[0,2,4],4:[0,1,3,4],5:[0,1,2,4,5],6:[0,1,2,3,4,5]};
+function onbSplit(n,lvl){if(n<=2)return[['Full body A','full'],['Full body B','full']];if(n===3)return lvl==='deb'?[['Full body A','full'],['Full body B','full'],['Full body C','full']]:[['Haut du corps','haut'],['Bas du corps','bas'],['Full body','full']];
+  if(n===4)return[['Haut A','haut'],['Bas A','bas'],['Haut B','haut'],['Bas B','bas']];if(n===5)return[['Push','push'],['Pull','pull'],['Jambes','jambes'],['Haut du corps','haut'],['Bas du corps','bas']];
+  return[['Push A','push'],['Pull A','pull'],['Jambes A','jambes'],['Push B','push'],['Pull B','pull'],['Jambes B','jambes']]}
+function onbProgram(o){const n=+o.days,eq=ONB_EQ[o.where],dur=o.lvl==='deb'?45:o.lvl==='inter'?60:75;
+  const reps={force:[5,8,180,90],muscle:[8,12,150,75],seche:[12,15,75,45],forme:[10,12,90,60]}[o.goal];
+  return onbSplit(n,o.lvl).map(([name,zone])=>{const W=genWorkout({dur,zone,eq});W.exercises.forEach(e=>{const X=ex(e.exId),comp=COMPOUND.test(norm(X.name));
+      const nS=o.lvl==='deb'?3:comp&&o.goal==='force'?5:comp?4:3;e.rest=comp?reps[2]:reps[3];e.sets=Array.from({length:nS},()=>({t:'n',a:'',b:X.type==='t'?'40':String(comp?reps[0]:reps[1])}))});
+    return{id:uid(),name,exercises:W.exercises}})}
+function onbShouldShow(){if(S.settings.onboarded)return false;if(S.history.length||S.custom.length||S.routines.some(r=>!/· exemple$/.test(r.name))){S.settings.onboarded=1;save();return false}return true}
+function onbHTML(){const o=ui.onb||(ui.onb={step:0,a:{}});const top=`<div class="sheet-head"><button class="btn-ghost" data-act="onb-skip">Passer</button><div class="sh-title">${o.step&&o.step<=ONB_Q.length?`${o.step} / ${ONB_Q.length}`:''}</div><span style="width:70px"></span></div>`;
+  if(o.step===0)return top+`<div class="sheet-body"><div class="wrapx dwrap onb"><div class="onb-hero">${platesHTML()}<h1>Carnet de fonte</h1><p>Ton carnet de muscu : 1 600 exercices, tes records, ta progression. Gratuit, sans pub, sans abonnement.</p></div>
+    <p class="dtext">Réponds à 4 questions et je te prépare un programme complet, avec ton planning de la semaine.</p>
+    <button class="btn btn-primary block lg" data-act="onb-next">C'est parti</button><button class="btn btn-soft block" data-act="onb-restore">J'ai déjà une sauvegarde</button></div></div>`;
+  if(o.step<=ONB_Q.length){const[k,q,opts]=ONB_Q[o.step-1];return top+`<div class="sheet-body"><div class="wrapx dwrap onb"><div class="wu-prog">${ONB_Q.map((_,i)=>`<i class="${i<o.step-1?'on':i===o.step-1?'cur':''}"></i>`).join('')}</div><h2 class="onb-q">${q}</h2>
+    <div class="onb-opts">${opts.map(([v,l])=>`<button class="onb-opt ${o.a[k]===v?'on':''}" data-act="onb-pick:${k}:${v}">${l}</button>`).join('')}</div>
+    ${o.step===ONB_Q.length?`<label class="fld"><span>Ton poids (facultatif, pour les calories)</span><input id="onb-kg" type="text" inputmode="decimal" placeholder="ex. 78" value="${esc(o.a.kg||'')}"></label><button class="btn btn-primary block lg" data-act="onb-build" ${o.a.days?'':'disabled'}>Créer mon programme</button>`:''}
+    ${o.step>1?'<button class="btn-ghost" data-act="onb-back" style="align-self:flex-start">Retour</button>':''}</div></div>`}
+  const R=o.prog||[];const d=ONB_DAYS[R.length]||[];
+  return top+`<div class="sheet-body"><div class="wrapx dwrap onb"><h2 class="onb-q">Ton programme est prêt</h2><p class="dtext">${R.length} séances par semaine. Tu peux tout modifier ensuite dans tes routines.</p>
+    ${R.map((r,i)=>`<section class="card onb-r"><div class="onb-rh"><b>${esc(r.name)}</b><span class="muted">${DAYS[d[i]]||''}</span></div><p class="rc-ex">${esc(r.exercises.map(e=>ex(e.exId).name).join(' · '))}</p><span class="rc-meta">${r.exercises.length} exercices · ${r.exercises[0]?r.exercises[0].sets.length+' × '+r.exercises[0].sets[0].b:''}</span></section>`).join('')}
+    <button class="btn btn-primary block lg" data-act="onb-go">${icon('play')}Démarrer ma première séance</button><button class="btn btn-soft block" data-act="onb-done">Voir mes routines</button><button class="btn-ghost" data-act="onb-build" style="align-self:center">${icon('refresh')}Proposer d'autres exercices</button></div></div>`}
+function onbSave(){const o=ui.onb,R=o.prog||[];S.routines=S.routines.filter(r=>!/· exemple$/.test(r.name)).concat(R);S.plan={};(ONB_DAYS[R.length]||[]).forEach((d,i)=>{if(R[i])S.plan[d]=R[i].id});
+  S.settings.weekGoal=R.length;S.settings.onboarded=1;S.settings.profile={goal:o.a.goal,lvl:o.a.lvl,where:o.a.where};if(S.settings.profile.goal==='force'){S.settings.repLo=3;S.settings.repHi=6}else if(S.settings.profile.goal==='seche'){S.settings.repLo=12;S.settings.repHi=15}
+  const kg=num(o.a.kg);if(kg>30&&kg<300)S.body=(S.body||[]).concat([{id:uid(),t:Date.now(),kg}]);save()}
+function onbStart(){ui.onb={step:0,a:{}};pushDetail({kind:'onb'})}
 
 /* ================= Classement entre potes =================
    Chacun publie un petit profil public (stats de la semaine, régularité, records) dans un gist public de son GitHub.
@@ -2887,11 +2944,11 @@ function cloudCardHTML(){const gOn=ghToken()&&S.settings.gistId;const ago=t=>{co
   const last=`Dernière sauvegarde : ${S.settings.lastSync?ago(S.settings.lastSync):'jamais'}.`;
   const gBlock=gOn?`<p class="okline">${icon('cloud')}GitHub : @${esc(S.settings.ghLogin||'GitHub')}</p><div class="btnrow"><button class="btn btn-soft sm" data-act="cloud-push">Synchroniser GitHub</button><button class="btn btn-soft sm" data-act="cloud-pull">Récupérer depuis GitHub</button></div><button class="btn-ghost danger" data-act="cloud-off" style="align-self:flex-start">Déconnecter GitHub</button>`
     :`<button class="btn-ghost" data-act="cloud-connect" style="align-self:flex-start">${icon('cloud')}Utiliser GitHub à la place</button>`;
-  if(NATIVE)return`<section class="card setc"><h3>Synchro cloud</h3><p class="dtext">La connexion Google arrive bientôt dans l'appli Android. En attendant, tu peux sauvegarder avec GitHub.</p>${gBlock.replace('Utiliser GitHub à la place','Connecter GitHub')}</section>`;
+  if(NATIVE&&!NATIVE_G())return`<section class="card setc"><h3>Synchro cloud</h3><p class="dtext">La connexion Google arrive bientôt dans l'appli Android. En attendant, tu peux sauvegarder avec GitHub.</p>${gBlock.replace('Utiliser GitHub à la place','Connecter GitHub')}</section>`;
   const fbW=fbWanted()&&S.settings.fbUid;
   const gg=`<svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="stroke:none"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="#FBBC05" d="M6.4 14a6 6 0 0 1 0-3.9V7.5H3.1a10 10 0 0 0 0 9z"/><path fill="#EA4335" d="M12 6c1.5 0 2.8.5 3.8 1.5l2.8-2.8A10 10 0 0 0 3.1 7.5L6.4 10C7.2 7.8 9.4 6 12 6z"/></svg>`;
   return`<section class="card setc"><h3>Synchro cloud</h3>${fbW?`<p class="okline">${gg}${esc(S.settings.fbEmail||'Compte Google')}${fbUser?'':' <span class="muted">(connexion…)</span>'}</p><p class="dtext">Sauvegarde automatique après chaque modification. ${last}</p>
-    <div class="btnrow"><button class="btn btn-primary" data-act="fb-push">Sauvegarder maintenant</button><button class="btn btn-soft" data-act="fb-pull">Récupérer la sauvegarde</button></div><button class="btn-ghost danger" data-act="fb-off" style="align-self:flex-start">Se déconnecter de Google</button>`
+    <div class="btnrow"><button class="btn btn-primary" data-act="fb-push">Sauvegarder maintenant</button><button class="btn btn-soft" data-act="fb-pull">Récupérer la sauvegarde</button></div><div class="btnrow"><button class="btn-ghost danger" data-act="fb-off">Se déconnecter de Google</button><button class="btn-ghost danger" data-act="fb-delete">Supprimer mon compte</button></div>`
     :`<p class="dtext">Sauvegarde automatique de tes séances sur ton compte Google. Pratique si tu changes de téléphone, et nécessaire pour le classement entre potes.</p><button class="btn btn-google" data-act="fb-login">${gg}Se connecter avec Google</button>`}
     ${gOn||!fbW?`<div class="sep"></div>${gBlock}`:''}</section>`}
 
@@ -2933,7 +2990,7 @@ if(S.active){ui.edMode='workout';ui.editorOpen=true}
 applyTheme();renderAll();save();
 setTimeout(()=>maybeInstallPrompt(),1200);
 if(MEDIA_MODE==='packs'){new MutationObserver(hydrate).observe(document.body,{childList:true,subtree:true});hydrate()}
-setTimeout(checkShareLink,300);setTimeout(checkFriendLink,320);setTimeout(checkMonthReport,1200);setTimeout(()=>checkBadges(true),1500);
+setTimeout(()=>{if(!location.hash&&onbShouldShow())onbStart()},250);setTimeout(checkShareLink,300);setTimeout(checkFriendLink,320);setTimeout(checkMonthReport,1200);setTimeout(()=>checkBadges(true),1500);
 if('serviceWorker'in navigator&&!NATIVE&&document.querySelector('link[rel="manifest"]')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 </script>
 

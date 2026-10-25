@@ -5,7 +5,7 @@ quand tu modifies `index.html`, tu recopies et tu recompiles (voir « Mettre à 
 
 ## Ce qui est déjà prêt
 
-- Le projet Android : identifiant `io.github.baboulinet05.fonte`, cible Android 16 (API 36), version 2.8.
+- Le projet Android : identifiant `io.github.baboulinet05.fonte`, cible Android 16 (API 36), version 2.9.
 - L'icône, l'écran de démarrage et l'icône de notification.
 - La notification de fin de repos quand l'écran est verrouillé, le bouton retour d'Android, l'export de
   sauvegarde par le menu Partager.
@@ -37,8 +37,14 @@ quand tu modifies `index.html`, tu recopies et tu recompiles (voir « Mettre à 
   - Annonces : « Non, mon appli ne contient pas d'annonces ».
   - Classification du contenu : catégorie « Toutes les autres applications », réponds « Non » partout.
   - Public cible : 18 ans et plus (ou 13 ans et plus). Ce n'est pas une appli pour enfants.
-  - Sécurité des données : « Aucune donnée collectée ni partagée ». Les données restent sur l'appareil ;
-    la synchro GitHub est faite par l'utilisateur vers son propre compte.
+  - Sécurité des données (avec la connexion Google, il faut déclarer ces données) :
+    - **Collectées** : adresse e-mail et identifiant du compte (connexion Google), données d'activité
+      physique (séances, pesées) pour la sauvegarde, pseudo et statistiques pour le classement si
+      l'utilisateur l'active. **Partagées** : aucune (Firebase est un sous-traitant, pas un partage).
+    - Chiffrées en transit : oui. Suppression possible : oui, dans l'appli (Réglages → Synchro cloud →
+      Supprimer mon compte).
+    - Lien de suppression du compte demandé par Google : l'adresse de la politique de confidentialité
+      (section « Suppression »).
   - Appli d'actualité, santé, finance… : réponds « Non ». Pour Santé, coche seulement « Fitness » si on
     te le demande.
 
@@ -98,8 +104,25 @@ TES DONNÉES T'APPARTIENNENT
 **Catégorie** : Santé et remise en forme
 **Adresse e-mail de contact** : à choisir (elle est affichée publiquement sur la fiche).
 
+## Connexion Google dans l'appli Android (à faire une fois, sur ton PC)
+La version web utilise une fenêtre Google ; l'appli Android passe par le sélecteur de compte natif
+d'Android (plugin `@capacitor-firebase/authentication`, déjà ajouté à `package.json`).
+1. Dans `mobile/` : `npm install`, puis `npm run sync`.
+   Si npm refuse la version du plugin, lance `npm install @capacitor-firebase/authentication@latest`.
+2. Récupère les empreintes de ta clé : dans `mobile/android`, lance `.\gradlew.bat signingReport`
+   et note les lignes **SHA1** et **SHA-256** de la variante `release` (et `debug` pour tes tests).
+3. Console Firebase → Paramètres du projet → **Vos applications → Ajouter une application → Android** :
+   nom du package `io.github.baboulinet05.fonte`, puis colle le SHA-1. Ajoute aussi le SHA-256 dans la
+   fiche de l'appli Android.
+4. Télécharge le fichier **google-services.json** proposé et mets-le dans `mobile/android/app/`.
+   Ne l'envoie pas sur GitHub : il est déjà dans `.gitignore`.
+5. Quand l'appli sera sur le Play Store : console Play → **Intégrité de l'appli** → copie l'empreinte
+   SHA-1 de la **clé de signature d'application** (celle de Google) et ajoute-la aussi dans Firebase.
+   Sans elle, la connexion Google ne marchera pas dans la version téléchargée depuis le store.
+6. Recompile : `.\build-android.ps1`. Le bouton « Se connecter avec Google » apparaît dans Réglages.
+
 ## Récupérer ses données depuis la version web (iPhone ou navigateur)
-La version Play Store ne voit pas les données de la version web. Pour les récupérer :
+Le plus simple : se connecter avec le même compte Google sur les deux. Sinon :
 1. Dans la version web : **Réglages → Exporter → Copier** (ou Télécharger le fichier).
 2. Dans l'appli Android : **Réglages → Coller une sauvegarde** (ou Importer un fichier).
 

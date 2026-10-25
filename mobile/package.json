@@ -1,6 +1,6 @@
 {
   "name": "carnet-de-fonte-mobile",
-  "version": "2.2.0",
+  "version": "2.9.0",
   "private": true,
   "description": "Carnet de fonte pour Android (Capacitor)",
   "scripts": {
@@ -14,7 +14,8 @@
     "@capacitor/core": "^8.5.3",
     "@capacitor/filesystem": "^8.1.5",
     "@capacitor/local-notifications": "^8.3.1",
-    "@capacitor/share": "^8.0.3"
+    "@capacitor/share": "^8.0.3",
+    "@capacitor-firebase/authentication": "^8.0.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.3"
