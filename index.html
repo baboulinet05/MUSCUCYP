@@ -1509,6 +1509,23 @@ const BUILTIN=[];
 
 const KEY='carnet-fonte-v1';
 const APP_VERSION='2.2';
+/* ================= Appli Android (Capacitor) ================= */
+const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+const CP=NATIVE?window.Capacitor.Plugins:{};
+async function nativeExport(txt){const name=`carnet-fonte-${new Date().toISOString().slice(0,10)}.json`;
+  try{const r=await CP.Filesystem.writeFile({path:name,data:txt,directory:'CACHE',encoding:'utf8'});await CP.Share.share({title:'Sauvegarde Carnet de fonte',files:[r.uri],dialogTitle:'Enregistrer la sauvegarde'});markExport()}
+  catch(e){if(!/cancel/i.test(String(e&&e.message)))flash('Enregistrement impossible : utilise Copier')}}
+/* notification de fin de repos, programmée seulement quand l'appli passe en arrière-plan */
+let notifAsked=false;
+async function askNotif(){if(!NATIVE||notifAsked||!CP.LocalNotifications)return;notifAsked=true;const LN=CP.LocalNotifications;
+  try{await LN.createChannel({id:'repos',name:'Fin du repos',description:'Prévient quand le temps de repos est écoulé',importance:5,vibration:true,visibility:1})}catch(e){}
+  try{const p=await LN.checkPermissions();if(p.display!=='granted')await LN.requestPermissions()}catch(e){}}
+async function restNotif(){if(!NATIVE||!CP.LocalNotifications)return;const LN=CP.LocalNotifications;try{await LN.cancel({notifications:[{id:1}]})}catch(e){}
+  const r=S.active&&S.active.rest;if(!r||document.visibilityState!=='hidden'||r.end<=Date.now()+1000)return;
+  try{await LN.schedule({notifications:[{id:1,title:'Repos terminé',body:'Série suivante : '+(S.active.name||'séance'),channelId:'repos',schedule:{at:new Date(r.end),allowWhileIdle:true}}]})}catch(e){}}
+if(NATIVE){document.addEventListener('visibilitychange',restNotif);
+  if(CP.App)CP.App.addListener('backButton',()=>{if(MODAL)return closeDlg();if(ui.detail.length){ui.detail.pop();renderDetail();renderRestBar();return}
+    if(ui.picker)return ACTS['p-close']();if(ui.editorOpen)return ACTS['ed-min']();if(ui.tab!=='seance'){ui.tab='seance';renderMain();return}CP.App.minimizeApp()})}
 function exampleRoutines(){
   const R=(name,list)=>({id:uid(),name,exercises:list.map(([n,k])=>({exId:slug(n),rest:90,sets:Array.from({length:k},()=>({t:'n',a:'',b:''}))}))});
   return[
@@ -1878,7 +1895,7 @@ function setView(){
   <section class="card setc"><h3>Importer depuis Hevy</h3>
     <ol class="steps"><li>Dans Hevy : <b>Profil → Réglages → Exporter et importer des données → Exporter les données</b>.</li><li>Enregistre le fichier CSV dans Fichiers.</li><li>Choisis-le ici : tes séances arrivent dans l'historique, avec la colonne « Précédent » et les records.</li></ol>
     <button class="btn btn-primary" data-act="hevy-file">Choisir le fichier Hevy</button></section>
-  <section class="card setc"><h3>Installer sur l'iPhone</h3>
+  <section class="card setc" ${NATIVE?'hidden':''}><h3>Installer sur l'iPhone</h3>
     ${standalone?`<p class="okline">${icon('check')}L'app est installée sur ton écran d'accueil.</p>`:`<button class="btn btn-soft" data-act="install-help" style="align-self:flex-start">Afficher le mode d'emploi</button><ol class="steps"><li>Ouvre l'app dans <b>Safari</b>.</li><li>Touche <b>Partager</b>, puis <b>Sur l'écran d'accueil</b>.</li><li>Lance-la depuis l'icône : elle s'ouvre en plein écran et marche hors ligne.</li></ol>`}</section>
   <section class="card setc"><h3>Données</h3>
     <div class="setrow"><span class="muted">Version de l'app</span><b class="num">${APP_VERSION}</b></div>
@@ -2068,7 +2085,7 @@ function wDetailHTML(id){const w=S.history.find(w=>w.id===id);
   </div></div>`}
 
 /* ================= Minuteur de repos ================= */
-function startRest(sec){if(!S.active||!sec)return;S.active.rest={end:Date.now()+sec*1000,total:sec};renderRestBar()}
+function startRest(sec){if(!S.active||!sec)return;askNotif();S.active.rest={end:Date.now()+sec*1000,total:sec};renderRestBar()}
 function renderRestBar(){const el=$('#restbar');const r=S.active&&S.active.rest;
   const show=r&&ui.editorOpen&&ui.edMode==='workout'&&!ui.picker&&!ui.detail.length;
   if(!show){el.hidden=true;el.innerHTML='';return}
@@ -2203,7 +2220,7 @@ const ACTS={
   'rest-skip'(){if(S.active)S.active.rest=null;save();renderRestBar();renderResume()},
   'toggle-sound'(){S.settings.sound=!S.settings.sound;save();renderMain();if(S.settings.sound){ensureAudio();beep()}},
   export(){const txt=JSON.stringify(S);openDlg({title:'Exporter mes données',html:`<p class="dtext">Garde ce texte ou ce fichier en lieu sûr. Il contient tes séances, routines et exercices perso.</p><textarea id="exp" class="ta" readonly rows="5">${esc(txt)}</textarea>`,
-    buttons:[{label:'Copier',kind:'primary',fn:()=>{copyText(txt);return false}},...(document.querySelector('link[rel="manifest"]')?[{label:'Télécharger le fichier',kind:'soft',fn:()=>{download(txt);return false}}]:[]),{label:'Fermer',kind:'soft'}]})},
+    buttons:[{label:'Copier',kind:'primary',fn:()=>{copyText(txt);return false}},...(NATIVE?[{label:'Enregistrer le fichier',kind:'soft',fn:()=>{nativeExport(txt);return false}}]:document.querySelector('link[rel="manifest"]')?[{label:'Télécharger le fichier',kind:'soft',fn:()=>{download(txt);return false}}]:[]),{label:'Fermer',kind:'soft'}]})},
   'import-file'(){$('#fileIn').click()},
   'hevy-file'(){$('#hevyIn').click()},
   'import-paste'(){openDlg({title:'Coller une sauvegarde',html:`<p class="dtext">Colle ici le texte exporté depuis l'app.</p><textarea id="imp" class="ta" rows="6" autofocus></textarea>`,buttons:[{label:'Importer',kind:'primary',fn:()=>{const v=$('#imp').value.trim();if(!v)return false;applyImport(v)}},{label:'Annuler',kind:'soft'}]})},
@@ -2430,7 +2447,7 @@ const ADD_SVG='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" strok
 function installSnoozed(){try{return +localStorage.getItem('fonte-install-later')>Date.now()}catch(e){return false}}
 function snoozeInstall(days){try{localStorage.setItem('fonte-install-later',String(Date.now()+days*864e5))}catch(e){}}
 let installShown=false;
-function maybeInstallPrompt(force){if(isStandalone()||!document.querySelector('link[rel="manifest"]'))return;if(!force&&(installShown||installSnoozed()||MODAL))return;
+function maybeInstallPrompt(force){if(NATIVE||isStandalone()||!document.querySelector('link[rel="manifest"]'))return;if(!force&&(installShown||installSnoozed()||MODAL))return;
   const ios=isIOS();if(!ios&&!deferredInstall&&!force)return;installShown=true;
   const other=ios&&/CriOS|FxiOS|EdgiOS/.test(navigator.userAgent);
   const steps=ios?`<ol class="inst">
@@ -2452,7 +2469,7 @@ if(S.active){ui.edMode='workout';ui.editorOpen=true}
 applyTheme();renderAll();save();
 setTimeout(()=>maybeInstallPrompt(),1200);
 if(MEDIA_MODE==='packs'){new MutationObserver(hydrate).observe(document.body,{childList:true,subtree:true});hydrate()}
-if('serviceWorker'in navigator&&document.querySelector('link[rel="manifest"]')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+if('serviceWorker'in navigator&&!NATIVE&&document.querySelector('link[rel="manifest"]')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 </script>
 
 </body>

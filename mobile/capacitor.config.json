@@ -1,0 +1,15 @@
+{
+  "appId": "io.github.baboulinet05.fonte",
+  "appName": "Carnet de fonte",
+  "webDir": "www",
+  "backgroundColor": "#0E1012",
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_fonte",
+      "iconColor": "#EE4B3F"
+    }
+  }
+}
