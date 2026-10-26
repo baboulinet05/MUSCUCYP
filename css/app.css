@@ -1,3 +1,8 @@
+@font-face{font-family:'Figtree';src:url(../media/fonts/figtree.woff) format('woff');font-weight:300 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Barlow Condensed';src:url(../media/fonts/barlow-condensed-Medium.woff) format('woff');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Barlow Condensed';src:url(../media/fonts/barlow-condensed-SemiBold.woff) format('woff');font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:'Barlow Condensed';src:url(../media/fonts/barlow-condensed-Bold.woff) format('woff');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'Barlow Condensed';src:url(../media/fonts/barlow-condensed-ExtraBold.woff) format('woff');font-weight:800;font-style:normal;font-display:swap}
 /* Layout: app shell — scrolling view + bottom tab bar; séance, sélecteur d'exercices et fiches en feuilles plein écran. Plaques de compétition comme repères de couleur. */
 :root{
   --bg:#F1F3F5; --surface:#FFFFFF; --raised:#E8EBEE; --fg:#14171A; --muted:#5F6871; --line:#D9DEE3;

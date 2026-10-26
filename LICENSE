@@ -14,6 +14,7 @@ Contenus tiers inclus, qui restent soumis à leurs propres conditions :
   (github.com/hitmanrepo/open-exercise-illustrations, CC0 domaine public).
 - Noms et étapes d'une partie des exercices : adaptés de exercises-dataset
   (github.com/hasaneyldrm/exercises-dataset, licence MIT).
+- Polices Figtree et Barlow Condensed (media/fonts) : SIL Open Font License 1.1.
 - Génération de QR codes (lib/qrcode.js) : qrcode-generator, licence MIT,
   © Kazuhiko Arase.
 
