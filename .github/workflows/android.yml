@@ -40,7 +40,7 @@ jobs:
           GSJ: ${{ secrets.GOOGLE_SERVICES_JSON }}
         working-directory: mobile/android
         run: |
-          if [ -n "$GSJ" ]; then printf '%s' "$GSJ" > app/google-services.json; echo "google-services.json : ok"; else echo "google-services.json absent : la connexion Google ne marchera pas dans cet APK"; fi
+          if [ -n "$GSJ" ]; then printf '%s' "$GSJ" > app/google-services.json; echo "::notice title=Firebase::google-services.json présent, connexion Google activée"; else echo "::warning title=Firebase::google-services.json absent, la connexion Google ne marchera pas"; fi
           if [ -n "$KS" ]; then
             echo "$KS" | base64 -d > upload-key.jks
             printf 'storeFile=upload-key.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$KS_PASS" "$KEY_ALIAS" "$KEY_PASS" > keystore.properties
