@@ -5,7 +5,7 @@ quand tu modifies `index.html`, tu recopies et tu recompiles (voir « Mettre à 
 
 ## Ce qui est déjà prêt
 
-- Le projet Android : identifiant `io.github.baboulinet05.fonte`, cible Android 16 (API 36), version 3.1.
+- Le projet Android : identifiant `fr.carnetdefonte.app`, cible Android 16 (API 36), version 3.1.
 - L'icône, l'écran de démarrage et l'icône de notification.
 - La notification de fin de repos quand l'écran est verrouillé, le bouton retour d'Android, l'export de
   sauvegarde par le menu Partager.
@@ -119,7 +119,7 @@ d'Android (plugin `@capacitor-firebase/authentication`, déjà ajouté à `packa
 2. Récupère les empreintes de ta clé : dans `mobile/android`, lance `.\gradlew.bat signingReport`
    et note les lignes **SHA1** et **SHA-256** de la variante `release` (et `debug` pour tes tests).
 3. Console Firebase → Paramètres du projet → **Vos applications → Ajouter une application → Android** :
-   nom du package `io.github.baboulinet05.fonte`, puis colle le SHA-1. Ajoute aussi le SHA-256 dans la
+   nom du package `fr.carnetdefonte.app`, puis colle le SHA-1. Ajoute aussi le SHA-256 dans la
    fiche de l'appli Android.
 4. Télécharge le fichier **google-services.json** proposé et mets-le dans `mobile/android/app/`.
    Ne l'envoie pas sur GitHub : il est déjà dans `.gitignore`.

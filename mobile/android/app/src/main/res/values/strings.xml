@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Carnet de fonte</string>
     <string name="title_activity_main">Carnet de fonte</string>
-    <string name="package_name">io.github.baboulinet05.fonte</string>
-    <string name="custom_url_scheme">io.github.baboulinet05.fonte</string>
+    <string name="package_name">fr.carnetdefonte.app</string>
+    <string name="custom_url_scheme">fr.carnetdefonte.app</string>
 </resources>

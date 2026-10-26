@@ -5,10 +5,10 @@ def keystoreProps = new Properties()
 if (keystorePropsFile.exists()) { keystoreProps.load(new FileInputStream(keystorePropsFile)) }
 
 android {
-    namespace = "io.github.baboulinet05.fonte"
+    namespace = "fr.carnetdefonte.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "io.github.baboulinet05.fonte"
+        applicationId "fr.carnetdefonte.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 3

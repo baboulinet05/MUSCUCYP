@@ -1,4 +1,4 @@
-package io.github.baboulinet05.fonte;
+package fr.carnetdefonte.app;
 
 import com.getcapacitor.BridgeActivity;
 
