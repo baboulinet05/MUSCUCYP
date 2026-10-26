@@ -1,0 +1,73 @@
+name: Android
+# Compile l'appli Android dans le cloud, sans PC.
+# - Toujours : un APK de test (app-debug.apk) à installer directement sur un téléphone.
+# - Si les secrets de signature sont présents : le bundle signé pour le Play Store (app-release.aab)
+#   et un APK signé. Secrets à créer dans GitHub → Settings → Secrets and variables → Actions :
+#     ANDROID_KEYSTORE_BASE64  (le fichier upload-key.jks encodé en base64)
+#     ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+#     GOOGLE_SERVICES_JSON     (contenu du fichier google-services.json, pour la connexion Google)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['index.html', 'css/**', 'js/**', 'media/**', 'lib/**', 'mobile/**', '.github/workflows/android.yml']
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Préparer l'appli (copie du site + Capacitor)
+        working-directory: mobile
+        run: |
+          npm install --no-audit --no-fund
+          npm run sync
+      - name: Clé de signature et Firebase (si configurés)
+        id: secrets
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          GSJ: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        working-directory: mobile/android
+        run: |
+          if [ -n "$GSJ" ]; then printf '%s' "$GSJ" > app/google-services.json; echo "google-services.json : ok"; else echo "google-services.json absent : la connexion Google ne marchera pas dans cet APK"; fi
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > upload-key.jks
+            printf 'storeFile=upload-key.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$KS_PASS" "$KEY_ALIAS" "$KEY_PASS" > keystore.properties
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else echo "Pas de clé de signature : seul l'APK de test sera produit"; fi
+      - name: Compiler l'APK de test
+        working-directory: mobile/android
+        run: chmod +x gradlew && ./gradlew assembleDebug --console=plain
+      - name: Compiler le bundle signé (Play Store)
+        if: steps.secrets.outputs.signed == 'true'
+        working-directory: mobile/android
+        run: |
+          ./gradlew bundleRelease assembleRelease --console=plain
+          echo "Empreintes de la clé (à copier dans Firebase) :"
+          keytool -list -v -keystore upload-key.jks -storepass "$(grep storePassword keystore.properties | cut -d= -f2-)" | grep -E 'SHA1|SHA256'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-de-test
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+      - uses: actions/upload-artifact@v4
+        if: steps.secrets.outputs.signed == 'true'
+        with:
+          name: play-store
+          path: |
+            mobile/android/app/build/outputs/bundle/release/app-release.aab
+            mobile/android/app/build/outputs/apk/release/app-release.apk
+      - name: Nettoyer la clé
+        if: always()
+        working-directory: mobile/android
+        run: rm -f upload-key.jks keystore.properties app/google-services.json
