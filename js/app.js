@@ -45,7 +45,7 @@ const BUILTIN=[];
   for(const id in REPDB){const[k,one]=REPDB[id].split(':');if(INFO[id])INFO[id].rp=k;else INFO[id]={s:[],rp:k};INFO[id].rp1=!!one}})();
 
 const KEY='carnet-fonte-v1';
-const APP_VERSION='3.1';
+const APP_VERSION='3.2';
 /* ================= Appli Android (Capacitor) ================= */
 const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const CP=NATIVE?window.Capacitor.Plugins:{};
@@ -73,7 +73,8 @@ function exampleRoutines(){
 }
 const defaultSettings=()=>({deloadUntil:0,deloadLast:0,deloadSnooze:0,onboarded:0,profile:null,fbUid:'',fbEmail:'',fbName:'',lbFb:false,accent:'rouge',lastReport:'',lbGist:'',lbName:'',showRare:false,mediaOffline:0,theme:'auto',gistId:'',ghLogin:'',lastSync:0,rest:90,sound:true,weekGoal:0,suggest:true,repLo:8,repHi:12,lastExport:0,backupSnooze:0});
 const defaultState=()=>({v:1,settings:defaultSettings(),fav:[],friends:[],plan:{},vids:{},custom:[],routines:exampleRoutines(),history:[],active:null,body:[],goals:{},measures:[]});
-function load(){try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&Array.isArray(d.history))return{...defaultState(),...d,settings:{...defaultSettings(),...(d.settings||{})}}}}catch(e){}return null}
+function load(){let r=null;try{r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&Array.isArray(d.history))return{...defaultState(),...d,settings:{...defaultSettings(),...(d.settings||{})}}}}catch(e){}
+  if(r)try{localStorage.setItem(KEY+'-illisible-'+Date.now(),r)}catch(e){}return null}
 let S=load()||defaultState();
 let storageOK=true;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}catch(e){storageOK=false}try{if(typeof cloudDirty==='function')cloudDirty()}catch(e){}}
@@ -1120,8 +1121,10 @@ const NATIVE_G=()=>!!(NATIVE&&CP.FirebaseAuthentication);
 async function fbNativeCred(){const r=await CP.FirebaseAuthentication.signInWithGoogle();const t=r&&r.credential&&r.credential.idToken;if(!t)throw new Error('Connexion Google annulée.');return FB.au.GoogleAuthProvider.credential(t)}
 async function fbSignIn(){const b=document.querySelector('[data-act="fb-login"]');if(b){b.disabled=true;b.textContent='Connexion…'}
   try{await fbLoad();if(NATIVE_G()){const c=await fbNativeCred();const r=await FB.au.signInWithCredential(FB.A,c);await fbAfterLogin(r.user);return}const p=new FB.au.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
+    const slow=setTimeout(()=>{const x=document.querySelector('[data-act="fb-login"]');if(x){x.disabled=false;x.textContent='Se connecter avec Google'}if(!fbUser)openDlg({title:'La connexion traîne ?',html:'<p class="dtext">Si la fenêtre Google est restée bloquée, ferme-la (« OK » ou « Terminé » en haut) puis essaie l\'autre méthode.</p>',buttons:[{label:'Essayer une autre méthode',kind:'primary',fn:()=>{FB.au.signInWithRedirect(FB.A,p).catch(e=>openDlg({title:'Connexion impossible',html:`<p class="dtext">${esc(fbErr(e))}</p>`,buttons:[{label:'OK',kind:'primary'}]}))}},{label:'Attendre',kind:'soft'}]})},20000);
     let cred;try{cred=await FB.au.signInWithPopup(FB.A,p)}catch(e){if(/popup-blocked|operation-not-supported/.test(e.code||'')){await FB.au.signInWithRedirect(FB.A,p);return}throw e}
-    await fbAfterLogin(cred.user)}
+    finally{clearTimeout(slow)}
+    if(MODAL&&MODAL.title==='La connexion traîne ?')closeDlg();await fbAfterLogin(cred.user)}
   catch(e){if(b){b.disabled=false}renderMain();if(/popup-closed|cancelled-popup/.test(e.code||''))return;
     openDlg({title:'Connexion impossible',html:`<p class="dtext">${esc(fbErr(e))}</p>`,buttons:[{label:'OK',kind:'primary'}]})}}
 function fbErr(e){const c=e&&e.code||'';if(/unauthorized-domain/.test(c))return'Ce site n\'est pas autorisé dans Firebase : ajoute baboulinet05.github.io dans Authentication → Paramètres → Domaines autorisés.';
@@ -1132,15 +1135,21 @@ async function fbAfterLogin(u){fbUser=u;S.settings.fbUid=u.uid;S.settings.fbEmai
   if(!d){await fbPush(true);renderMain();return openDlg({title:'Compte Google connecté',html:`<p class="dtext">Connecté avec <b>${esc(u.email||'ton compte Google')}</b>. Tes données sont maintenant sauvegardées automatiquement après chaque modification.</p>`,buttons:[{label:'Super',kind:'primary'}]})}
   const n=(d.history||[]).length;if(!S.history.length){applyCloud(d);return flash(`${n} séance${n>1?'s':''} restaurée${n>1?'s':''}`)}
   openDlg({title:'Sauvegarde trouvée',html:`<p class="dtext">Ton compte Google contient déjà une sauvegarde : <b>${n} séance${n>1?'s':''}</b>. Ce téléphone en a <b>${S.history.length}</b>.</p>`,
-    buttons:[{label:'Récupérer la sauvegarde',kind:'primary',fn:()=>{applyCloud(d);flash('Données récupérées')}},{label:'Garder ce téléphone',kind:'soft',fn:()=>{fbPush(true)}}]})}
-async function fbPush(manual){if(!fbOn())return;if(fbBusy){fbPending=true;return}fbBusy=true;clearTimeout(fbTimer);
+    buttons:[{label:'Récupérer la sauvegarde',kind:'primary',fn:()=>{applyCloud(d);flash('Données récupérées')}},{label:'Garder ce téléphone',kind:'soft',fn:()=>{fbPush('force')}}]})}
+async function fbPush(manual){if(!fbOn())return;if(manual==='force')fbConflictShown=false;if(fbBusy){fbPending=true;return}fbBusy=true;clearTimeout(fbTimer);
   try{const{fs,D}=FB,uid=fbUser.uid,txt=cloudPayload(),parts=[];for(let i=0;i<txt.length;i+=FB_CHUNK)parts.push(txt.slice(i,i+FB_CHUNK));
     const meta=await fs.getDoc(fs.doc(D,'users',uid));const oldN=meta.exists()?(meta.data().n||0):0;
+    const cloudN=meta.exists()?(meta.data().sessions||0):0,locN=S.history.length;if(manual!=='force'&&cloudN>0&&(locN===0||(cloudN-locN>=3&&locN<cloudN/2))){fbBusy=false;fbPending=false;return fbConflict(cloudN)}
     const bt=fs.writeBatch(D);parts.forEach((p,i)=>bt.set(fs.doc(D,'users',uid,'chunks',String(i)),{d:p}));for(let i=parts.length;i<oldN;i++)bt.delete(fs.doc(D,'users',uid,'chunks',String(i)));
     bt.set(fs.doc(D,'users',uid),{n:parts.length,saved:Date.now(),ver:APP_VERSION,sessions:S.history.length});await bt.commit();
     S.settings.lastSync=Date.now();S.settings.lastExport=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(manual===true&&ui.tab==='reglages')renderMain();if(manual==='flash')flash('Sauvegardé sur ton compte Google')}
   catch(e){if(manual)openDlg({title:'Sauvegarde impossible',html:`<p class="dtext">${esc(fbErr(e))}</p>`,buttons:[{label:'OK',kind:'primary'}]})}
   finally{fbBusy=false;if(fbPending){fbPending=false;fbTimer=setTimeout(()=>fbPush(),3000)}}}
+let fbConflictShown=false;
+function fbConflict(cloudN){if(fbConflictShown)return;fbConflictShown=true;const n=S.history.length;
+  openDlg({title:'Sauvegarde Google trouvée',html:`<p class="dtext">Ton compte Google contient <b>${cloudN} séance${cloudN>1?'s':''}</b>, ce téléphone <b>${n}</b>. Pour ne rien perdre, la sauvegarde Google n'a pas été remplacée.</p>`,
+    buttons:[{label:'Récupérer mes séances',kind:'primary',fn:async()=>{try{const d=await fbRead();applyCloud(d);const k=(d.history||[]).length;flash(`${k} séance${k>1?'s':''} restaurée${k>1?'s':''}`)}catch(e){openDlg({title:'Récupération impossible',html:`<p class="dtext">${esc(fbErr(e))}</p>`,buttons:[{label:'OK',kind:'primary'}]})}}},
+      {label:'Plus tard',kind:'soft'},{label:'Remplacer par ce téléphone',kind:'soft',fn:()=>confirmDlg('Remplacer la sauvegarde Google ?',`Les ${cloudN} séances de ton compte Google seront remplacées par les ${n} de ce téléphone.`,'Remplacer',()=>{fbConflictShown=false;fbPush('force')})}]})}
 async function fbRead(){await fbLoad();const{fs,D}=FB,uid=fbUser.uid;const m=await fs.getDoc(fs.doc(D,'users',uid));if(!m.exists())throw new Error('introuvable');
   const n=m.data().n||0;const P=await Promise.all(Array.from({length:n},(_,i)=>fs.getDoc(fs.doc(D,'users',uid,'chunks',String(i)))));const txt=P.map(x=>x.exists()?x.data().d:'').join('');const j=JSON.parse(txt);return j.data||j}
 async function fbDeleteAccount(){if(!fbOn())return flash('Connecte-toi d\'abord avec Google');const{fs,D,au,A}=FB,uid=fbUser.uid;
@@ -1219,8 +1228,10 @@ async function bkSave(tag){if(!S.history.length&&!S.routines.length)return;try{c
     await new Promise((ok,ko)=>{const tx=db.transaction('snap','readwrite');tx.objectStore('snap').put(v,k);tx.oncomplete=ok;tx.onerror=()=>ko(tx.error)});
     const all=await bkAll();const days=[...new Set(all.map(x=>x.k.slice(0,10)))].sort().reverse();const old=all.filter(x=>!days.slice(0,BK_KEEP).includes(x.k.slice(0,10)));
     if(old.length)await new Promise(ok=>{const tx=db.transaction('snap','readwrite');old.forEach(x=>tx.objectStore('snap').delete(x.k));tx.oncomplete=ok;tx.onerror=ok})}catch(e){}}
+async function bkOfferEmpty(){if(S.history.length||MODAL)return;const L=(await bkAll()).filter(x=>x.n>0);if(!L.length||S.history.length||MODAL)return;const x=L.sort((a,b)=>b.n-a.n||b.t-a.t)[0];
+  openDlg({title:'Tes séances sont là',html:`<p class="dtext">Ce téléphone n'a plus de séances, mais une copie du <b>${esc(bkLabel(x))}</b> en contient <b>${x.n}</b>.</p>`,buttons:[{label:'Restaurer cette copie',kind:'primary',fn:()=>bkRestore('l',x.k)},{label:'Voir toutes les copies',kind:'soft',fn:()=>setTimeout(restoreDlg,50)},{label:'Non merci',kind:'soft'}]})}
 async function bkDaily(){const all=await bkAll();if(!all.some(x=>x.k===dayKey()))await bkSave();if(fbOn())fbBackupDaily()}
-async function fbBackupDaily(){try{const{fs,D}=FB,uid=fbUser.uid,k=dayKey();const ref=fs.doc(D,'users',uid,'days',k);const ex=await fs.getDoc(ref);if(ex.exists())return;
+async function fbBackupDaily(){if(!S.history.length)return;try{const{fs,D}=FB,uid=fbUser.uid,k=dayKey();const ref=fs.doc(D,'users',uid,'days',k);const ex=await fs.getDoc(ref);if(ex.exists())return;
     const txt=cloudPayload(),parts=[];for(let i=0;i<txt.length;i+=FB_CHUNK)parts.push(txt.slice(i,i+FB_CHUNK));const bt=fs.writeBatch(D);
     parts.forEach((p,i)=>bt.set(fs.doc(D,'users',uid,'days',k,'chunks',String(i)),{d:p}));bt.set(ref,{n:parts.length,t:Date.now(),sessions:S.history.length});await bt.commit();
     const L=await fs.getDocs(fs.collection(D,'users',uid,'days'));const keys=L.docs.map(d=>d.id).sort().reverse();
@@ -1530,5 +1541,5 @@ if(S.active){ui.edMode='workout';ui.editorOpen=true}
 applyTheme();renderAll();save();
 setTimeout(()=>maybeInstallPrompt(),1200);
 if(MEDIA_MODE==='packs'){new MutationObserver(hydrate).observe(document.body,{childList:true,subtree:true});hydrate()}
-setTimeout(()=>{if(!location.hash&&onbShouldShow())onbStart()},250);setTimeout(checkShareLink,300);setTimeout(checkFriendLink,320);setTimeout(checkMonthReport,1200);setTimeout(()=>checkBadges(true),1500);setTimeout(bkDaily,4000);
+setTimeout(()=>{if(!location.hash&&onbShouldShow())onbStart()},250);setTimeout(checkShareLink,300);setTimeout(checkFriendLink,320);setTimeout(checkMonthReport,1200);setTimeout(()=>checkBadges(true),1500);setTimeout(bkDaily,4000);setTimeout(bkOfferEmpty,2500);
 if('serviceWorker'in navigator&&!NATIVE&&document.querySelector('link[rel="manifest"]')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
