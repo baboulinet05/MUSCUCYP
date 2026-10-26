@@ -55,12 +55,16 @@ jobs:
         run: |
           ./gradlew bundleRelease assembleRelease --console=plain
           echo "Empreintes de la clé (à copier dans Firebase) :"
-          keytool -list -v -keystore upload-key.jks -storepass "$(grep storePassword keystore.properties | cut -d= -f2-)" | grep -E 'SHA1|SHA256'
-      - uses: actions/upload-artifact@v4
+          P="$(grep storePassword keystore.properties | cut -d= -f2-)"
+          SHA1=$(keytool -list -v -keystore upload-key.jks -storepass "$P" | grep -m1 'SHA1:' | sed 's/.*SHA1: *//')
+          SHA256=$(keytool -list -v -keystore upload-key.jks -storepass "$P" | grep -m1 'SHA256:' | sed 's/.*SHA256: *//')
+          echo "::notice title=Empreinte SHA1 (Firebase)::$SHA1"
+          echo "::notice title=Empreinte SHA-256 (Firebase)::$SHA256
+      - uses: actions/upload-artifact@v5
         with:
           name: apk-de-test
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: steps.secrets.outputs.signed == 'true'
         with:
           name: play-store
