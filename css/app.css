@@ -424,3 +424,4 @@ h3{margin:0;font:700 20px/1.15 var(--f-display);letter-spacing:.01em}
 @keyframes toast{0%{opacity:0;transform:translate(-50%,-8px)}10%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+.lb-crit{margin-top:-2px}.lb-crit .chip{font-size:13px;padding:6px 12px;min-height:0}

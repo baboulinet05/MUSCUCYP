@@ -5,7 +5,7 @@ quand tu modifies `index.html`, tu recopies et tu recompiles (voir « Mettre à 
 
 ## Ce qui est déjà prêt
 
-- Le projet Android : identifiant `fr.carnetdefonte.app`, cible Android 16 (API 36), version 3.4.
+- Le projet Android : identifiant `fr.carnetdefonte.app`, cible Android 16 (API 36), version 3.5.
 - L'icône, l'écran de démarrage et l'icône de notification.
 - La notification de fin de repos quand l'écran est verrouillé, le bouton retour d'Android, l'export de
   sauvegarde par le menu Partager.

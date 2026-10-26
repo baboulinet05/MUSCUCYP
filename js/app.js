@@ -45,7 +45,7 @@ const BUILTIN=[];
   for(const id in REPDB){const[k,one]=REPDB[id].split(':');if(INFO[id])INFO[id].rp=k;else INFO[id]={s:[],rp:k};INFO[id].rp1=!!one}})();
 
 const KEY='carnet-fonte-v1';
-const APP_VERSION='3.4';
+const APP_VERSION='3.5';
 /* ================= Appli Android (Capacitor) ================= */
 const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const CP=NATIVE?window.Capacitor.Plugins:{};
@@ -825,7 +825,7 @@ const ACTS={
     const X=alt[Math.floor(Math.random()*Math.min(3,alt.length))];e.exId=X.id;const o=S.settings.gen;genShow(o,W)},
   'rp-pick'(id){replaceWith(id)},
   'lb-setup'(){lbSetupDlg()},'lb-add'(){lbAddDlg()},'lb-invite'(){lbInviteDlg()},'lb-refresh'(){lbRefresh(true);flash('Actualisation…')},
-  'lb-tab'(k){ui.lbTab=k;renderDetail()},
+  'lb-tab'(k){ui.lbTab=k;renderDetail()},'lb-sort'(t,k){ui.lbSort=Object.assign({},ui.lbSort,{[t]:k});try{localStorage.setItem('fonte-lbsort',JSON.stringify(ui.lbSort))}catch(e){}renderDetail()},
   'lb-del'(id){const f=(S.friends||[]).find(f=>f.id===id);confirmDlg('Retirer ce pote ?',`${(lbFriends[id]&&lbFriends[id].p&&lbFriends[id].p.name)||(f&&f.name)||'Ce pote'} ne sera plus dans ton classement.`,'Retirer',()=>{S.friends=S.friends.filter(f=>f.id!==id);save();renderDetail()})},
   'lb-off'(){confirmDlg('Quitter le classement ?','Ton profil public sera supprimé et tes potes ne verront plus tes stats.','Quitter',async()=>{const id=S.settings.lbGist,wasFb=S.settings.lbFb;S.settings.lbGist='';S.settings.lbFb=false;save();renderDetail();if(wasFb&&fbOn()){try{await FB.fs.deleteDoc(FB.fs.doc(FB.D,'profiles',fbUser.uid))}catch(e){}}if(id){try{await gh('/gists/'+id,{method:'DELETE'})}catch(e){}}flash('Tu as quitté le classement')})},
   'lb-open'(){pushDetail({kind:'lb'});lbRefresh()},
@@ -1264,10 +1264,12 @@ async function bkRestore(src,k){try{const d=src==='c'?await fbBackupRead(k):JSON
    Les potes s'ajoutent avec le code (identifiant du gist), par lien ou QR code. Aucune séance détaillée n'est partagée. */
 const LB_FILE='carnet-fonte-profil.json',LB_DESC='Carnet de fonte : profil public (classement entre potes)';
 const LIFTS=[['Développé couché',['developpe-couche-barre','developpe-couche-powerlifting']],['Squat',['squat-barre-haute','squat-barre-basse']],['Soulevé de terre',['souleve-de-terre','souleve-de-terre-sumo','souleve-de-terre-trap-bar']],['Développé militaire',['developpe-militaire-debout','developpe-militaire-barre','developpe-militaire-assis']]];
+function lbAgg(L){const sets=w=>w.exercises.reduce((a,e)=>a+e.sets.filter(s=>s.t!=='w'&&s.done!==false).length,0);
+  return{n:L.length,vol:Math.round(L.reduce((a,w)=>a+wVolume(w),0)),kcal:Math.round(L.reduce((a,w)=>a+kcalFor(w),0)),min:Math.round(L.reduce((a,w)=>a+Math.max(0,(w.end||w.start)-w.start),0)/6e4),sets:L.reduce((a,w)=>a+sets(w),0)}}
 function lbProfile(){const wk=monday(Date.now()),H=S.history,W=H.filter(w=>w.start>=wk),mk=mStart(mKey(Date.now())),M=H.filter(w=>w.start>=mk);
   const best={};for(const[n,ids]of LIFTS){let b=0;for(const w of H)for(const e of w.exercises)if(ids.includes(e.exId))for(const s of e.sets)if(s.t!=='w'&&s.done!==false&&+s.a>0&&+s.b>0)b=Math.max(b,e1rm(+s.a,+s.b));if(b)best[n]=Math.round(b)}
   return{app:'carnet-fonte-profil',v:1,name:(S.settings.lbName||S.settings.ghLogin||'Moi').slice(0,24),updated:Date.now(),week:wk,
-    w:{n:W.length,vol:Math.round(W.reduce((a,w)=>a+wVolume(w),0)),kcal:Math.round(W.reduce((a,w)=>a+kcalFor(w),0))},m:{n:M.length,vol:Math.round(M.reduce((a,w)=>a+wVolume(w),0))},
+    w:lbAgg(W),m:lbAgg(M),
     streak:weekStreaks().cur,total:H.length,best}}
 let lbFriends={},lbBusy=false,lbLast=0;
 const lbMyId=()=>S.settings.lbFb?S.settings.fbUid:S.settings.lbGist;
@@ -1309,22 +1311,32 @@ function lbAddDlg(){const err=t=>{const e=$('#lba-err');e.textContent=t;e.hidden
 function lbInviteDlg(){const link=lbLink();openDlg({title:'Inviter un pote',html:`<p class="dtext">Envoie ce lien à ton pote. Dans son appli : <b>Classement → Ajouter un pote → Coller le lien</b>. Vous apparaîtrez automatiquement l'un chez l'autre.</p><div class="qrbox" id="qrbox"><span class="muted">QR code…</span></div><textarea class="ta" rows="3" readonly id="lbl">${esc(link)}</textarea>`,
   buttons:[...(navigator.share?[{label:'Envoyer…',kind:'primary',fn:()=>{navigator.share({text:'Ajoute-moi dans Carnet de fonte 💪 Copie ce lien, puis dans l\'appli : Classement → Ajouter un pote → Coller le lien.\n'+link}).catch(()=>{});return false}}]:[]),{label:'Copier',kind:navigator.share?'soft':'primary',fn:()=>{try{navigator.clipboard.writeText(link).then(()=>flash('Lien copié'))}catch(e){}return false}},{label:'Fermer',kind:'soft'}]});
   loadQR().then(()=>{const b=$('#qrbox');if(b)b.innerHTML=qrSVG(link)}).catch(()=>{const b=$('#qrbox');if(b)b.remove()})}
+function lbCrit(tab){const f=k=>(p,c)=>c&&c[k]!=null?c[k]:(c?0:0),pl=(n,w)=>n+' '+w+(n>1?'s':'');
+  const min=v=>v>=60?Math.floor(v/60)+' h '+String(v%60).padStart(2,'0'):v+' min';
+  const sub=(p,c)=>c?`${pl(c.n,'séance')} · ${fmtVol(c.vol)}`:'Rien pour l\'instant';
+  if(tab==='w'||tab==='m')return[['n','Séances',(p,c)=>c?c.n*1e9+(c.vol||0):0,v=>pl(Math.floor(Math.max(0,v)/1e9),'séance'),(p,c)=>c?fmtVol(c.vol):'0 kg'],
+    ['vol','Volume',f('vol'),v=>fmtVol(v),sub],['min','Temps',f('min'),min,sub],['sets','Séries',f('sets'),v=>pl(v,'série'),sub],['kcal','Calories',f('kcal'),v=>v.toLocaleString('fr-FR')+' kcal',sub]];
+  if(tab==='s')return[['st','Semaines d\'affilée',p=>p.streak*1e6+p.total,v=>Math.floor(v/1e6)+' sem.',p=>pl(p.total,'séance')+' au total'],['tot','Total séances',p=>p.total,v=>pl(v,'séance'),p=>p.streak+' sem. d\'affilée']];
+  const B=p=>p.best||{};const lifts=p=>LIFTS.map(([n])=>B(p)[n]?n.split(' ')[0].slice(0,4)+'. '+B(p)[n]:'').filter(Boolean).join(' · ')||'Aucun des 4 mouvements';
+  return[['t','Total',p=>Object.values(B(p)).reduce((a,b)=>a+b,0),v=>v+' kg',lifts],...LIFTS.map(([n],i)=>['l'+i,n.replace('Développé','Dév.').replace('Soulevé de terre','Soulevé'),p=>B(p)[n]||0,v=>v+' kg',p=>B(p)[n]?'1RM estimé':'Pas encore fait'])]}
 function lbHTML(){const on=lbOn(),me=lbProfile(),wk=monday(Date.now());const tab=ui.lbTab||'w';
   const rows=[{me:true,p:me,id:'moi'}].concat((S.friends||[]).map(f=>({id:f.id,name:f.name,...(lbFriends[f.id]||{})})));
-  const val=r=>{const p=r.p;if(!p)return-1;const cur=p.week===wk;return tab==='w'?(cur?p.w.n*1e9+p.w.vol:0):tab==='m'?(mKey(p.updated)===mKey(Date.now())?p.m.vol:0):tab==='s'?p.streak*1e6+p.total:tab==='b'?Object.values(p.best||{}).reduce((a,b)=>a+b,0):0};
+  if(!ui.lbSort)try{ui.lbSort=JSON.parse(localStorage.getItem('fonte-lbsort')||'{}')}catch(e){ui.lbSort={}}
+  const crit=lbCrit(tab),C=crit.find(c=>c[0]===ui.lbSort[tab])||crit[0];
+  const cur=p=>tab==='w'?(p.week===wk?p.w:null):tab==='m'?(mKey(p.updated)===mKey(Date.now())?p.m:null):null;
+  const num=p=>{if(!p)return-1;return C[2](p,cur(p))};
+  const val=r=>num(r.p);
   rows.sort((a,b)=>val(b)-val(a));
-  const show=r=>{const p=r.p;if(!p)return`<span class="muted">${r.err?(/introuvable/.test(r.err)?'Pas encore inscrit au classement':/connecte/.test(r.err)?'Connecte-toi avec Google':'Profil indisponible'):'Chargement…'}</span>`;const cur=p.week===wk;
-    if(tab==='w')return`<b>${cur?p.w.n:0} séance${cur&&p.w.n>1?'s':''}</b><span class="muted">${cur?fmtVol(p.w.vol):'0 kg'}</span>`;
-    if(tab==='m'){const ok=mKey(p.updated)===mKey(Date.now());return`<b>${ok?fmtVol(p.m.vol):'0 kg'}</b><span class="muted">${ok?p.m.n:0} séances</span>`}
-    if(tab==='s')return`<b>${p.streak} sem.</b><span class="muted">${p.total} séances au total</span>`;
-    const B=p.best||{};const t=Object.values(B).reduce((a,b)=>a+b,0);return`<b>${t?t+' kg':'—'}</b><span class="muted">${LIFTS.map(([n])=>B[n]?n.split(' ')[0].slice(0,4)+'. '+B[n]:'').filter(Boolean).join(' · ')||'Aucun des 4 mouvements'}</span>`};
+  const show=r=>{const p=r.p;if(!p)return`<span class="muted">${r.err?(/introuvable/.test(r.err)?'Pas encore inscrit au classement':/connecte/.test(r.err)?'Connecte-toi avec Google':'Profil indisponible'):'Chargement…'}</span>`;
+    const v=num(p);return`<b>${v>0||C[0]==='n'?C[3](v):'—'}</b><span class="muted">${C[4]?C[4](p,cur(p)):''}</span>`};
   const T=[['w','Semaine'],['m','Mois'],['s','Régularité'],['b','Force']];
   return`<div class="sheet-head"><button class="btn-ghost" data-act="d-close">${icon('chev-down')}Fermer</button><div class="sh-title">Classement</div><span style="width:70px"></span></div>
   <div class="sheet-body"><div class="wrapx dwrap">
   ${on?`<div class="chips">${T.map(([k,l])=>`<button class="chip ${tab===k?'on':''}" data-act="lb-tab:${k}">${l}</button>`).join('')}</div>
+    <div class="chips lb-crit">${crit.map(c=>`<button class="chip sm ${c===C?'on':''}" data-act="lb-sort:${tab}:${c[0]}">${c[1]}</button>`).join('')}</div>
     <ol class="lb">${rows.map((r,i)=>`<li class="${r.me?'me':''}"><span class="rk">${r.p&&val(r)>0&&i<3?['🥇','🥈','🥉'][i]:i+1}</span><span class="nm">${esc(r.me?(me.name+' (toi)'):(r.p&&r.p.name)||r.name||'Pote')}</span><span class="vl">${show(r)}</span>${r.me?'':`<button class="icon-btn" data-act="lb-del:${r.id}" aria-label="Retirer ce pote">${icon('x')}</button>`}</li>`).join('')}</ol>
     ${(S.friends||[]).length?'':`<p class="dtext">Ajoute tes potes pour vous comparer. Chacun doit avoir l'appli et activer le classement.</p>`}
-    <p class="dtext" style="font-size:13px">${tab==='b'?'Somme des 1RM estimés (formule d\'Epley) sur les 4 grands mouvements.':tab==='s'?'Semaines d\'affilée avec au moins une séance.':'Remis à zéro chaque '+(tab==='w'?'lundi':'1er du mois')+'.'} Mis à jour quand chacun ouvre son appli.</p>
+    <p class="dtext" style="font-size:13px">${tab==='b'?(C[0]==='t'?'Somme des 1RM estimés (formule d\'Epley) sur les 4 grands mouvements.':'1RM estimé (formule d\'Epley) sur ce mouvement.'):tab==='s'?'Semaines d\'affilée avec au moins une séance.':'Remis à zéro chaque '+(tab==='w'?'lundi':'1er du mois')+'.'} Mis à jour quand chacun ouvre son appli.</p>
     <div class="btnrow"><button class="btn btn-primary" data-act="lb-invite">${icon('share')}Inviter</button><button class="btn btn-soft" data-act="lb-add">${icon('plus')}Ajouter un pote</button><button class="btn btn-soft" data-act="lb-refresh">Actualiser</button></div>
     <button class="btn-ghost danger" data-act="lb-off" style="align-self:flex-start">Quitter le classement</button>`
   :`<div class="empty">${icon('crown')}<b>Compare-toi à tes potes</b>Séances de la semaine, volume du mois, régularité et force : un classement rien qu'entre vous.</div><button class="btn btn-primary block" data-act="lb-setup">Rejoindre le classement</button>`}
