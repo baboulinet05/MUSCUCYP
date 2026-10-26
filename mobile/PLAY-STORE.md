@@ -40,7 +40,7 @@ quand tu modifies `index.html`, tu recopies et tu recompiles (voir « Mettre à 
   - Sécurité des données (avec la connexion Google, il faut déclarer ces données) :
     - **Collectées** : adresse e-mail et identifiant du compte (connexion Google), données d'activité
       physique (séances, pesées) pour la sauvegarde, pseudo et statistiques pour le classement si
-      l'utilisateur l'active. **Partagées** : aucune (Firebase est un sous-traitant, pas un partage).
+      l'utilisateur l'active, et **Plantages + Diagnostics** (rubrique « Informations et performances de l'appli », via Firebase Crashlytics, finalité « Fonctionnement de l'appli », collecte facultative car désactivable dans Réglages). **Partagées** : aucune (Firebase est un sous-traitant, pas un partage).
     - Chiffrées en transit : oui. Suppression possible : oui, dans l'appli (Réglages → Synchro cloud →
       Supprimer mon compte).
     - Lien de suppression du compte demandé par Google : l'adresse de la politique de confidentialité

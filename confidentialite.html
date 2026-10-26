@@ -20,7 +20,7 @@ p,li{color:var(--fg)}.muted{color:var(--muted)}
 <p class="muted">Carnet de fonte · mise à jour le 26 octobre 2026</p>
 
 <h2>En bref</h2>
-<p>Carnet de fonte fonctionne sans compte : tant que tu ne te connectes pas, tout reste sur ton téléphone. Pas de publicité, pas de statistiques d'utilisation, pas de traceur, aucune donnée vendue.</p>
+<p>Carnet de fonte fonctionne sans compte : tant que tu ne te connectes pas, tout reste sur ton téléphone. Pas de publicité, pas de statistiques d'utilisation, pas de traceur, aucune donnée vendue. Seule l'appli Android envoie des rapports de plantage, que tu peux désactiver.</p>
 
 <h2>Données enregistrées sur ton téléphone</h2>
 <p>Tes séances, routines, exercices perso, pesées, mensurations, favoris et réglages sont enregistrés sur ton téléphone. Sans connexion à un compte, ils ne sont envoyés à personne.</p>
@@ -42,9 +42,15 @@ p,li{color:var(--fg)}.muted{color:var(--muted)}
 <li><b>Vidéos de démo</b> : ouvrent YouTube dans ton navigateur, soumis aux règles de Google.</li>
 </ul>
 
+<h2>Rapports de plantage (appli Android)</h2>
+<p>Si l'appli Android plante ou rencontre une erreur, un rapport technique est envoyé à Firebase Crashlytics (Google) : description de l'erreur, modèle du téléphone, version d'Android et de l'appli, et un identifiant d'installation aléatoire. Il ne contient ni tes séances, ni ton e-mail, ni ton nom, et sert uniquement à corriger les bugs (intérêt légitime). Tu peux le désactiver dans Réglages → Données → Envoyer les rapports de plantage. Les rapports sont conservés 90 jours.</p>
+
+<h2>Widget et invitations</h2>
+<p>Le widget d'écran d'accueil affiche ta séance du jour à partir des données du téléphone, sans rien envoyer. Quand tu ajoutes un pote au classement, ton pseudo est déposé dans sa liste d'invitations pour qu'il t'ajoute aussi ; il est effacé dès qu'il l'a lu ou si tu supprimes ton compte.</p>
+
 <h2>Autorisations Android</h2>
 <ul>
-<li><b>Notifications</b> : uniquement pour te prévenir à la fin du temps de repos.</li>
+<li><b>Notifications</b> : minuteur de repos (aussi sur l'écran verrouillé), fin du repos et, si tu les actives, rappels les jours de ton planning.</li>
 <li><b>Vibreur</b> : retour au toucher pendant la séance.</li>
 <li><b>Internet</b> : pour les images d'exercices, la connexion Google et la sauvegarde si tu les utilises.</li>
 </ul>
@@ -60,7 +66,7 @@ p,li{color:var(--fg)}.muted{color:var(--muted)}
 <p>Conformément au RGPD, tu peux accéder à tes données (Réglages → Exporter), les rectifier, les supprimer ou t'opposer à leur traitement. Tu peux aussi saisir la CNIL (cnil.fr).</p>
 
 <h2>Images d'exercices</h2>
-<p>Photos : Free Exercise DB (domaine public). Illustrations : Exercise data by RepDB (repdb.co).</p>
+<p>Photos : Free Exercise DB (domaine public). Illustrations : Exercise data by RepDB (repdb.co) et Open Exercise Illustrations (CC0).</p>
 
 <h2>Contact</h2>
 <p>Pour toute question : ouvre une demande sur <a href="https://github.com/baboulinet05/MUSCUCYP/issues">github.com/baboulinet05/MUSCUCYP</a>.</p>
