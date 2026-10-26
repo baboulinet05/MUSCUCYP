@@ -40,12 +40,12 @@ const icon=n=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true"${n==='dots'
 /* ================= Données ================= */
 const BUILTIN=[];
 (()=>{let m='';for(const line of RAW.split('\n')){const l=line.trim();if(!l)continue;if(l[0]==='#'){m=l.slice(1).trim();continue}const[name,equip,t]=l.split('|');const type=t||(m==='Cardio'?'c':m==='Mobilité'?'t':equip==='Poids du corps'?'b':'w');BUILTIN.push({id:slug(name),name,muscle:m,equip,type})}})();
-(()=>{for(const[id,name,muscle,equip,type,k,en,s,r]of EDB){BUILTIN.push({id,name,muscle,equip,type,en,edb:1,rare:!!r||!REPDB[id]});INFO[id]={s}}
+(()=>{for(const[id,name,muscle,equip,type,k,en,s,r]of EDB){const has=!!(REPDB[id]||(INFO[id]&&INFO[id].img));BUILTIN.push({id,name,muscle,equip,type,en,edb:1,rare:!!r||!has});INFO[id]=Object.assign(INFO[id]||{},{s})}
   for(const id in EDB_STEPS)if(!INFO[id])INFO[id]={s:EDB_STEPS[id]};
   for(const id in REPDB){const[k,one]=REPDB[id].split(':');if(INFO[id])INFO[id].rp=k;else INFO[id]={s:[],rp:k};INFO[id].rp1=!!one}})();
 
 const KEY='carnet-fonte-v1';
-const APP_VERSION='3.0';
+const APP_VERSION='3.1';
 /* ================= Appli Android (Capacitor) ================= */
 const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const CP=NATIVE?window.Capacitor.Plugins:{};
@@ -444,10 +444,10 @@ function setView(){
   <section class="card setc"><h3>Minuteur de repos</h3>
     <div class="setrow"><span>Repos par défaut</span><select class="sel" data-f="defrest">${opts.map(o=>`<option value="${o}" ${S.settings.rest===o?'selected':''}>${o?fmtRest(o):'Désactivé'}</option>`).join('')}</select></div>
     <div class="setrow"><span>Son à la fin du repos</span><button class="toggle ${S.settings.sound?'on':''}" data-act="toggle-sound" role="switch" aria-checked="${S.settings.sound}" aria-label="Son à la fin du repos"></button></div>
-    <p class="dtext" style="font-size:13px">Sur iPhone, le son et la vibration ne marchent que si l'app est ouverte à l'écran.</p></section>
+    ${/iPhone|iPad/.test(navigator.userAgent)&&!NATIVE?`<p class="dtext" style="font-size:13px">Sur iPhone, le son et la vibration ne marchent que si l'app est ouverte à l'écran.</p>`:''}</section>
   <section class="card setc"><h3>Apparence</h3>
     <div class="setrow"><span>Couleur</span><div class="swatches" role="radiogroup" aria-label="Couleur de l'appli">${Object.entries(ACCENTS).map(([k,A])=>`<button class="sw ${(S.settings.accent||'rouge')===k?'on':''}" data-act="accent:${k}" role="radio" aria-checked="${(S.settings.accent||'rouge')===k}" aria-label="${A.n}" style="--c:${isDark()?A.d:A.l}"></button>`).join('')}</div></div>
-    <div class="setrow"><span>Thème</span><select class="sel" data-f="theme">${[['auto','Comme l\'iPhone'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${(S.settings.theme||'auto')===v?'selected':''}>${l}</option>`).join('')}</select></div></section>
+    <div class="setrow"><span>Thème</span><select class="sel" data-f="theme">${[['auto','Automatique (selon le téléphone)'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${(S.settings.theme||'auto')===v?'selected':''}>${l}</option>`).join('')}</select></div></section>
   <section class="card setc"><h3>Annuaire d'exercices</h3>
     <div class="setrow"><span>Afficher tout l'annuaire<br><span class="muted" style="font-size:13px">ajoute les exercices sans illustration et les variantes rares (swiss ball, Bosu…)</span></span><button class="toggle ${S.settings.showRare?'on':''}" data-act="toggle-rare" role="switch" aria-checked="${!!S.settings.showRare}" aria-label="Afficher les variantes rares"></button></div>
     ${NATIVE?'':`<div class="setrow"><span>Images hors connexion<br><span class="muted" style="font-size:13px">${S.settings.mediaOffline?'Téléchargées le '+fmtShort(S.settings.mediaOffline):'Chargées au fil de l\'eau (environ 60 Mo pour tout)'}</span></span><button class="btn btn-soft sm" data-act="dl-media" id="dl-lbl">${dlBusy?'Téléchargement…':S.settings.mediaOffline?'Mettre à jour':'Tout télécharger'}</button></div>`}</section>

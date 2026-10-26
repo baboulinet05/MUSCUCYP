@@ -59,7 +59,7 @@ jobs:
           SHA1=$(keytool -list -v -keystore upload-key.jks -storepass "$P" | grep -m1 'SHA1:' | sed 's/.*SHA1: *//')
           SHA256=$(keytool -list -v -keystore upload-key.jks -storepass "$P" | grep -m1 'SHA256:' | sed 's/.*SHA256: *//')
           echo "::notice title=Empreinte SHA1 (Firebase)::$SHA1"
-          echo "::notice title=Empreinte SHA-256 (Firebase)::$SHA256
+          echo "::notice title=Empreinte SHA-256 (Firebase)::$SHA256"
       - uses: actions/upload-artifact@v5
         with:
           name: apk-de-test

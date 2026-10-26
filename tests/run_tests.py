@@ -77,7 +77,7 @@ with sync_playwright() as p:
     check('exercice perso et favoris conservés', new['custom'] == OLD_SAVE['custom'] and new['fav'] == OLD_SAVE['fav'])
     check('identifiants d\'exercices uniques', pg.evaluate("BUILTIN.length===new Set(BUILTIN.map(e=>e.id)).size"))
     n_vis = pg.evaluate("filterEx('','Tous','').length"); n_novis = pg.evaluate("filterEx('','Tous','').filter(e=>{const i=INFO[e.id]||{};return!i.img&&!i.rp}).length")
-    check(f'annuaire : {n_vis} exercices affichés, presque tous illustrés', n_vis > 900 and n_novis < 40, f'{n_novis} sans visuel')
+    check(f'annuaire : {n_vis} exercices affichés, presque tous illustrés', n_vis > 1300 and n_novis < 40, f'{n_novis} sans visuel')
     urls = pg.evaluate("mediaUrls()"); from urllib.parse import unquote
     missing = [u for u in urls if not (ROOT / unquote(u)).exists()]
     check(f'les {len(urls)} images référencées existent', not missing, str(missing[:5]))

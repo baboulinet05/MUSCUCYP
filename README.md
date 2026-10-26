@@ -1,6 +1,6 @@
 # Carnet de fonte
 
-Application de musculation personnelle (PWA pour iPhone) : séances, séries et répétitions, annuaire de plus de 900 exercices illustrés avec descriptions (dont machines Technogym et mobilité), routines, minuteur de repos, records et progression.
+Application de musculation personnelle (PWA pour iPhone) : séances, séries et répétitions, annuaire de plus de 1 300 exercices illustrés avec descriptions (dont machines Technogym et mobilité), routines, minuteur de repos, records et progression.
 
 Ouvrir sur iPhone dans Safari, puis Partager → Sur l'écran d'accueil.
 

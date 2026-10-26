@@ -61,7 +61,7 @@ def shots():
 
 CAP = [('accueil', 'Ton programme, prêt en 4 questions', 'Planning de la semaine, récupération musculaire, séance du jour'),
        ('seance', 'La bonne charge à chaque série', 'Records, minuteur de repos et progression automatique'),
-       ('exercices', 'Plus de 900 exercices illustrés', 'Barre, haltères, machines, poids du corps, élastiques'),
+       ('exercices', 'Plus de 1 300 exercices illustrés', 'Barre, haltères, machines, poids du corps, élastiques'),
        ('fiche', 'Chaque mouvement expliqué', 'Étapes en français, conseils et vidéos de démonstration'),
        ('bilan', 'Ta progression, mois après mois', 'Volume, records, muscles travaillés et calories'),
        ('classement', 'Défie tes potes', 'Classement de la semaine, régularité et force')]

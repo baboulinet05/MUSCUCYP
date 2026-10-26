@@ -5,7 +5,7 @@ quand tu modifies `index.html`, tu recopies et tu recompiles (voir « Mettre à 
 
 ## Ce qui est déjà prêt
 
-- Le projet Android : identifiant `io.github.baboulinet05.fonte`, cible Android 16 (API 36), version 3.0.
+- Le projet Android : identifiant `io.github.baboulinet05.fonte`, cible Android 16 (API 36), version 3.1.
 - L'icône, l'écran de démarrage et l'icône de notification.
 - La notification de fin de repos quand l'écran est verrouillé, le bouton retour d'Android, l'export de
   sauvegarde par le menu Partager.
@@ -69,7 +69,7 @@ en général 1 à 7 jours.
 Carnet de fonte
 
 **Description courte (80 caractères max)**
-Carnet de muscu gratuit et sans pub : programme, 900 exercices, progression.
+Carnet de muscu gratuit et sans pub : programme, 1 300 exercices, progression.
 
 **Description complète**
 Carnet de fonte est le carnet de musculation français, gratuit, sans pub et sans abonnement.
@@ -86,7 +86,7 @@ PENDANT LA SÉANCE
 • Minuteur de repos, séries d'échauffement, drop sets, supersets, RIR
 • Remplacement d'un exercice en un geste quand la machine est prise
 
-PLUS DE 900 EXERCICES ILLUSTRÉS
+PLUS DE 1 300 EXERCICES ILLUSTRÉS
 • Photos ou illustrations, étapes en français, conseils et vidéos de démonstration
 • Poids libres, machines guidées, poulies, poids du corps, élastiques, mobilité
 • Favoris et recherche aussi en anglais (chest press, lat pulldown…)
