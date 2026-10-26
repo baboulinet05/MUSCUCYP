@@ -21,5 +21,15 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['app', 'v', 'name', 'updated', 'week', 'w', 'm', 'streak', 'total', 'best'])
         && request.resource.data.name is string && request.resource.data.name.size() <= 24;
     }
+
+    // Invitations du classement : quand A ajoute B, A dépose un mot chez B
+    // pour que B l'ajoute automatiquement. Seul B les lit ; B ou A peuvent les effacer.
+    match /invites/{to}/from/{from} {
+      allow create, update: if request.auth != null && request.auth.uid == from && from != to
+        && request.resource.data.keys().hasOnly(['name', 't'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24;
+      allow read: if request.auth != null && request.auth.uid == to;
+      allow delete: if request.auth != null && (request.auth.uid == to || request.auth.uid == from);
+    }
   }
 }

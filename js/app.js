@@ -45,7 +45,7 @@ const BUILTIN=[];
   for(const id in REPDB){const[k,one]=REPDB[id].split(':');if(INFO[id])INFO[id].rp=k;else INFO[id]={s:[],rp:k};INFO[id].rp1=!!one}})();
 
 const KEY='carnet-fonte-v1';
-const APP_VERSION='3.3';
+const APP_VERSION='3.4';
 /* ================= Appli Android (Capacitor) ================= */
 const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const CP=NATIVE?window.Capacitor.Plugins:{};
@@ -1162,6 +1162,8 @@ async function fbDeleteAccount(){if(!fbOn())return flash('Connecte-toi d\'abord 
   try{const m=await fs.getDoc(fs.doc(D,'users',uid));const n=m.exists()?(m.data().n||0):0;const bt=fs.writeBatch(D);for(let i=0;i<Math.max(n,8);i++)bt.delete(fs.doc(D,'users',uid,'chunks',String(i)));
     try{const L=await fs.getDocs(fs.collection(D,'users',uid,'days'));for(const d of L.docs){const n2=d.data().n||0;for(let i=0;i<Math.max(n2,8);i++)bt.delete(fs.doc(D,'users',uid,'days',d.id,'chunks',String(i)));bt.delete(fs.doc(D,'users',uid,'days',d.id))}}catch(e){}
     bt.delete(fs.doc(D,'users',uid));bt.delete(fs.doc(D,'profiles',uid));await bt.commit();
+    for(const f of S.friends||[])if(!isGist(f.id))try{await fs.deleteDoc(fs.doc(D,'invites',f.id,'from',uid))}catch(e){}
+    try{const L=await fs.getDocs(fs.collection(D,'invites',uid,'from'));for(const d of L.docs)try{await fs.deleteDoc(fs.doc(D,'invites',uid,'from',d.id))}catch(e){}}catch(e){}
     try{await au.deleteUser(fbUser)}catch(e){if(!/requires-recent-login/.test(e.code||''))throw e;
       const c=NATIVE_G()?await fbNativeCred():null;if(c)await au.reauthenticateWithCredential(fbUser,c);else{const p=new au.GoogleAuthProvider();await au.reauthenticateWithPopup(fbUser,p)}await au.deleteUser(fbUser)}
     S.settings.lbFb=false;await fbSignOut();openDlg({title:'Compte supprimé',html:'<p class="dtext">Ton compte et toutes tes données en ligne (sauvegarde et profil du classement) ont été supprimés. Tes séances restent sur ce téléphone : utilise <b>Tout effacer</b> si tu veux aussi les retirer.</p>',buttons:[{label:'OK',kind:'primary'}]})}
@@ -1276,9 +1278,10 @@ async function lbFetch(id){if(!isGist(id)){await fbLoad();if(!fbUser)throw new E
   const r=await fetch(GH_API+'/gists/'+id,{headers:Object.assign({'Accept':'application/vnd.github+json'},ghToken()?{'Authorization':'Bearer '+ghToken()}:{})});
   if(r.status===404)throw new Error('introuvable');if(!r.ok)throw new Error('GitHub '+r.status);const g=await r.json();const f=g.files&&g.files[LB_FILE];if(!f)throw new Error('pas un profil');
   let txt=f.content;if(f.truncated)txt=await (await fetch(f.raw_url)).text();const p=JSON.parse(txt);if(p.app!=='carnet-fonte-profil')throw new Error('pas un profil');return p}
-async function lbRefresh(force){if(lbBusy||(!force&&Date.now()-lbLast<60000))return;lbBusy=true;lbLast=Date.now();if(S.settings.lbFb||(S.friends||[]).some(f=>!isGist(f.id))){try{await fbLoad()}catch(e){}}await lbPublish();
+async function lbRefresh(force){if(lbBusy||(!force&&Date.now()-lbLast<60000))return;lbBusy=true;lbLast=Date.now();if(S.settings.lbFb||(S.friends||[]).some(f=>!isGist(f.id))){try{await fbLoad()}catch(e){}}await lbPublish();await lbInbox();
   await Promise.all((S.friends||[]).map(f=>lbFetch(f.id).then(p=>{lbFriends[f.id]={p}}).catch(e=>{lbFriends[f.id]={err:e.message}})));lbBusy=false;
   if(ui.detail.length&&ui.detail[ui.detail.length-1].kind==='lb')renderDetail()}
+function lbLinkFor(id,n){return SHARE_BASE+'#ami='+id+(n?'.'+n:'')}
 function lbLink(){return SHARE_BASE+'#ami='+lbMyId()+'.'+b64e(S.settings.lbName||S.settings.fbName||S.settings.ghLogin||'')}
 
 async function lbEnable(){const name=($('#lb-name')||{}).value;S.settings.lbName=String(name||S.settings.fbName||S.settings.ghLogin||'').trim().slice(0,24)||'Moi';save();
@@ -1291,19 +1294,26 @@ function lbSetupDlg(){if(!fbOn()&&!ghToken())return openDlg({title:'Classement e
   openDlg({title:'Rejoindre le classement',html:`<p class="dtext">Ton pseudo et ces stats seront visibles par les potes qui ont ton code : séances et volume de la semaine et du mois, semaines d'affilée, total de séances et 1RM estimés (couché, squat, soulevé de terre, militaire). <b>Rien d'autre</b> : ni tes séances détaillées, ni ton poids, ni ton e-mail.</p><label class="fld"><span>Pseudo</span><input id="lb-name" type="text" maxlength="24" value="${esc(S.settings.lbName||S.settings.fbName||S.settings.ghLogin||'')}" autofocus></label><p class="derr" id="lb-err" hidden></p>`,
   buttons:[{label:'Activer',kind:'primary',fn:()=>{lbEnable();return false}},{label:'Annuler',kind:'soft'}]})}
 
+const IS_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const IN_SAFARI=IS_IOS&&!NATIVE&&!((window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone);
+async function lbNotify(id){if(isGist(id)||!fbOn()||!lbOn())return;try{await FB.fs.setDoc(FB.fs.doc(FB.D,'invites',id,'from',fbUser.uid),{name:String(S.settings.lbName||S.settings.fbName||'Pote').slice(0,24),t:Date.now()})}catch(e){}}
+async function lbInbox(){if(!fbOn()||!lbOn())return;try{const L=await FB.fs.getDocs(FB.fs.collection(FB.D,'invites',fbUser.uid,'from'));let n=0;
+  for(const d of L.docs){const id=d.id,v=d.data()||{};S.friends=S.friends||[];if(/^[A-Za-z0-9]{20,40}$/.test(id)&&id!==fbUser.uid&&!S.friends.some(f=>f.id===id)){S.friends.push({id,name:String(v.name||'').slice(0,24)});n++}
+    try{await FB.fs.deleteDoc(FB.fs.doc(FB.D,'invites',fbUser.uid,'from',id))}catch(e){}}
+  if(n){save();flash(n>1?`${n} potes t'ont ajouté au classement`:`${(S.friends[S.friends.length-1].name)||'Un pote'} t'a ajouté au classement`)}}catch(e){}}
 function lbAddFriend(id,name){id=String(id||'').trim().replace(/^.*#ami=/,'').split('.')[0].replace(/[^A-Za-z0-9]/g,'');if(!/^[A-Za-z0-9]{20,40}$/.test(id))return'Code invalide : colle le lien complet envoyé par ton pote.';
   if(id===lbMyId()||id===S.settings.lbGist||id===S.settings.fbUid)return'C\'est ton propre code.';S.friends=S.friends||[];if(S.friends.some(f=>f.id===id))return'Ce pote est déjà dans ta liste.';
-  S.friends.push({id,name:String(name||'').slice(0,24)});save();lbFetch(id).then(p=>{lbFriends[id]={p};const f=S.friends.find(f=>f.id===id);if(f&&p.name){f.name=p.name;save()}renderDetail()}).catch(e=>{lbFriends[id]={err:e.message};renderDetail()});return null}
+  S.friends.push({id,name:String(name||'').slice(0,24)});save();lbNotify(id);lbFetch(id).then(p=>{lbFriends[id]={p};const f=S.friends.find(f=>f.id===id);if(f&&p.name){f.name=p.name;save()}renderDetail()}).catch(e=>{lbFriends[id]={err:e.message};renderDetail()});return null}
 function lbAddDlg(){const err=t=>{const e=$('#lba-err');e.textContent=t;e.hidden=false;return false};openDlg({title:'Ajouter un pote',html:`<p class="dtext">Colle le lien ou le code que ton pote t'a envoyé (Classement → Inviter).</p><input id="lba" class="ta" style="height:48px" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus><p class="derr" id="lba-err" hidden></p>`,
-  buttons:[{label:'Ajouter',kind:'primary',fn:()=>{const e=lbAddFriend($('#lba').value);if(e)return err(e);flash('Pote ajouté')}},{label:'Annuler',kind:'soft'}]})}
-function lbInviteDlg(){const link=lbLink();openDlg({title:'Inviter un pote',html:`<p class="dtext">Ton pote scanne ce QR code ou ouvre le lien : tu apparaîtras dans son classement. Pour le voir dans le tien, ajoute aussi son code.</p><div class="qrbox" id="qrbox"><span class="muted">QR code…</span></div><textarea class="ta" rows="3" readonly id="lbl">${esc(link)}</textarea>`,
-  buttons:[...(navigator.share?[{label:'Envoyer…',kind:'primary',fn:()=>{navigator.share({text:'Ajoute-moi dans Carnet de fonte : '+link}).catch(()=>{});return false}}]:[]),{label:'Copier',kind:navigator.share?'soft':'primary',fn:()=>{try{navigator.clipboard.writeText(link).then(()=>flash('Lien copié'))}catch(e){}return false}},{label:'Fermer',kind:'soft'}]});
+  buttons:[...(navigator.clipboard&&navigator.clipboard.readText?[{label:'Coller le lien',kind:'soft',fn:()=>{navigator.clipboard.readText().then(t=>{const i=$('#lba');if(i){i.value=(t||'').trim();const e=lbAddFriend(i.value);if(e)err(e);else{closeDlg();flash('Pote ajouté');renderDetail()}}}).catch(()=>err('Colle le lien dans la case (appui long → Coller).'));return false}}]:[]),{label:'Ajouter',kind:'primary',fn:()=>{const e=lbAddFriend($('#lba').value);if(e)return err(e);flash('Pote ajouté')}},{label:'Annuler',kind:'soft'}]})}
+function lbInviteDlg(){const link=lbLink();openDlg({title:'Inviter un pote',html:`<p class="dtext">Envoie ce lien à ton pote. Dans son appli : <b>Classement → Ajouter un pote → Coller le lien</b>. Vous apparaîtrez automatiquement l'un chez l'autre.</p><div class="qrbox" id="qrbox"><span class="muted">QR code…</span></div><textarea class="ta" rows="3" readonly id="lbl">${esc(link)}</textarea>`,
+  buttons:[...(navigator.share?[{label:'Envoyer…',kind:'primary',fn:()=>{navigator.share({text:'Ajoute-moi dans Carnet de fonte 💪 Copie ce lien, puis dans l\'appli : Classement → Ajouter un pote → Coller le lien.\n'+link}).catch(()=>{});return false}}]:[]),{label:'Copier',kind:navigator.share?'soft':'primary',fn:()=>{try{navigator.clipboard.writeText(link).then(()=>flash('Lien copié'))}catch(e){}return false}},{label:'Fermer',kind:'soft'}]});
   loadQR().then(()=>{const b=$('#qrbox');if(b)b.innerHTML=qrSVG(link)}).catch(()=>{const b=$('#qrbox');if(b)b.remove()})}
 function lbHTML(){const on=lbOn(),me=lbProfile(),wk=monday(Date.now());const tab=ui.lbTab||'w';
   const rows=[{me:true,p:me,id:'moi'}].concat((S.friends||[]).map(f=>({id:f.id,name:f.name,...(lbFriends[f.id]||{})})));
   const val=r=>{const p=r.p;if(!p)return-1;const cur=p.week===wk;return tab==='w'?(cur?p.w.n*1e9+p.w.vol:0):tab==='m'?(mKey(p.updated)===mKey(Date.now())?p.m.vol:0):tab==='s'?p.streak*1e6+p.total:tab==='b'?Object.values(p.best||{}).reduce((a,b)=>a+b,0):0};
   rows.sort((a,b)=>val(b)-val(a));
-  const show=r=>{const p=r.p;if(!p)return`<span class="muted">${r.err?'Profil indisponible':'Chargement…'}</span>`;const cur=p.week===wk;
+  const show=r=>{const p=r.p;if(!p)return`<span class="muted">${r.err?(/introuvable/.test(r.err)?'Pas encore inscrit au classement':/connecte/.test(r.err)?'Connecte-toi avec Google':'Profil indisponible'):'Chargement…'}</span>`;const cur=p.week===wk;
     if(tab==='w')return`<b>${cur?p.w.n:0} séance${cur&&p.w.n>1?'s':''}</b><span class="muted">${cur?fmtVol(p.w.vol):'0 kg'}</span>`;
     if(tab==='m'){const ok=mKey(p.updated)===mKey(Date.now());return`<b>${ok?fmtVol(p.m.vol):'0 kg'}</b><span class="muted">${ok?p.m.n:0} séances</span>`}
     if(tab==='s')return`<b>${p.streak} sem.</b><span class="muted">${p.total} séances au total</span>`;
@@ -1321,6 +1331,9 @@ function lbHTML(){const on=lbOn(),me=lbProfile(),wk=monday(Date.now());const tab
   </div></div>`}
 function checkFriendLink(){const h=location.hash;const m=h.match(/^#ami=([A-Za-z0-9]{20,40})(?:\.([A-Za-z0-9_-]*))?/);if(!m)return;try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
   let nm='';try{nm=m[2]?b64d(m[2]):''}catch(e){}
+  const link=lbLinkFor(m[1],m[2]);
+  if(IN_SAFARI)return openDlg({title:'Ajouter un pote',html:`<p class="dtext">Ce lien s'est ouvert dans Safari. Si Carnet de fonte est sur ton écran d'accueil, ajoute <b>${esc(nm||'ce pote')}</b> depuis l'appli :</p><ol class="steps"><li>Touche <b>Copier le lien</b>.</li><li>Ouvre <b>Carnet de fonte</b> depuis ton écran d'accueil.</li><li><b>Classement → Ajouter un pote → Coller le lien</b>.</li></ol>`,
+    buttons:[{label:'Copier le lien',kind:'primary',fn:()=>{try{navigator.clipboard.writeText(link).then(()=>flash('Lien copié : ouvre l\'appli'))}catch(e){}}},{label:'Ajouter ici (dans Safari)',kind:'soft',fn:()=>{const e=lbAddFriend(m[1],nm);flash(e||'Pote ajouté')}}]});
   openDlg({title:'Ajouter un pote',html:`<p class="dtext">Ajouter <b>${esc(nm||'ce pote')}</b> à ton classement ?</p>`,buttons:[{label:'Ajouter',kind:'primary',fn:()=>{const e=lbAddFriend(m[1],nm);flash(e||'Pote ajouté');if(!e){ui.tab='historique';renderMain();pushDetail({kind:'lb'});lbRefresh(true)}}},{label:'Plus tard',kind:'soft'}]})}
 window.addEventListener('hashchange',checkFriendLink);
 
