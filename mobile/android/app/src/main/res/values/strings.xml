@@ -4,4 +4,5 @@
     <string name="title_activity_main">Carnet de fonte</string>
     <string name="package_name">fr.carnetdefonte.app</string>
     <string name="custom_url_scheme">fr.carnetdefonte.app</string>
+    <string name="widget_desc">Ta séance du jour et ta régularité</string>
 </resources>

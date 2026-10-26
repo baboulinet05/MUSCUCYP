@@ -9,7 +9,7 @@ name: Android
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, 'dev/**']
     paths: ['index.html', 'css/**', 'js/**', 'media/**', 'lib/**', 'mobile/**', '.github/workflows/android.yml']
 jobs:
   build:
