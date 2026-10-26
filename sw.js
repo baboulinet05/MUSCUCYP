@@ -1,7 +1,7 @@
 // Carnet de fonte : cache hors ligne
-const CACHE='fonte-v17';
+const CACHE='fonte-3.0';
 const MEDIA_CACHE='fonte-media'; // photos et animations : gardées d'une version à l'autre
-const CORE=['./','./index.html','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png','./lib/qrcode.js'];
+const CORE=['./','./index.html','./manifest.webmanifest','./apple-touch-icon.png','./icon-192.png','./icon-512.png','./lib/qrcode.js','./media/logo.svg','./css/app.css?v=3.0','./js/data.js?v=3.0','./js/app.js?v=3.0'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE&&x!==MEDIA_CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});

@@ -9,8 +9,9 @@ non, sans l'autorisation écrite préalable de l'auteur.
 
 Contenus tiers inclus, qui restent soumis à leurs propres conditions :
 - Photos d'exercices : Free Exercise DB (domaine public).
-- Animations d'exercices : © Gym visual — https://gymvisual.com/
 - Illustrations d'exercices : Exercise data by RepDB (repdb.co).
+- Noms et étapes d'une partie des exercices : adaptés de exercises-dataset
+  (github.com/hasaneyldrm/exercises-dataset, licence MIT).
 - Génération de QR codes (lib/qrcode.js) : qrcode-generator, licence MIT,
   © Kazuhiko Arase.
 

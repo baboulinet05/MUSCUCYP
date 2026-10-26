@@ -5,7 +5,7 @@ quand tu modifies `index.html`, tu recopies et tu recompiles (voir « Mettre à 
 
 ## Ce qui est déjà prêt
 
-- Le projet Android : identifiant `io.github.baboulinet05.fonte`, cible Android 16 (API 36), version 2.9.
+- Le projet Android : identifiant `io.github.baboulinet05.fonte`, cible Android 16 (API 36), version 3.0.
 - L'icône, l'écran de démarrage et l'icône de notification.
 - La notification de fin de repos quand l'écran est verrouillé, le bouton retour d'Android, l'export de
   sauvegarde par le menu Partager.
@@ -69,37 +69,44 @@ en général 1 à 7 jours.
 Carnet de fonte
 
 **Description courte (80 caractères max)**
-Carnet de muscu simple : séances, séries, 690 exercices en photos, records.
+Carnet de muscu gratuit et sans pub : programme, 900 exercices, progression.
 
 **Description complète**
-Carnet de fonte est un carnet de musculation simple, sans compte et sans pub.
+Carnet de fonte est le carnet de musculation français, gratuit, sans pub et sans abonnement.
 
-SÉANCES
-• Note tes séries, reps et charges en quelques touches, avec la colonne « Précédent »
-• Minuteur de repos avec notification, même écran verrouillé
-• Séries d'échauffement automatiques, drop sets, supersets, reps en réserve
-• Chrono pour la planche, le gainage et les étirements
+TON PROGRAMME EN 4 QUESTIONS
+• Objectif, niveau, lieu et séances par semaine : ton programme complet est prêt
+• Planning de la semaine et séance du jour sur l'accueil
+• Générateur de séance selon ta durée, ton matériel et tes muscles reposés
+• Échauffement guidé de 5 minutes adapté à ta séance
 
-690 EXERCICES
-• Photos et explications en 3 étapes pour chaque exercice
-• Machines guidées (Technogym, Matrix…), poids libres, poulies, poids du corps
-• Nouvelle catégorie Mobilité : étirements et rouleau de massage
-• Recherche aussi par le nom écrit sur la machine (chest press, lat machine, rotary torso…)
+PENDANT LA SÉANCE
+• Séries, reps et charges en quelques touches, avec la colonne « Précédent »
+• La charge à faire proposée à chaque série, semaine de décharge quand tu stagnes
+• Minuteur de repos, séries d'échauffement, drop sets, supersets, RIR
+• Remplacement d'un exercice en un geste quand la machine est prise
+
+PLUS DE 900 EXERCICES ILLUSTRÉS
+• Photos ou illustrations, étapes en français, conseils et vidéos de démonstration
+• Poids libres, machines guidées, poulies, poids du corps, élastiques, mobilité
+• Favoris et recherche aussi en anglais (chest press, lat pulldown…)
 
 PROGRESSION
-• Records et 1RM estimé, graphiques de progression
-• L'appli propose la charge suivante et repère quand tu stagnes
-• Tableau des charges selon le nombre de reps
-• Séries par muscle chaque semaine, muscles négligés, calendrier, statistiques
+• Records, 1RM estimé, graphiques, bilan du mois, calories estimées
+• Carte de récupération musculaire et muscles négligés
+• 42 badges à débloquer
 
-PROGRAMMES ET ROUTINES
-• Full body, Upper/Lower, Push/Pull/Legs, machines guidées, fessiers, mobilité…
-• La prochaine séance de ton programme est proposée automatiquement
-• Partage tes routines avec tes collègues par un simple code
+ENTRE POTES
+• Classement de la semaine, régularité et force
+• Partage de routines par lien ou QR code
 
 TES DONNÉES T'APPARTIENNENT
-• Tout reste sur ton téléphone, rien n'est envoyé
-• Export de sauvegarde, import depuis Hevy, synchro facultative vers ton GitHub
+• Sans compte, tout reste sur ton téléphone
+• Connexion Google facultative pour la sauvegarde et le classement
+• Copies automatiques des 7 derniers jours, export, import depuis Hevy
+
+**Visuels** : générés dans `store/out/` (6 captures 1080 × 1920 et l'image de présentation 1024 × 500).
+Pour les refaire après une modification de l'appli : `python3 store/make_store.py`.
 
 **Catégorie** : Santé et remise en forme
 **Adresse e-mail de contact** : à choisir (elle est affichée publiquement sur la fiche).
