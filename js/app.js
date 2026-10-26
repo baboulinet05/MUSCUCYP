@@ -40,9 +40,10 @@ const icon=n=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true"${n==='dots'
 /* ================= Données ================= */
 const BUILTIN=[];
 (()=>{let m='';for(const line of RAW.split('\n')){const l=line.trim();if(!l)continue;if(l[0]==='#'){m=l.slice(1).trim();continue}const[name,equip,t]=l.split('|');const type=t||(m==='Cardio'?'c':m==='Mobilité'?'t':equip==='Poids du corps'?'b':'w');BUILTIN.push({id:slug(name),name,muscle:m,equip,type})}})();
-(()=>{for(const[id,name,muscle,equip,type,k,en,s,r]of EDB){const has=!!(REPDB[id]||(INFO[id]&&INFO[id].img));BUILTIN.push({id,name,muscle,equip,type,en,edb:1,rare:!!r||!has});INFO[id]=Object.assign(INFO[id]||{},{s})}
+(()=>{for(const[id,name,muscle,equip,type,k,en,s,r]of EDB){const has=!!(REPDB[id]||(INFO[id]&&INFO[id].img)||(typeof OEIMG!=='undefined'&&OEIMG[id]));BUILTIN.push({id,name,muscle,equip,type,en,edb:1,rare:!!r||!has});INFO[id]=Object.assign(INFO[id]||{},{s})}
   for(const id in EDB_STEPS)if(!INFO[id])INFO[id]={s:EDB_STEPS[id]};
-  for(const id in REPDB){const[k,one]=REPDB[id].split(':');if(INFO[id])INFO[id].rp=k;else INFO[id]={s:[],rp:k};INFO[id].rp1=!!one}})();
+  for(const id in REPDB){const[k,one]=REPDB[id].split(':');if(INFO[id])INFO[id].rp=k;else INFO[id]={s:[],rp:k};INFO[id].rp1=!!one}
+  if(typeof OEIMG!=='undefined')for(const id in OEIMG){const[k,one]=OEIMG[id].split(':');const I=INFO[id]||(INFO[id]={s:[]});if(I.img||I.rp)continue;I.oe=k;I.oe1=!!one}})();
 
 const KEY='carnet-fonte-v1';
 const APP_VERSION='3.5';
@@ -476,7 +477,7 @@ function histView(){
 
 function equipSelect(f,val){return`<select class="sel" data-f="${f}" aria-label="Équipement"><option value="">Tout équipement</option>${EQUIP.map(e=>`<option ${e===val?'selected':''}>${e}</option>`).join('')}</select>`}
 function chipsHTML(act,val){return`<div class="chips">${['Tous','Récents','Favoris',...MUSCLES].map(m=>`<button class="chip ${m===val?'on':''}" data-act="${act}:${m}">${m}</button>`).join('')}</div>`}
-function avHTML(X,cls){const inf=INFO[X.id];return`<span class="av ${cls||''}">${ABBR[X.muscle]||'•'}${(S.fav||[]).includes(X.id)?'<span class="star" aria-label="favori">★</span>':''}${inf&&inf.img?`<img ${imgAttr(inf.img,0,true)} alt="" loading="lazy" decoding="async" onerror="this.remove()">`:inf&&inf.rp?`<img src="media/repdb/${inf.rp}-t.webp" alt="" loading="lazy" decoding="async" onerror="this.remove()">`:''}</span>`}
+function avHTML(X,cls){const inf=INFO[X.id];return`<span class="av ${cls||''}">${ABBR[X.muscle]||'•'}${(S.fav||[]).includes(X.id)?'<span class="star" aria-label="favori">★</span>':''}${inf&&inf.img?`<img ${imgAttr(inf.img,0,true)} alt="" loading="lazy" decoding="async" onerror="this.remove()">`:inf&&inf.rp?`<img src="media/repdb/${inf.rp}-t.webp" alt="" loading="lazy" decoding="async" onerror="this.remove()">`:inf&&inf.oe?`<img src="media/oei/${inf.oe}-t.webp" alt="" loading="lazy" decoding="async" onerror="this.remove()">`:''}</span>`}
 function exItem(X,mode,selected,uses){const body=`${avHTML(X)}<span class="xt"><span class="t">${esc(X.name)}</span><span class="s">${esc(X.muscle)} · ${esc(X.equip)}${X.custom?' · perso':''}${uses?` · ${uses}×`:''}</span></span>`;
   if(mode!=='pick')return`<button class="xi" data-act="x-open:${X.id}">${body}${icon('chev-right')}</button>`;
   return`<div class="xi"><button class="xi-main" data-act="p-toggle:${X.id}">${body}<span class="tick ${selected?'on':''}">${selected?icon('check'):''}</span></button><button class="icon-btn" data-act="p-info:${X.id}" aria-label="Voir la fiche de ${esc(X.name)}">${icon('info')}</button></div>`}
@@ -529,6 +530,7 @@ function setView(){
     <div class="setrow"><span class="muted">Séances</span><b class="num">${S.history.length}</b></div>
     <div class="setrow"><span class="muted">Routines</span><b class="num">${S.routines.length}</b></div>
     <div class="setrow"><span class="muted">Exercices perso</span><b class="num">${S.custom.length}</b></div>
+    <details class="credits"><summary>Crédits</summary><p class="dtext" style="font-size:13px">Photos : <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noopener">Free Exercise DB</a> (domaine public).<br>Illustrations : <a href="https://repdb.co" target="_blank" rel="noopener">Exercise data by RepDB (repdb.co)</a>.<br>Illustrations : <a href="https://github.com/hitmanrepo/open-exercise-illustrations" target="_blank" rel="noopener">Open Exercise Illustrations</a> (CC0).<br>Noms et étapes d'une partie des exercices : exercises-dataset (MIT).<br>QR codes : qrcode-generator (MIT), © Kazuhiko Arase.</p></details>
     <button class="btn btn-soft block" data-act="onb-redo">Refaire le questionnaire (nouveau programme)</button>
     <button class="btn btn-danger block" data-act="wipe">Tout effacer</button></section>
   </div>`}
@@ -676,6 +678,10 @@ function mediaHTML(X){const inf=INFO[X.id]||{};
   if(inf.rp&&!inf.img){const CR='Illustrations : <a href="https://repdb.co" target="_blank" rel="noopener">Exercise data by RepDB (repdb.co)</a>',u=t=>`src="media/repdb/${inf.rp}-${t}.webp"`;
     if(inf.rp1)return`<figure class="media-wrap"><div class="media gifonly rp" id="media"><img class="f0" ${u('main')} alt="${esc(X.name)}" onerror="this.closest('.media-wrap').remove()"></div><figcaption><span></span><span class="credit">${CR}</span></figcaption></figure>`;
     return`<figure class="media-wrap"><div class="media rp ${ui.mediaSplit?'split':''}" id="media"><img class="f0" ${u('start')} alt="${esc(X.name)} : position de départ" onerror="this.closest('.media-wrap').remove()"><img class="f1" loading="lazy" ${u('peak')} alt="${esc(X.name)} : position d'arrivée"></div>
+  <figcaption><button class="btn-ghost" data-act="media-mode">${icon('film')}<span id="media-lbl">${ui.mediaSplit?'Voir l\'animation':'Voir les 2 positions'}</span></button><span class="credit">${CR}</span></figcaption></figure>`}
+  if(inf.oe&&!inf.img){const CR='Illustrations : Open Exercise Illustrations (CC0)',u=t=>`src="media/oei/${inf.oe}-${t}.webp"`;
+    if(inf.oe1)return`<figure class="media-wrap"><div class="media gifonly oe" id="media"><img class="f0" ${u('hold')} alt="${esc(X.name)}" onerror="this.closest('.media-wrap').remove()"></div><figcaption><span></span><span class="credit">${CR}</span></figcaption></figure>`;
+    return`<figure class="media-wrap"><div class="media oe ${ui.mediaSplit?'split':''}" id="media"><img class="f0" ${u('start')} alt="${esc(X.name)} : position de départ" onerror="this.closest('.media-wrap').remove()"><img class="f1" loading="lazy" ${u('end')} alt="${esc(X.name)} : position d'arrivée"></div>
   <figcaption><button class="btn-ghost" data-act="media-mode">${icon('film')}<span id="media-lbl">${ui.mediaSplit?'Voir l\'animation':'Voir les 2 positions'}</span></button><span class="credit">${CR}</span></figcaption></figure>`}
   if(!inf.img){if(!MAIN_M.includes(X.muscle))return'';return`<figure class="media-wrap"><div class="musmap">${bodySVG({},m=>m===X.muscle?'rs-target':'rs-n')}</div><figcaption><span class="credit">Muscle travaillé : <b>${esc(X.muscle)}</b></span></figcaption></figure>`}
   return`<figure class="media-wrap"><div class="media ${ui.mediaSplit?'split':''}" id="media"><img class="f0" ${imgAttr(inf.img,0)} alt="${esc(X.name)} : position de départ" onerror="this.closest('.media-wrap').remove()"><img class="f1" loading="lazy" ${imgAttr(inf.img,1)} alt="${esc(X.name)} : position d'arrivée"></div>
@@ -1492,7 +1498,7 @@ function checkMonthReport(){const now=mKey(Date.now());if(S.settings.lastReport=
 
 /* ================= Images hors connexion ================= */
 const MEDIA_CACHE='fonte-media';
-function mediaUrls(){const u=new Set();for(const id in INFO){const i=INFO[id];if(i.img){u.add(`media/img/${encodeURIComponent(i.img)}-0.webp`);u.add(`media/img/${encodeURIComponent(i.img)}-1.webp`);u.add(`media/thumb/${encodeURIComponent(i.img)}-0.webp`)}if(i.rp){u.add(`media/repdb/${i.rp}-t.webp`);for(const t of i.rp1?['main']:['start','peak'])u.add(`media/repdb/${i.rp}-${t}.webp`)}}return[...u]}
+function mediaUrls(){const u=new Set();for(const id in INFO){const i=INFO[id];if(i.img){u.add(`media/img/${encodeURIComponent(i.img)}-0.webp`);u.add(`media/img/${encodeURIComponent(i.img)}-1.webp`);u.add(`media/thumb/${encodeURIComponent(i.img)}-0.webp`)}if(i.oe){u.add(`media/oei/${i.oe}-t.webp`);for(const t of i.oe1?['hold']:['start','end'])u.add(`media/oei/${i.oe}-${t}.webp`)}if(i.rp){u.add(`media/repdb/${i.rp}-t.webp`);for(const t of i.rp1?['main']:['start','peak'])u.add(`media/repdb/${i.rp}-${t}.webp`)}}return[...u]}
 let dlBusy=false;
 async function downloadMedia(){if(dlBusy||!window.caches)return;dlBusy=true;const urls=mediaUrls();let done=0,fail=0;const lbl=()=>{const e=$('#dl-lbl');if(e)e.textContent=`Téléchargement… ${Math.round(done/urls.length*100)} %`};
   try{const c=await caches.open(MEDIA_CACHE);let i=0;const worker=async()=>{while(i<urls.length){const u=urls[i++];try{if(!(await c.match(u))){const r=await fetch(u);if(r.ok)await c.put(u,r);else fail++}}catch(e){fail++}done++;if(done%25===0)lbl()}};

@@ -425,3 +425,5 @@ h3{margin:0;font:700 20px/1.15 var(--f-display);letter-spacing:.01em}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 .lb-crit{margin-top:-2px}.lb-crit .chip{font-size:13px;padding:6px 12px;min-height:0}
+.media.oe,.media.oe img{object-fit:contain;background:#16181B}.media.oe{aspect-ratio:4/3}.media.oe.split{background:none}.media.split.oe img{aspect-ratio:3/4;object-fit:cover}.av img[src*="media/oei"]{background:#16181B}
+.credits summary{cursor:pointer;color:var(--muted);font-size:14px;padding:6px 0}.credits a{color:var(--accent)}

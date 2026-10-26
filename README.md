@@ -7,6 +7,7 @@ Ouvrir sur iPhone dans Safari, puis Partager → Sur l'écran d'accueil.
 Photos d'exercices : [Free Exercise DB](https://github.com/yuhonas/free-exercise-db) (domaine public).
 Exercices supplémentaires : noms et étapes adaptés en français depuis [exercises-dataset](https://github.com/hasaneyldrm/exercises-dataset) (MIT).
 Illustrations d'exercices : Exercise data by RepDB ([repdb.co](https://repdb.co)).
+- Illustrations : [Open Exercise Illustrations](https://github.com/hitmanrepo/open-exercise-illustrations) (CC0)
 QR codes : [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (licence MIT, Kazuhiko Arase).
 Les données d'entraînement restent sur le téléphone (Réglages → Exporter pour les sauvegarder).
 
