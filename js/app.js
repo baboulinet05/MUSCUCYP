@@ -45,7 +45,7 @@ const BUILTIN=[];
   for(const id in REPDB){const[k,one]=REPDB[id].split(':');if(INFO[id])INFO[id].rp=k;else INFO[id]={s:[],rp:k};INFO[id].rp1=!!one}})();
 
 const KEY='carnet-fonte-v1';
-const APP_VERSION='3.2';
+const APP_VERSION='3.3';
 /* ================= Appli Android (Capacitor) ================= */
 const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const CP=NATIVE?window.Capacitor.Plugins:{};
@@ -345,7 +345,7 @@ function calendarHTML(){const H=S.history;const now=new Date();const m0=ui.calMo
 /* ================= Rendu principal ================= */
 function renderAll(){renderMain();renderEditor();renderPicker(true);renderDetail();renderRestBar();renderDialog()}
 let lastTab=null;
-function renderMain(){
+function renderMain(){if(ui.tab==='reglages'&&!NATIVE&&!FB&&!fbReady)setTimeout(()=>fbLoad().catch(()=>{}),0);
   const m=$('#main');const st=lastTab===ui.tab?m.scrollTop:0;
   m.innerHTML=ui.tab==='seance'?seanceView():ui.tab==='historique'?histView():ui.tab==='exercices'?exView():setView();
   m.scrollTop=st;lastTab=ui.tab;
@@ -1119,14 +1119,20 @@ function fbLoad(){if(fbReady)return fbReady;const b=`https://www.gstatic.com/fir
     .catch(e=>{fbReady=null;throw new Error('Impossible de joindre Google. Vérifie ta connexion internet.')});return fbReady}
 const NATIVE_G=()=>!!(NATIVE&&CP.FirebaseAuthentication);
 async function fbNativeCred(){const r=await CP.FirebaseAuthentication.signInWithGoogle();const t=r&&r.credential&&r.credential.idToken;if(!t)throw new Error('Connexion Google annulée.');return FB.au.GoogleAuthProvider.credential(t)}
-async function fbSignIn(){const b=document.querySelector('[data-act="fb-login"]');if(b){b.disabled=true;b.textContent='Connexion…'}
-  try{await fbLoad();if(NATIVE_G()){const c=await fbNativeCred();const r=await FB.au.signInWithCredential(FB.A,c);await fbAfterLogin(r.user);return}const p=new FB.au.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
-    const slow=setTimeout(()=>{const x=document.querySelector('[data-act="fb-login"]');if(x){x.disabled=false;x.textContent='Se connecter avec Google'}if(!fbUser)openDlg({title:'La connexion traîne ?',html:'<p class="dtext">Si la fenêtre Google est restée bloquée, ferme-la (« OK » ou « Terminé » en haut) puis essaie l\'autre méthode.</p>',buttons:[{label:'Essayer une autre méthode',kind:'primary',fn:()=>{FB.au.signInWithRedirect(FB.A,p).catch(e=>openDlg({title:'Connexion impossible',html:`<p class="dtext">${esc(fbErr(e))}</p>`,buttons:[{label:'OK',kind:'primary'}]}))}},{label:'Attendre',kind:'soft'}]})},20000);
-    let cred;try{cred=await FB.au.signInWithPopup(FB.A,p)}catch(e){if(/popup-blocked|operation-not-supported/.test(e.code||'')){await FB.au.signInWithRedirect(FB.A,p);return}throw e}
-    finally{clearTimeout(slow)}
-    if(MODAL&&MODAL.title==='La connexion traîne ?')closeDlg();await fbAfterLogin(cred.user)}
-  catch(e){if(b){b.disabled=false}renderMain();if(/popup-closed|cancelled-popup/.test(e.code||''))return;
-    openDlg({title:'Connexion impossible',html:`<p class="dtext">${esc(fbErr(e))}</p>`,buttons:[{label:'OK',kind:'primary'}]})}}
+async function fbSignIn(){const b=document.querySelector('[data-act="fb-login"]');
+  if(NATIVE_G()){if(b){b.disabled=true;b.textContent='Connexion…'}try{await fbLoad();const c=await fbNativeCred();const r=await FB.au.signInWithCredential(FB.A,c);await fbAfterLogin(r.user)}catch(e){fbLoginErr(e)}return}
+  /* iPhone : la fenêtre Google doit s'ouvrir directement au toucher, sinon Safari la bloque sans rien dire */
+  if(FB)return fbPopup();
+  if(b){b.disabled=true;b.textContent='Préparation…'}
+  try{await fbLoad()}catch(e){return fbLoginErr(e)}
+  if(b){b.disabled=false;b.textContent='Se connecter avec Google'}
+  openDlg({title:'Connexion Google',html:'<p class="dtext">Tout est prêt. Touche le bouton pour choisir ton compte Google.</p>',buttons:[{label:'Continuer avec Google',kind:'primary',fn:()=>{fbPopup()}},{label:'Annuler',kind:'soft'}]})}
+function fbPopup(){const p=new FB.au.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
+  FB.au.signInWithPopup(FB.A,p).then(cred=>fbAfterLogin(cred.user)).catch(e=>{
+    if(/popup-blocked/.test(e.code||''))return openDlg({title:'Fenêtre bloquée',html:'<p class="dtext">Ton téléphone a bloqué la fenêtre Google. Touche à nouveau le bouton.</p>',buttons:[{label:'Continuer avec Google',kind:'primary',fn:()=>{fbPopup()}},{label:'Annuler',kind:'soft'}]});
+    fbLoginErr(e)})}
+function fbLoginErr(e){const b=document.querySelector('[data-act="fb-login"]');if(b){b.disabled=false;b.textContent='Se connecter avec Google'}renderMain();if(/popup-closed|cancelled-popup/.test(e&&e.code||''))return;
+  openDlg({title:'Connexion impossible',html:`<p class="dtext">${esc(fbErr(e))}</p><p class="muted" style="font-size:12px">${esc((e&&e.code)||'')}</p>`,buttons:[{label:'OK',kind:'primary'}]})}
 function fbErr(e){const c=e&&e.code||'';if(/unauthorized-domain/.test(c))return'Ce site n\'est pas autorisé dans Firebase : ajoute baboulinet05.github.io dans Authentication → Paramètres → Domaines autorisés.';
   if(/operation-not-allowed/.test(c))return'La connexion Google n\'est pas activée dans Firebase (Authentication → Sign-in method → Google).';if(/permission-denied/.test(c))return'Firebase a refusé l\'accès : vérifie les règles Firestore.';
   if(/network/.test(c))return'Pas de connexion internet.';return(e&&e.message)||'Erreur inconnue.'}

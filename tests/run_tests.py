@@ -107,7 +107,11 @@ with sync_playwright() as p:
     check('restauration d\'une copie datée', pg.evaluate("S.history.length") == 3)
 
     print('Compte Google (simulé)')
-    pg.evaluate("ui.tab='reglages';renderMain()"); pg.click('[data-act="fb-login"]'); pg.wait_for_timeout(1500); pg.evaluate("closeDlg()")
+    pg.evaluate("ui.tab='reglages';renderMain()"); pg.wait_for_timeout(400); check('SDK Google préchargé dans Réglages (fenêtre ouverte au toucher)', pg.evaluate("!!FB"))
+    pg.click('[data-act="fb-login"]'); pg.wait_for_timeout(1500); pg.evaluate("closeDlg()")
+    p2 = page(OLD_SAVE); p2.evaluate("closeDlg();ui.tab='seance';renderMain()"); p2.evaluate("fbSignIn()"); p2.wait_for_timeout(600)
+    check('SDK pas encore chargé → bouton « Continuer avec Google »', p2.evaluate("MODAL&&MODAL.title") == 'Connexion Google')
+    p2.evaluate("MODAL.buttons[0].fn()"); p2.wait_for_timeout(800); check('connexion après « Continuer »', p2.evaluate("fbOn()"))
     db = json.loads(pg.evaluate("localStorage.getItem('mock-db')") or '{}')
     check('connexion et sauvegarde en ligne', pg.evaluate("fbOn()") and any(k.startswith('users/TESTUSER') for k in db))
     pg.evaluate("fbBackupDaily()"); pg.wait_for_timeout(600)
