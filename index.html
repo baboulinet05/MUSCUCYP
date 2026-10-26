@@ -35,6 +35,7 @@
 <input type="file" id="fileIn" accept="application/json,.json,text/plain" hidden>
 <input type="file" id="hevyIn" accept=".csv,text/csv,text/plain,text/comma-separated-values" hidden>
 
+<script>(function(){var l='fr';try{var s=JSON.parse(localStorage.getItem('carnet-fonte-v1')||'{}').settings||{};l=s.lang&&s.lang!=='auto'?s.lang:(/^fr/i.test(navigator.language||'fr')?'fr':'en')}catch(e){}window.FONTE_LANG=l;document.documentElement.lang=l;if(l==='en')document.write('<script src="js/i18n-en.js?v=3.5"><\/script>')})()</script>
 <script src="js/data.js?v=3.5"></script>
 <script src="js/app.js?v=3.5"></script>
 

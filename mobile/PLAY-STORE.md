@@ -69,7 +69,7 @@ en général 1 à 7 jours.
 Carnet de fonte
 
 **Description courte (80 caractères max)**
-Carnet de muscu gratuit et sans pub : programme, 1 300 exercices, progression.
+Carnet de muscu gratuit et sans pub : programme, 1 400 exercices, progression.
 
 **Description complète**
 Carnet de fonte est le carnet de musculation français, gratuit, sans pub et sans abonnement.
@@ -86,7 +86,7 @@ PENDANT LA SÉANCE
 • Minuteur de repos, séries d'échauffement, drop sets, supersets, RIR
 • Remplacement d'un exercice en un geste quand la machine est prise
 
-PLUS DE 1 300 EXERCICES ILLUSTRÉS
+PLUS DE 1 400 EXERCICES ILLUSTRÉS
 • Photos ou illustrations, étapes en français, conseils et vidéos de démonstration
 • Poids libres, machines guidées, poulies, poids du corps, élastiques, mobilité
 • Favoris et recherche aussi en anglais (chest press, lat pulldown…)
@@ -103,9 +103,49 @@ ENTRE POTES
 TES DONNÉES T'APPARTIENNENT
 • Sans compte, tout reste sur ton téléphone
 • Connexion Google facultative pour la sauvegarde et le classement
-• Copies automatiques des 7 derniers jours, export, import depuis Hevy
+• Copies automatiques des 7 derniers jours, export, import depuis Hevy et Strong
+• Rappels d'entraînement, minuteur sur l'écran verrouillé, widget, bilan du mois en PDF
 
-**Visuels** : générés dans `store/out/` (6 captures 1080 × 1920 et l'image de présentation 1024 × 500).
+### Fiche en anglais (Play Console → Fiche principale → Gérer les traductions → Anglais)
+L'appli passe toute seule en anglais quand le téléphone est en anglais (réglable dans Réglages → Langue).
+
+**Short description**
+Free workout log, no ads: program, 1,400 exercises, progress tracking.
+
+**Full description**
+Carnet de fonte is a free workout log with no ads and no subscription.
+
+YOUR PROGRAM IN 4 QUESTIONS
+• Goal, level, place and workouts per week: your full program is ready
+• Weekly schedule and today's workout on the home screen
+• Workout generator based on your time, equipment and recovered muscles
+• 5-minute guided warm-up matched to your workout
+
+DURING YOUR WORKOUT
+• Sets, reps and weights in a few taps, with the "Previous" column
+• Suggested weight on every set, deload week when you plateau
+• Rest timer on the lock screen, warm-up sets, drop sets, supersets, RIR
+• Swap an exercise in one tap when the machine is taken
+
+OVER 1,400 ILLUSTRATED EXERCISES
+• Photos or illustrations, step-by-step instructions and demo videos
+• Free weights, machines, cables, bodyweight, bands, mobility
+
+PROGRESS
+• Records, estimated 1RM, charts, monthly report (PDF), estimated calories
+• Muscle recovery map and neglected muscles
+• 42 badges to unlock
+
+WITH FRIENDS
+• Weekly leaderboard: workouts, volume, time, consistency and strength
+• Share routines by link or QR code, share your workout as an Instagram story
+
+YOUR DATA IS YOURS
+• No account needed: everything stays on your phone
+• Optional Google sign-in for backup and the leaderboard
+• Automatic copies of the last 7 days, export, import from Hevy and Strong
+
+**Visuels** : générés dans `store/out/` (français) et `store/out-en/` (anglais, `LANG_STORE=en python3 store/make_store.py`) (6 captures 1080 × 1920 et l'image de présentation 1024 × 500).
 Pour les refaire après une modification de l'appli : `python3 store/make_store.py`.
 
 **Catégorie** : Santé et remise en forme

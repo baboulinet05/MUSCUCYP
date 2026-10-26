@@ -1,4 +1,22 @@
 'use strict';
+/* ================= Langue (français par défaut, anglais si le téléphone est en anglais) ================= */
+const EN=window.FONTE_LANG==='en'&&typeof I18N_EN!=='undefined';
+const LOC=EN?'en-GB':'fr-FR';
+const TR=(()=>{if(!EN)return s=>s;const U=I18N_EN.ui,cache=new Map(),units={min:'min',h:'h',jour:'day',jours:'days',semaine:'week',semaines:'weeks',mois:'months'};
+  const keys=Object.keys(U).filter(k=>k.length>=3).sort((a,b)=>b.length-a.length),rx=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const re=new RegExp('(?<![\\p{L}])(?:'+keys.map(rx).join('|')+')(?![\\p{L}])','gu');
+  return s=>{if(!s||!/[A-Za-zÀ-ÿ]/.test(s))return s;const c=cache.get(s);if(c!==undefined)return c;const t=s.trim();let r;
+    if(U[t]!==undefined)r=s.replace(t,U[t]);
+    else r=s.replace(/il y a (\d+) ?(min|h|jours?|semaines?|mois)(?![\p{L}])/gu,(m,n,u)=>n+' '+(units[u]||u)+' ago').replace(re,m=>U[m]).replace(/(\d+) sur (\d+)/g,'$1 of $2').replace(/(^|\s)sur (\d+)/g,'$1out of $2').replace(/(\d+) jours?(?![\p{L}])/gu,(m,n)=>n+(n==1?' day':' days')).replace(/(\d+) semaines?(?![\p{L}])/gu,(m,n)=>n+(n==1?' week':' weeks'));
+    if(cache.size>8000)cache.clear();cache.set(s,r);return r}})();
+function trCtx(x){if(EN){const f=x.fillText.bind(x),m=x.measureText.bind(x);x.fillText=(t,...a)=>f(TR(String(t)),...a);x.measureText=t=>m(TR(String(t)))}return x}
+function trDom(root){if(!EN||!root)return;if(root.nodeType===3){const v=root.data,t=TR(v);if(t!==v)root.data=t;return}if(root.nodeType!==1)return;
+  if(root.closest&&root.closest('textarea,[contenteditable],.notr'))return;
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement&&n.parentElement.closest('textarea,script,style,.notr')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});let n;while((n=w.nextNode())){const v=n.data,t=TR(v);if(t!==v)n.data=t}
+  const els=root.querySelectorAll?[root,...root.querySelectorAll('[placeholder],[aria-label],[title],[alt]')]:[];for(const e of els)for(const a of['placeholder','aria-label','title','alt']){const v=e.getAttribute&&e.getAttribute(a);if(v){const t=TR(v);if(t!==v)e.setAttribute(a,t)}}}
+if(EN){const mo=new MutationObserver(L=>{for(const m of L){if(m.type==='characterData')trDom(m.target);else m.addedNodes.forEach(trDom)}});
+  document.addEventListener('DOMContentLoaded',()=>{trDom(document.body);mo.observe(document.body,{childList:true,subtree:true,characterData:true})});
+  if(document.body){trDom(document.body);mo.observe(document.body,{childList:true,subtree:true,characterData:true})}}
 
 const IMG='img/';
 const MEDIA_MODE='webp';
@@ -23,14 +41,14 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const clone=o=>JSON.parse(JSON.stringify(o));
 const num=v=>{if(v===''||v==null)return NaN;const n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:NaN};
 const fmt=n=>{n=+n;if(!isFinite(n))return'';return(Math.round(n*100)/100).toString().replace('.',',')};
-const fmtVol=n=>Math.round(n).toLocaleString('fr-FR')+' kg';
+const fmtVol=n=>Math.round(n).toLocaleString(LOC)+' kg';
 const fmtDur=ms=>{const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`:`${m}:${String(x).padStart(2,'0')}`};
 const fmtDurLong=ms=>{const m=Math.max(1,Math.round(ms/60000));return m<60?m+' min':Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')};
 const fmtSec=s=>{s=Math.round(+s||0);return s<60?s+' s':Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
 const fmtRest=o=>o<60?o+' s':(o%60?`${Math.floor(o/60)} min ${o%60}`:`${o/60} min`);
-const fmtDay=t=>new Date(t).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-const fmtShort=t=>new Date(t).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
-const fmtHour=t=>new Date(t).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+const fmtDay=t=>new Date(t).toLocaleDateString(LOC,{weekday:'long',day:'numeric',month:'long'});
+const fmtShort=t=>new Date(t).toLocaleDateString(LOC,{day:'numeric',month:'short'});
+const fmtHour=t=>new Date(t).toLocaleTimeString(LOC,{hour:'2-digit',minute:'2-digit'});
 const e1rm=(a,b)=>b<=1?a:a*(1+b/30);
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 
@@ -43,6 +61,7 @@ const BUILTIN=[];
 (()=>{for(const[id,name,muscle,equip,type,k,en,s,r]of EDB){const has=!!(REPDB[id]||(INFO[id]&&INFO[id].img)||(typeof OEIMG!=='undefined'&&OEIMG[id]));BUILTIN.push({id,name,muscle,equip,type,en,edb:1,rare:!!r||!has});INFO[id]=Object.assign(INFO[id]||{},{s})}
   for(const id in EDB_STEPS)if(!INFO[id])INFO[id]={s:EDB_STEPS[id]};
   for(const id in REPDB){const[k,one]=REPDB[id].split(':');if(INFO[id])INFO[id].rp=k;else INFO[id]={s:[],rp:k};INFO[id].rp1=!!one}
+  if(EN){const N=I18N_EN.names,St=I18N_EN.steps;for(const X of BUILTIN){if(N[X.id])X.name=N[X.id];const I=INFO[X.id];if(I){I.s=St[X.id]||[];delete I.tip}else if(St[X.id])INFO[X.id]={s:St[X.id]}}}
   if(typeof OEIMG!=='undefined')for(const id in OEIMG){const[k,one]=OEIMG[id].split(':');const I=INFO[id]||(INFO[id]={s:[]});if(I.img||I.rp)continue;I.oe=k;I.oe1=!!one}})();
 
 const KEY='carnet-fonte-v1';
@@ -76,20 +95,20 @@ function widgetSync(){if(!FONTE())return;clearTimeout(widgetT);widgetT=setTimeou
   const wk=monday(Date.now()),n=S.history.filter(w=>w.start>=wk).length,g=S.settings.weekGoal,doneToday=S.history.some(w=>dayKey(w.start)===dayKey(Date.now())),st=weekStreaks().cur;
   const title=S.active?'Séance en cours':doneToday?'Séance faite ✔':R?R.name:'Repos';
   const line1=S.active?(S.active.name||'Séance'):R?`${R.exercises.length} exercice${R.exercises.length>1?'s':''} · ${n}${g?' / '+g:''} séance${(g||n)>1?'s':''} cette semaine`:`${n}${g?' / '+g:''} séance${(g||n)>1?'s':''} cette semaine`;
-  CP.Fonte.widget({title,line1,line2:st?`🔥 ${st} semaine${st>1?'s':''} d'affilée`:''})}catch(e){}},800)}
+  CP.Fonte.widget({title:TR(title),line1:TR(line1),line2:TR(st?`🔥 ${st} semaine${st>1?'s':''} d'affilée`:'')})}catch(e){}},800)}
 /* rappels d'entraînement : notification les jours du planning */
 async function remindSync(){if(!NATIVE||!CP.LocalNotifications)return;const LN=CP.LocalNotifications,R=S.settings.remind||{};
   try{await LN.cancel({notifications:[0,1,2,3,4,5,6].map(i=>({id:100+i}))})}catch(e){}
   if(!R.on)return;try{await LN.createChannel({id:'rappels',name:'Rappels d\'entraînement',description:'Les jours prévus dans ton planning',importance:3})}catch(e){}
   const [h,m]=(R.at||'18:00').split(':').map(Number),N=[];
   for(let i=0;i<7;i++){const rid=(S.plan||{})[i],r=rid&&S.routines.find(x=>x.id===rid);if(!r)continue;
-    N.push({id:100+i,title:`${r.name} aujourd'hui 💪`,body:`${r.exercises.length} exercices au programme. On y va ?`,channelId:'rappels',schedule:{on:{weekday:((i+1)%7)+1,hour:h,minute:m},allowWhileIdle:true}})}
+    N.push({id:100+i,title:EN?`${r.name} today 💪`:`${r.name} aujourd'hui 💪`,body:EN?`${r.exercises.length} exercises planned. Let's go?`:`${r.exercises.length} exercices au programme. On y va ?`,channelId:'rappels',schedule:{on:{weekday:((i+1)%7)+1,hour:h,minute:m},allowWhileIdle:true}})}
   if(N.length)try{await LN.schedule({notifications:N})}catch(e){}}
 const VIBS={tap:15,heavy:45,end:[200,100,200],pr:[60,40,60,40,160]};
 function vib(t){try{if(FONTE()){CP.Fonte.haptic({type:t});return}if(navigator.vibrate)navigator.vibrate(VIBS[t]||15)}catch(e){}}
 /* minuteur de repos natif : compte à rebours sur l'écran verrouillé, boutons +30 s / Passer */
-function restSync(){if(!FONTE())return;const r=S.active&&S.active.rest;try{if(r&&r.end>Date.now()+500)CP.Fonte.restStart({end:r.end,total:r.total,title:'Repos · '+(S.active.name||'Séance'),body:restNext()});else CP.Fonte.restStop()}catch(e){}}
-function restNext(){try{const A=S.active;for(const e of A.exercises){const k=e.sets.findIndex(s=>!s.done&&s.t!=='w');if(k>=0)return'Ensuite : '+ex(e.exId).name+' · série '+(k+1)}}catch(e){}return'À la série suivante !'}
+function restSync(){if(!FONTE())return;const r=S.active&&S.active.rest;try{if(r&&r.end>Date.now()+500)CP.Fonte.restStart({end:r.end,total:r.total,title:TR('Repos')+' · '+(S.active.name||TR('Séance')),body:restNext()});else CP.Fonte.restStop()}catch(e){}}
+function restNext(){try{const A=S.active;for(const e of A.exercises){const k=e.sets.findIndex(s=>!s.done&&s.t!=='w');if(k>=0)return TR('Ensuite :')+' '+ex(e.exId).name+' · '+TR('série')+' '+(k+1)}}catch(e){}return TR('À la série suivante !')}
 function restFromNative(e){if(!S.active)return;if(e.action==='plus'&&S.active.rest){S.active.rest.end=e.end;S.active.rest.total=e.total||S.active.rest.total+30}else if(e.action==='skip'||e.action==='end')S.active.rest=null;save();renderRestBar();renderResume();tick()}
 async function restResume(){if(!FONTE()||!S.active||!S.active.rest)return;try{const n=await CP.Fonte.restGet();if(!n.end)S.active.rest=null;else if(Math.abs(n.end-S.active.rest.end)>900){S.active.rest.end=n.end;S.active.rest.total=n.total||S.active.rest.total}save();renderRestBar();renderResume()}catch(e){}}
 if(NATIVE)setTimeout(()=>{if(!FONTE())return;try{CP.Fonte.addListener('rest',restFromNative)}catch(e){}document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')restResume()})},0);
@@ -171,7 +190,7 @@ function wVolume(w){let v=0;for(const e of w.exercises){const T=ex(e.exId).type;
 function bodyAt(t){const B=bodySorted();if(!B.length)return 0;let k=B[0].kg;for(const b of B)if(b.t<=t)k=b.kg;return +k||0}
 function kcalFor(w){const kg=bodyAt(w.start)||75,T=Math.max(0,(w.end-w.start)/36e5);let cm=0;for(const e of w.exercises)if(ex(e.exId).type==='c')for(const s of e.sets)if(s.done!==false)cm+=+s.b||0;
   const ch=Math.min(T,cm/60);return Math.round(kg*((T-ch)*5+ch*7.5))}
-const fmtKcal=n=>'≈ '+Math.round(n).toLocaleString('fr-FR')+' kcal';
+const fmtKcal=n=>'≈ '+Math.round(n).toLocaleString(LOC)+' kcal';
 function wSets(w){let n=0;for(const e of w.exercises)for(const s of e.sets)if(s.done!==false&&s.t!=='w')n++;return n}
 function activeStats(){let v=0,n=0;for(const e of S.active.exercises){const T=ex(e.exId).type;for(const s of e.sets)if(s.done){v+=setVol(s,T);if(s.t!=='w')n++}}return{v,n}}
 function score(type,sets){let best=0;for(const s of sets){if(s.t==='w')continue;const a=+s.a||0,b=+s.b||0;
@@ -264,7 +283,7 @@ function analyzeHevy(txt){let rows=parseCSV(txt);if(rows.length<2)throw new Erro
 function hevyImport(txt){let r;try{r=analyzeHevy(txt)}catch(e){return openDlg({title:'Import impossible',html:`<p class="dtext">${esc(e.message||'Fichier illisible.')}</p>`,buttons:[{label:'OK',kind:'primary'}]})}
   if(!r.workouts.length)return openDlg({title:'Rien de nouveau',html:`<p class="dtext">${r.dupes?`Les ${r.dupes} séances de ce fichier sont déjà dans ton historique.`:'Aucune séance trouvée dans ce fichier.'}</p>`,buttons:[{label:'OK',kind:'primary'}]});
   const W=r.workouts.slice().sort((a,b)=>a.start-b.start);const nSets=W.reduce((a,w)=>a+w.exercises.reduce((b,e)=>b+e.sets.length,0),0);
-  openDlg({title:'Importer depuis '+r.src,html:`<div class="sum"><div><span class="k">Séances</span><span class="v">${W.length}</span></div><div><span class="k">Séries</span><span class="v">${nSets.toLocaleString('fr-FR')}</span></div><div><span class="k">Exercices</span><span class="v">${r.used}</span></div></div>
+  openDlg({title:'Importer depuis '+r.src,html:`<div class="sum"><div><span class="k">Séances</span><span class="v">${W.length}</span></div><div><span class="k">Séries</span><span class="v">${nSets.toLocaleString(LOC)}</span></div><div><span class="k">Exercices</span><span class="v">${r.used}</span></div></div>
     <p class="dtext">Du ${fmtShort(W[0].start)} ${new Date(W[0].start).getFullYear()} au ${fmtShort(W[W.length-1].start)} ${new Date(W[W.length-1].start).getFullYear()}.${r.dupes?` ${r.dupes} séance${r.dupes>1?'s':''} déjà présente${r.dupes>1?'s':''} ser${r.dupes>1?'ont':'a'} ignorée${r.dupes>1?'s':''}.`:''}</p>
     <p class="dtext">${r.matched} exercice${r.matched>1?'s':''} reconnu${r.matched>1?'s':''} dans l'annuaire${r.creates.length?`, ${r.creates.length} ajouté${r.creates.length>1?'s':''} comme exercice${r.creates.length>1?'s':''} perso : ${esc(r.creates.map(c=>c.name).join(', '))}.`:'.'}</p>`,
   buttons:[{label:`Importer ${W.length} séance${W.length>1?'s':''}`,kind:'primary',fn:()=>{
@@ -318,7 +337,7 @@ function measDetailHTML(k){const L=(measLast()[k]||[]);
 /* ================= Image à partager ================= */
 function shareImage(w){openSheet('Partager ta séance',[{label:'Story Instagram (vertical)',fn:()=>shareImageGo(w,'story')},{label:'Publication (carré 4:5)',fn:()=>shareImageGo(w,'post')}])}
 async function shareImageGo(w,fmt){try{await document.fonts.ready}catch(e){}
-    const cv=document.createElement('canvas');cv.width=1080;cv.height=1350;const x=cv.getContext('2d');
+    const cv=document.createElement('canvas');cv.width=1080;cv.height=1350;const x=trCtx(cv.getContext('2d'));
   if(fmt!=='story'){x.fillStyle='#0E1012';x.fillRect(0,0,1080,1350)}
   const red=accentHex('d'),fg='#ECEEF0',mu='#8F98A1',ln='#2A2F35';const D='"Barlow Condensed","Arial Narrow",sans-serif',B='"Figtree",system-ui,sans-serif';
   [[red,150],['#6A97F2',130],['#E5AE22',110],['#55C985',90]].forEach(([c,h],i)=>{x.fillStyle=c;x.beginPath();x.roundRect(80+i*30,80+(150-h)/2,20,h,5);x.fill()});
@@ -334,12 +353,12 @@ async function shareImageGo(w,fmt){try{await document.fonts.ready}catch(e){}
   if(w.exercises.length>8){y+=56;x.fillStyle=mu;x.font=`500 28px ${B}`;x.fillText(`+ ${w.exercises.length-8} autres exercices`,80,y)}
   if(w.prs&&w.prs.length){y=Math.min(y+90,1180);x.fillStyle=accentHex('sd');x.beginPath();x.roundRect(80,y-50,920,80,20);x.fill();x.fillStyle=red;x.font=`700 38px ${D}`;x.fillText(`🏆 ${w.prs.length} RECORD${w.prs.length>1?'S':''} BATTU${w.prs.length>1?'S':''}`,110,y+5)}
   let out;
-  if(fmt==='story'){const ch=Math.min(1350,y+80);out=document.createElement('canvas');out.width=1080;out.height=1920;const o=out.getContext('2d');
+  if(fmt==='story'){const ch=Math.min(1350,y+80);out=document.createElement('canvas');out.width=1080;out.height=1920;const o=trCtx(out.getContext('2d'));
     const g=o.createRadialGradient(540,0,80,540,300,1500);g.addColorStop(0,'#262B33');g.addColorStop(.55,'#0E1012');g.addColorStop(1,'#0E1012');o.fillStyle=g;o.fillRect(0,0,1080,1920);
     const top=Math.max(170,Math.round((1920-ch-260)/2));o.drawImage(cv,0,0,1080,ch,0,top,1080,ch);
     try{const L=await new Promise((ok,ko)=>{const im=new Image();im.onload=()=>ok(im);im.onerror=ko;im.src='media/logo.svg'});o.drawImage(L,80,1920-230,110,110)}catch(e){}
     o.fillStyle=fg;o.font=`800 54px ${D}`;o.fillText('CARNET DE FONTE',214,1920-158);o.fillStyle=mu;o.font=`500 28px ${B}`;o.fillText('Carnet de muscu gratuit · sans pub',214,1920-116)}
-  else{const Hf=Math.min(1350,Math.max(1080,y+170));out=document.createElement('canvas');out.width=1080;out.height=Hf;const o=out.getContext('2d');o.drawImage(cv,0,0);
+  else{const Hf=Math.min(1350,Math.max(1080,y+170));out=document.createElement('canvas');out.width=1080;out.height=Hf;const o=trCtx(out.getContext('2d'));o.drawImage(cv,0,0);
     o.fillStyle=mu;o.font=`600 26px ${B}`;o.fillText('CARNET DE FONTE',80,Hf-60)}
   const blob=await new Promise(r=>out.toBlob(r,'image/png'));const url=URL.createObjectURL(blob);
   if(NATIVE&&CP.Filesystem&&CP.Share){try{const b64=await new Promise(ok=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]);fr.readAsDataURL(blob)});
@@ -397,7 +416,7 @@ function calendarHTML(){const H=S.history;const now=new Date();const m0=ui.calMo
   let cells='';for(let i=0;i<lead;i++)cells+='<span></span>';
   for(let d=1;d<=days;d++){const has=byDay[d];cells+=has?`<button class="cd on ${d===today?'td':''}" data-act="cal-day:${y}-${mo}-${d}" aria-label="${d} : ${has.length} séance${has.length>1?'s':''}">${d}</button>`:`<span class="cd ${d===today?'td':''}">${d}</span>`}
   const isCur=y===now.getFullYear()&&mo===now.getMonth();
-  return`<section class="card cal"><div class="cal-h"><button class="icon-btn" data-act="cal-nav:-1" aria-label="Mois précédent">${icon('chev-left')}</button><div class="cal-t"><b>${esc(cap(first.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})))}</b><span class="s">${cnt} séance${cnt>1?'s':''}</span></div><button class="icon-btn" data-act="cal-nav:1" ${isCur?'disabled':''} aria-label="Mois suivant">${icon('chev-right')}</button></div>
+  return`<section class="card cal"><div class="cal-h"><button class="icon-btn" data-act="cal-nav:-1" aria-label="Mois précédent">${icon('chev-left')}</button><div class="cal-t"><b>${esc(cap(first.toLocaleDateString(LOC,{month:'long',year:'numeric'})))}</b><span class="s">${cnt} séance${cnt>1?'s':''}</span></div><button class="icon-btn" data-act="cal-nav:1" ${isCur?'disabled':''} aria-label="Mois suivant">${icon('chev-right')}</button></div>
   <div class="cal-g"><span class="cw">L</span><span class="cw">M</span><span class="cw">M</span><span class="cw">J</span><span class="cw">V</span><span class="cw">S</span><span class="cw">D</span>${cells}</div></section>`}
 
 /* ================= Rendu principal ================= */
@@ -460,7 +479,7 @@ function histView(){
   const bars=counts.map((c,i)=>{const h=c?Math.max(4,c/maxC*(Hh-top-bot)):3;const x=10+i*step+(step-bw)/2,y=Hh-bot-h;const d=new Date(weeks[i]);
     return`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw}" height="${h.toFixed(1)}" rx="4" class="${i===7?'b-on':'b-off'}"/>${c?`<text x="${(x+bw/2).toFixed(1)}" y="${(y-4).toFixed(1)}" text-anchor="middle" class="tv">${c}</text>`:''}<text x="${(x+bw/2).toFixed(1)}" y="${Hh-4}" text-anchor="middle" class="tx">${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</text>`}).join('');
   let html='',cur='';
-  for(const w of H){const mk=new Date(w.start).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});if(mk!==cur){cur=mk;html+=`<div class="month">${esc(mk)}</div>`}
+  for(const w of H){const mk=new Date(w.start).toLocaleDateString(LOC,{month:'long',year:'numeric'});if(mk!==cur){cur=mk;html+=`<div class="month">${esc(mk)}</div>`}
     const exs=[];for(const e of w.exercises){const last=exs[exs.length-1];if(last&&last.id===e.exId)last.n+=e.sets.length;else exs.push({id:e.exId,n:e.sets.length})}
     html+=`<button class="card hcard" data-act="hist-open:${w.id}"><div class="hc-top"><h3>${esc(w.name)}</h3><span class="hc-date">${esc(cap(fmtShort(w.start)))}</span></div>
     <div class="hc-stats num"><span>${icon('clock')}${fmtDurLong(w.end-w.start)}</span><span>${icon('weight')}${fmtVol(wVolume(w))}</span><span>${icon('layers')}${wSets(w)} série${wSets(w)>1?'s':''}</span><span>${icon('flame')}${Math.round(kcalFor(w))} kcal</span>${w.prs&&w.prs.length?`<span class="pr">${icon('trophy')}${w.prs.length} record${w.prs.length>1?'s':''}</span>`:''}</div>
@@ -510,6 +529,7 @@ function setView(){
     ${/iPhone|iPad/.test(navigator.userAgent)&&!NATIVE?`<p class="dtext" style="font-size:13px">Sur iPhone, le son et la vibration ne marchent que si l'app est ouverte à l'écran.</p>`:''}</section>
   <section class="card setc"><h3>Apparence</h3>
     <div class="setrow"><span>Couleur</span><div class="swatches" role="radiogroup" aria-label="Couleur de l'appli">${Object.entries(ACCENTS).map(([k,A])=>`<button class="sw ${(S.settings.accent||'rouge')===k?'on':''}" data-act="accent:${k}" role="radio" aria-checked="${(S.settings.accent||'rouge')===k}" aria-label="${A.n}" style="--c:${isDark()?A.d:A.l}"></button>`).join('')}</div></div>
+    <div class="setrow"><span>Langue</span><select class="sel" data-f="lang">${[['auto','Automatique (langue du téléphone)'],['fr','Français'],['en','English']].map(([v,l])=>`<option value="${v}" ${(S.settings.lang||'auto')===v?'selected':''}>${l}</option>`).join('')}</select></div>
     <div class="setrow"><span>Thème</span><select class="sel" data-f="theme">${[['auto','Automatique (selon le téléphone)'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${(S.settings.theme||'auto')===v?'selected':''}>${l}</option>`).join('')}</select></div></section>
   <section class="card setc"><h3>Annuaire d'exercices</h3>
     <div class="setrow"><span>Afficher tout l'annuaire<br><span class="muted" style="font-size:13px">ajoute les exercices sans illustration et les variantes rares (swiss ball, Bosu…)</span></span><button class="toggle ${S.settings.showRare?'on':''}" data-act="toggle-rare" role="switch" aria-checked="${!!S.settings.showRare}" aria-label="Afficher les variantes rares"></button></div>
@@ -933,6 +953,7 @@ document.addEventListener('change',e=>{const el=e.target,f=el.dataset&&el.datase
   else if(f==='theme'){S.settings.theme=el.value;save();applyTheme()}
   else if(f&&f.startsWith('plan:')){S.plan=S.plan||{};const i=+f.slice(5);if(el.value)S.plan[i]=el.value;else delete S.plan[i];save();renderMain();remindSync()}
   else if(f==='weekgoal'){S.settings.weekGoal=+el.value;save()}
+  else if(f==='lang'){S.settings.lang=el.value;save();setTimeout(()=>location.reload(),100)}
   else if(f==='remindat'){S.settings.remind=Object.assign({on:true},S.settings.remind,{at:el.value||'18:00'});save();remindSync()}
   else if(el.id==='hevyIn'){const file=el.files&&el.files[0];el.value='';if(!file)return;const r=new FileReader();r.onload=()=>hevyImport(String(r.result));r.onerror=()=>flash('Lecture du fichier impossible');r.readAsText(file)}
   else if(el.id==='fileIn'){const file=el.files&&el.files[0];el.value='';if(!file)return;const r=new FileReader();r.onload=()=>applyImport(String(r.result));r.onerror=()=>flash('Lecture du fichier impossible');r.readAsText(file)}});
@@ -998,7 +1019,7 @@ function statsHTML(){const H=S.history;if(!H.length)return'';const vol=H.reduce(
   const now=new Date();const months=[];for(let k=5;k>=0;k--){const d=new Date(now.getFullYear(),now.getMonth()-k,1);months.push(d)}
   const data=months.map((d,i)=>{const e=new Date(d.getFullYear(),d.getMonth()+1,1).getTime();const L=H.filter(w=>w.start>=d.getTime()&&w.start<e);return{d,n:L.length,v:L.reduce((a,w)=>a+wVolume(w),0)}});
   const mx=Math.max(1,...data.map(x=>x.v)),Wd=330,Hd=120,top=18,bot=20,step=(Wd-10)/6,bw=Math.min(34,step-12);
-  const bars=data.map((x,i)=>{const h=x.v?Math.max(4,x.v/mx*(Hd-top-bot)):3;const X0=5+i*step+(step-bw)/2,y=Hd-bot-h;return`<rect x="${X0.toFixed(1)}" y="${y.toFixed(1)}" width="${bw}" height="${h.toFixed(1)}" rx="5" class="${i===5?'b-on':'b-off'}"/>${x.n?`<text x="${(X0+bw/2).toFixed(1)}" y="${(y-5).toFixed(1)}" text-anchor="middle" class="tv">${x.n}</text>`:''}<text x="${(X0+bw/2).toFixed(1)}" y="${Hd-5}" text-anchor="middle" class="tx">${esc(x.d.toLocaleDateString('fr-FR',{month:'short'}))}</text>`}).join('');
+  const bars=data.map((x,i)=>{const h=x.v?Math.max(4,x.v/mx*(Hd-top-bot)):3;const X0=5+i*step+(step-bw)/2,y=Hd-bot-h;return`<rect x="${X0.toFixed(1)}" y="${y.toFixed(1)}" width="${bw}" height="${h.toFixed(1)}" rx="5" class="${i===5?'b-on':'b-off'}"/>${x.n?`<text x="${(X0+bw/2).toFixed(1)}" y="${(y-5).toFixed(1)}" text-anchor="middle" class="tv">${x.n}</text>`:''}<text x="${(X0+bw/2).toFixed(1)}" y="${Hd-5}" text-anchor="middle" class="tx">${esc(x.d.toLocaleDateString(LOC,{month:'short'}))}</text>`}).join('');
   return`<section class="card stats"><div class="sec-in"><b class="sth">Statistiques</b><span class="s">depuis le ${fmtShort(H[H.length-1].start)} ${new Date(H[H.length-1].start).getFullYear()}</span></div>
   <div class="stg"><div><span class="k">Séances</span><span class="v">${H.length}</span></div><div><span class="k">Volume total</span><span class="v">${vol>=1e5?fmt(Math.round(vol/100)/10)+' t':fmtVol(vol)}</span></div><div><span class="k">Temps total</span><span class="v">${Math.round(dur/36e5)} h</span></div>
   <div><span class="k">Semaines d'affilée</span><span class="v">${st.cur}</span></div><div><span class="k">Record d'affilée</span><span class="v">${st.best} sem.</span></div><div><span class="k">Moyenne / sem.</span><span class="v">${fmt(Math.round(H.length/Math.max(1,(Date.now()-H[H.length-1].start)/(7*864e5))*10)/10)}</span></div></div>
@@ -1077,7 +1098,7 @@ function planToday(){const id=(S.plan||{})[dow(Date.now())];return id&&S.routine
 function doneOn(d){const a=new Date(d);a.setHours(0,0,0,0);const b=a.getTime()+864e5;return S.history.filter(w=>w.start>=a.getTime()&&w.start<b)}
 function planCardHTML(){if(S.active)return'';const P=S.plan||{};const has=Object.values(P).some(Boolean);if(!has)return'';const wk=monday(Date.now()),today=dow(Date.now());
   const strip=DAYS.map((d,i)=>{const t=wk+i*864e5,r=S.routines.find(r=>r.id===P[i]),done=doneOn(t).length,past=i<today;
-    return`<div class="pd ${i===today?'today':''} ${done?'done':r&&past?'miss':''}"><span class="pd-d">${d.slice(0,1)}</span><span class="pd-r">${done?'✓':r?esc(r.name.split(/[\s·\-]/)[0].slice(0,6)):'–'}</span></div>`}).join('');
+    return`<div class="pd ${i===today?'today':''} ${done?'done':r&&past?'miss':''}"><span class="pd-d notr">${EN?"MTWTFSS"[i]:d.slice(0,1)}</span><span class="pd-r">${done?'✓':r?esc(r.name.split(/[\s·\-]/)[0].slice(0,6)):'–'}</span></div>`}).join('');
   const r=planToday(),doneToday=doneOn(Date.now()).length;
   return`<section class="card planc"><div class="sec-in"><b class="sth">Ma semaine</b><button class="btn-ghost" data-act="plan-open">Modifier</button></div><div class="pstrip">${strip}</div>
   ${r&&!doneToday?`<div class="mini"><span class="k">Aujourd'hui</span><span class="v">${esc(r.name)}</span><span class="s">${r.exercises.length} exercice${r.exercises.length>1?'s':''}</span></div><button class="btn btn-primary block" data-act="start-routine:${r.id}">${icon('play')}Démarrer</button>`
@@ -1319,7 +1340,7 @@ async function fbBackupDaily(){if(!S.history.length)return;try{const{fs,D}=FB,ui
 async function fbBackups(){try{const{fs,D}=FB,uid=fbUser.uid;const L=await fs.getDocs(fs.collection(D,'users',uid,'days'));return L.docs.map(d=>({k:d.id,...d.data()})).sort((a,b)=>b.t-a.t)}catch(e){return[]}}
 async function fbBackupRead(k){const{fs,D}=FB,uid=fbUser.uid;const m=await fs.getDoc(fs.doc(D,'users',uid,'days',k));const n=m.data().n||0;
   const P=await Promise.all(Array.from({length:n},(_,i)=>fs.getDoc(fs.doc(D,'users',uid,'days',k,'chunks',String(i)))));const j=JSON.parse(P.map(x=>x.data().d).join(''));return j.data||j}
-function bkLabel(x){const d=new Date(x.t);return`${cap(d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))} · ${fmtHour(x.t)}`}
+function bkLabel(x){const d=new Date(x.t);return`${cap(d.toLocaleDateString(LOC,{weekday:'long',day:'numeric',month:'long'}))} · ${fmtHour(x.t)}`}
 async function restoreDlg(){openDlg({title:'Revenir en arrière',html:'<p class="dtext">Chargement des sauvegardes…</p>',buttons:[{label:'Fermer',kind:'soft'}]});
   const L=await bkAll(),C=fbOn()?await fbBackups():[];if(!MODAL||MODAL.title!=='Revenir en arrière')return;
   const row=(x,src)=>`<button class="bk-row" data-act="bk-pick:${src}:${encodeURIComponent(x.k)}"><span><b>${esc(bkLabel(x))}</b><span class="muted">${x.n??x.sessions} séance${(x.n??x.sessions)>1?'s':''}${x.tag?' · avant '+esc(x.tag):''}</span></span>${icon('chevr')}</button>`;
@@ -1387,7 +1408,7 @@ function lbCrit(tab){const f=k=>(p,c)=>c&&c[k]!=null?c[k]:(c?0:0),pl=(n,w)=>n+' 
   const min=v=>v>=60?Math.floor(v/60)+' h '+String(v%60).padStart(2,'0'):v+' min';
   const sub=(p,c)=>c?`${pl(c.n,'séance')} · ${fmtVol(c.vol)}`:'Rien pour l\'instant';
   if(tab==='w'||tab==='m')return[['n','Séances',(p,c)=>c?c.n*1e9+(c.vol||0):0,v=>pl(Math.floor(Math.max(0,v)/1e9),'séance'),(p,c)=>c?fmtVol(c.vol):'0 kg'],
-    ['vol','Volume',f('vol'),v=>fmtVol(v),sub],['min','Temps',f('min'),min,sub],['sets','Séries',f('sets'),v=>pl(v,'série'),sub],['kcal','Calories',f('kcal'),v=>v.toLocaleString('fr-FR')+' kcal',sub]];
+    ['vol','Volume',f('vol'),v=>fmtVol(v),sub],['min','Temps',f('min'),min,sub],['sets','Séries',f('sets'),v=>pl(v,'série'),sub],['kcal','Calories',f('kcal'),v=>v.toLocaleString(LOC)+' kcal',sub]];
   if(tab==='s')return[['st','Semaines d\'affilée',p=>p.streak*1e6+p.total,v=>Math.floor(v/1e6)+' sem.',p=>pl(p.total,'séance')+' au total'],['tot','Total séances',p=>p.total,v=>pl(v,'séance'),p=>p.streak+' sem. d\'affilée']];
   const B=p=>p.best||{};const lifts=p=>LIFTS.map(([n])=>B(p)[n]?n.split(' ')[0].slice(0,4)+'. '+B(p)[n]:'').filter(Boolean).join(' · ')||'Aucun des 4 mouvements';
   return[['t','Total',p=>Object.values(B(p)).reduce((a,b)=>a+b,0),v=>v+' kg',lifts],...LIFTS.map(([n],i)=>['l'+i,n.replace('Développé','Dév.').replace('Soulevé de terre','Soulevé'),p=>B(p)[n]||0,v=>v+' kg',p=>B(p)[n]?'1RM estimé':'Pas encore fait'])]}
@@ -1427,7 +1448,7 @@ window.addEventListener('hashchange',checkFriendLink);
 const mKey=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
 const mStart=k=>{const[y,m]=k.split('-').map(Number);return new Date(y,m-1,1).getTime()};
 const mShift=(k,n)=>{const[y,m]=k.split('-').map(Number);return mKey(new Date(y,m-1+n,1))};
-const mLabel=k=>new Date(mStart(k)).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+const mLabel=k=>new Date(mStart(k)).toLocaleDateString(LOC,{month:'long',year:'numeric'});
 function monthStats(k){const a=mStart(k),b=mStart(mShift(k,1));const H=S.history.filter(w=>w.start>=a&&w.start<b);
   const mus={},exs={};let vol=0,dur=0,kcal=0,sets=0,prs=[];
   for(const w of H){vol+=wVolume(w);dur+=w.end-w.start;kcal+=kcalFor(w);sets+=wSets(w);prs=prs.concat((w.prs||[]).map(p=>({...p,t:w.start})));
@@ -1442,7 +1463,7 @@ function monthHTML(k){const M=monthStats(k),Pm=monthStats(mShift(k,-1)),cur=k===
   <div class="sheet-body"><div class="wrapx dwrap">
     <div class="mnav"><button class="icon-btn" data-act="month:${mShift(k,-1)}" ${k<=first?'disabled':''} aria-label="Mois précédent">${icon('chevl')}</button><h2>${esc(cap(mLabel(k)))}</h2><button class="icon-btn" data-act="month:${mShift(k,1)}" ${cur?'disabled':''} aria-label="Mois suivant">${icon('chevr')}</button></div>
     ${cur?`<p class="dtext" style="font-size:14px">Mois en cours : ${M.days} jour${M.days>1?'s':''} écoulé${M.days>1?'s':''}.</p>`:''}
-    ${M.n?`<div class="sum sum4">${tile('Séances',M.n,pct(M.n,Pm.n))}${tile('Volume',M.vol>=1e5?fmt(Math.round(M.vol/100)/10)+' t':fmtVol(M.vol),pct(M.vol,Pm.vol))}${tile('Temps',Math.round(M.dur/36e5)+' h',pct(M.dur,Pm.dur))}${tile('Calories','≈ '+Math.round(M.kcal).toLocaleString('fr-FR'),'')}</div>
+    ${M.n?`<div class="sum sum4">${tile('Séances',M.n,pct(M.n,Pm.n))}${tile('Volume',M.vol>=1e5?fmt(Math.round(M.vol/100)/10)+' t':fmtVol(M.vol),pct(M.vol,Pm.vol))}${tile('Temps',Math.round(M.dur/36e5)+' h',pct(M.dur,Pm.dur))}${tile('Calories','≈ '+Math.round(M.kcal).toLocaleString(LOC),'')}</div>
     <p class="dtext" style="font-size:13px">Les pourcentages comparent au mois précédent${cur?' entier':''}.</p>
     <section class="dsec"><h2>Régularité</h2><p class="dtext">Tu t'es entraîné <b>${M.weeks} semaine${M.weeks>1?'s':''}</b> sur ${Math.max(1,Math.ceil(M.days/7))}, avec ${M.sets} séries au total.</p></section>
     <section class="dsec"><h2>${icon('trophy')}Records battus</h2>${M.prs.length?`<ul class="mlist">${M.prs.slice(0,8).map(p=>`<li><span>${esc(ex(p.exId).name)}</span><b>${esc(p.label)} · ${esc(p.value)}</b></li>`).join('')}</ul>${M.prs.length>8?`<p class="dtext" style="font-size:13px">+ ${M.prs.length-8} autres</p>`:''}`:'<p class="dtext">Pas de record ce mois-ci.</p>'}</section>
@@ -1465,14 +1486,14 @@ function pdfFromJpegs(pages){const enc=new TextEncoder(),parts=[],offs=[];let le
 async function monthPdf(k){flash('Création du PDF…');try{await document.fonts.ready}catch(e){}
   const M=monthStats(k),P=monthStats(mShift(k,-1)),Wd=1240,Hd=1754,mx=100;const pages=[];let cv,x,y;
   const red=accentHex('d'),fg='#14181D',mu='#5E6873',ln='#E3E6EA',D='"Barlow Condensed","Arial Narrow",sans-serif',B='"Figtree",system-ui,sans-serif';
-  const page=()=>{if(cv)pages.push(cv);cv=document.createElement('canvas');cv.width=Wd;cv.height=Hd;x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,Wd,Hd);
+  const page=()=>{if(cv)pages.push(cv);cv=document.createElement('canvas');cv.width=Wd;cv.height=Hd;x=trCtx(cv.getContext('2d'));x.fillStyle='#fff';x.fillRect(0,0,Wd,Hd);
     [[red,0],['#6A97F2',1],['#E5AE22',2],['#55C985',3]].forEach(([c,i])=>{x.fillStyle=c;x.fillRect(mx+i*262,60,250,10)});
     x.fillStyle=mu;x.font=`500 22px ${B}`;x.fillText('Carnet de fonte · '+cap(mLabel(k)),mx,Hd-60);x.textAlign='right';x.fillText('Page '+(pages.length+1),Wd-mx,Hd-60);x.textAlign='left';y=150};
   const need=h=>{if(y+h>Hd-120)page()};
   const h2=t=>{need(110);y+=70;x.fillStyle=red;x.font=`800 40px ${D}`;x.fillText(t.toUpperCase(),mx,y);y+=26};
   page();x.fillStyle=mu;x.font=`600 26px ${B}`;x.fillText((P.n?'BILAN DU MOIS · écarts par rapport au mois précédent':'BILAN DU MOIS')+(S.settings.lbName||S.settings.fbName?' · '+(S.settings.lbName||S.settings.fbName):''),mx,y);y+=78;
   x.fillStyle=fg;x.font=`800 92px ${D}`;x.fillText(cap(mLabel(k)).toUpperCase(),mx,y);y+=50;
-  const tiles=[['Séances',String(M.n),M.n-P.n],['Volume',fmtVol(M.vol),P.vol?Math.round((M.vol-P.vol)/P.vol*100)+' %':null],['Temps',fmtDurLong(M.dur||0),null],['Séries',String(M.sets),M.sets-P.sets],['Calories','≈ '+Math.round(M.kcal).toLocaleString('fr-FR'),null],['Semaines actives',String(M.weeks),null]];
+  const tiles=[['Séances',String(M.n),M.n-P.n],['Volume',fmtVol(M.vol),P.vol?Math.round((M.vol-P.vol)/P.vol*100)+' %':null],['Temps',fmtDurLong(M.dur||0),null],['Séries',String(M.sets),M.sets-P.sets],['Calories','≈ '+Math.round(M.kcal).toLocaleString(LOC),null],['Semaines actives',String(M.weeks),null]];
   tiles.forEach(([k2,v,d],i)=>{const c=i%3,r=Math.floor(i/3),X0=mx+c*350,Y0=y+r*170;x.fillStyle='#F3F4F6';x.beginPath();x.roundRect(X0,Y0,330,150,22);x.fill();
     x.fillStyle=mu;x.font=`600 24px ${B}`;x.fillText(k2.toUpperCase(),X0+26,Y0+46);x.fillStyle=fg;let fs=58;x.font=`800 ${fs}px ${D}`;while(x.measureText(v).width>280&&fs>30){fs-=2;x.font=`800 ${fs}px ${D}`}x.fillText(v,X0+26,Y0+112);
     if(d!==null&&d!==undefined&&P.n){const sv=typeof d==='number'?(d>=0?'+':'')+d:(String(d)[0]==='-'?d:'+'+d);x.fillStyle=String(sv)[0]==='-'?'#C0392B':'#1E8E4E';x.font=`700 22px ${B}`;x.textAlign='right';x.fillText(sv,X0+306,Y0+46);x.textAlign='left'}});
@@ -1494,7 +1515,7 @@ async function monthPdf(k){flash('Création du PDF…');try{await document.fonts
   const a=document.createElement('a');a.href=URL.createObjectURL(pdf);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>a.remove(),1000)}
 function checkMonthReport(){const now=mKey(Date.now());if(S.settings.lastReport===now)return;const prev=mShift(now,-1),had=S.settings.lastReport;S.settings.lastReport=now;save();
   if(!had||!monthStats(prev).n||S.active)return;
-  setTimeout(()=>{if(MODAL)return;openDlg({title:`Ton bilan de ${new Date(mStart(prev)).toLocaleDateString('fr-FR',{month:'long'})} est prêt`,html:`<p class="dtext">${monthStats(prev).n} séances, tes records et les muscles travaillés.</p>`,buttons:[{label:'Voir le bilan',kind:'primary',fn:()=>pushDetail({kind:'month',id:prev})},{label:'Plus tard',kind:'soft'}]})},800)}
+  setTimeout(()=>{if(MODAL)return;openDlg({title:`Ton bilan de ${new Date(mStart(prev)).toLocaleDateString(LOC,{month:'long'})} est prêt`,html:`<p class="dtext">${monthStats(prev).n} séances, tes records et les muscles travaillés.</p>`,buttons:[{label:'Voir le bilan',kind:'primary',fn:()=>pushDetail({kind:'month',id:prev})},{label:'Plus tard',kind:'soft'}]})},800)}
 
 /* ================= Images hors connexion ================= */
 const MEDIA_CACHE='fonte-media';

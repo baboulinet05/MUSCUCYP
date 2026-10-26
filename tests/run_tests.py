@@ -57,8 +57,8 @@ OLD_SAVE = {"v": 1, "settings": {"theme": "dark", "rest": 120, "onboarded": 1, "
 
 with sync_playwright() as p:
     b = p.chromium.launch()
-    def page(seed=None, w=390, mock=True):
-        ctx = b.new_context(viewport={'width': w, 'height': 844}, service_workers='block')
+    def page(seed=None, w=390, mock=True, loc='fr-FR'):
+        ctx = b.new_context(viewport={'width': w, 'height': 844}, service_workers='block', locale=loc)
         if seed is not None:
             ctx.add_init_script("if(!sessionStorage.getItem('seeded')){localStorage.setItem('carnet-fonte-v1',%s);sessionStorage.setItem('seeded','1')}" % json.dumps(json.dumps(seed)))
         if mock:
@@ -146,7 +146,7 @@ with sync_playwright() as p:
     print('Appli Android (simulée)')
     NAT = '''window.__calls=[];const rec=n=>new Proxy({},{get:(t,k)=>k==='addListener'?((ev,cb)=>{(window.__l=window.__l||{})[n+'.'+ev]=cb;return Promise.resolve({remove(){}})}):(...a)=>{window.__calls.push([n+'.'+String(k),a[0]]);return Promise.resolve(k==='checkPermissions'?{display:'granted'}:k==='restGet'?{end:0,total:0}:k==='getLaunchUrl'?{}:{})}});
       window.Capacitor={isNativePlatform:()=>true,Plugins:{Fonte:rec('Fonte'),LocalNotifications:rec('LN'),InAppReview:rec('Review'),FirebaseCrashlytics:rec('Crash'),App:rec('App'),Filesystem:rec('FS'),Share:rec('Share')}};'''
-    ctx = b.new_context(viewport={'width': 390, 'height': 844}, service_workers='block')
+    ctx = b.new_context(viewport={'width': 390, 'height': 844}, service_workers='block', locale='fr-FR')
     ctx.add_init_script(NAT)
     ctx.add_init_script("if(!sessionStorage.getItem('seeded')){localStorage.setItem('carnet-fonte-v1',%s);sessionStorage.setItem('seeded','1')}" % json.dumps(json.dumps(dict(OLD_SAVE, plan={'0': 'r1', '3': 'r1'}))))
     pa = ctx.new_page(); pa.on('pageerror', lambda e: ERRS.append(str(e))); pa.goto(URL); pa.wait_for_timeout(2500)
@@ -173,6 +173,16 @@ with sync_playwright() as p:
     check('Android : erreur JS envoyée à Crashlytics', any(c[0] == 'Crash.recordException' and 'boum' in c[1]['message'] for c in pa.evaluate("window.__calls")))
     ERRS[:] = [e for e in ERRS if 'boum test' not in e]
     ctx.close()
+
+    print('Version anglaise')
+    pe = page(OLD_SAVE, loc='en-US'); pe.evaluate("closeDlg()")
+    check('anglais : activé selon la langue du téléphone', pe.evaluate("EN&&document.documentElement.lang==='en'"))
+    check('anglais : noms et étapes des exercices', pe.evaluate("ex('developpe-couche-barre').name") == 'Barbell Bench Press' and pe.evaluate("(INFO['developpe-couche-barre'].s||[]).join(' ')").startswith('Lie'))
+    pe.evaluate("ui.tab='reglages';renderMain()"); pe.wait_for_timeout(300)
+    left = pe.evaluate(r"""(()=>{const o=[];const w=document.createTreeWalker(document.querySelector('#main'),NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){if(/[éèàçêû]|\b(les|des|une|tes|ton|avec|pour|dans)\b/i.test(n.data)&&!/Français|Carnet de fonte/.test(n.data))o.push(n.data.trim())}return o})()""")
+    check('anglais : réglages sans français restant', not left, ' | '.join(left[:4]))
+    pe.evaluate("S.settings.lang='fr';save()"); pe.reload(); pe.wait_for_timeout(1200)
+    check('langue forcée en français depuis les réglages', pe.evaluate("!EN") and pe.evaluate("ex('developpe-couche-barre').name") == 'Développé couché barre')
 
     print('Premier lancement et affichage')
     for w in (320, 390):

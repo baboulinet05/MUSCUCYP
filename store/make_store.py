@@ -5,7 +5,8 @@ import json, os, random, socket, subprocess, sys, time, pathlib, base64
 from playwright.sync_api import sync_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-OUT = ROOT / 'store' / 'out'; OUT.mkdir(parents=True, exist_ok=True)
+LANG = os.environ.get('LANG_STORE', 'fr')
+OUT = ROOT / 'store' / ('out' if LANG == 'fr' else 'out-' + LANG); OUT.mkdir(parents=True, exist_ok=True)
 s = socket.socket(); s.bind(('127.0.0.1', 0)); PORT = s.getsockname()[1]; s.close()
 SRV = subprocess.Popen([sys.executable, '-m', 'http.server', str(PORT), '-b', '127.0.0.1', '-d', str(ROOT)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 time.sleep(1)
@@ -42,7 +43,7 @@ def shots():
     raw = {}
     with sync_playwright() as p:
         b = p.chromium.launch()
-        ctx = b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=3, service_workers='block')
+        ctx = b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=3, service_workers='block', locale='fr-FR' if LANG == 'fr' else 'en-US')
         ctx.add_init_script("if(!sessionStorage.getItem('s')){localStorage.setItem('carnet-fonte-v1',%s);sessionStorage.setItem('s','1')}" % json.dumps(json.dumps(STATE)))
         pg = ctx.new_page(); pg.goto(URL); pg.wait_for_timeout(1500); pg.evaluate("closeDlg();S.badges=badgeDefs().filter(b=>b.ok).map(b=>b.id);save()")
         def snap(name, js, wait=1200):
@@ -61,10 +62,18 @@ def shots():
 
 CAP = [('accueil', 'Ton programme, prêt en 4 questions', 'Planning de la semaine, récupération musculaire, séance du jour'),
        ('seance', 'La bonne charge à chaque série', 'Records, minuteur de repos et progression automatique'),
-       ('exercices', 'Plus de 1 300 exercices illustrés', 'Barre, haltères, machines, poids du corps, élastiques'),
+       ('exercices', 'Plus de 1 400 exercices illustrés', 'Barre, haltères, machines, poids du corps, élastiques'),
        ('fiche', 'Chaque mouvement expliqué', 'Étapes en français, conseils et vidéos de démonstration'),
        ('bilan', 'Ta progression, mois après mois', 'Volume, records, muscles travaillés et calories'),
        ('classement', 'Défie tes potes', 'Classement de la semaine, régularité et force')]
+if LANG == 'en':
+    CAP = [('accueil', 'Your program, ready in 4 questions', 'Weekly schedule, muscle recovery, today\'s workout'),
+           ('seance', 'The right weight on every set', 'Records, rest timer and automatic progression'),
+           ('exercices', 'Over 1,400 illustrated exercises', 'Barbell, dumbbells, machines, bodyweight, bands'),
+           ('fiche', 'Every movement explained', 'Step-by-step instructions, tips and demo videos'),
+           ('bilan', 'Your progress, month after month', 'Volume, records, muscles worked and calories'),
+           ('classement', 'Challenge your friends', 'Weekly leaderboard, consistency and strength')]
+TAGLINE = ('The <b>free</b> workout log,<br>no ads, no subscription.' if LANG == 'en' else 'Le carnet de muscu <b>gratuit</b>,<br>sans pub et sans abonnement.')
 LOGO = (ROOT / 'media' / 'logo.svg').read_text()
 FONT = '<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Figtree:wght@500;600&display=swap" rel="stylesheet">'
 
@@ -84,7 +93,7 @@ def compose(raw):
         pg.set_viewport_size({'width': 1024, 'height': 500})
         pg.set_content(f"""<html><head>{FONT}<style>body{{margin:0;width:1024px;height:500px;overflow:hidden;background:radial-gradient(90% 120% at 25% 50%,#2a2f37 0%,#0E1012 70%);color:#ECEEF0;font-family:Figtree,sans-serif;display:flex;align-items:center;gap:30px;padding:0 70px;box-sizing:border-box}}
         svg{{width:330px;height:330px;flex:none}}h1{{font:800 96px/0.95 'Barlow Condensed',sans-serif;text-transform:uppercase;margin:0}}p{{font-size:30px;color:#A9B1BA;margin:18px 0 0;line-height:1.3}}b{{color:#EE4B3F}}</style></head>
-        <body>{LOGO}<div><h1>Carnet<br>de fonte</h1><p>Le carnet de muscu <b>gratuit</b>,<br>sans pub et sans abonnement.</p></div></body></html>""")
+        <body>{LOGO}<div><h1>Carnet<br>de fonte</h1><p>{TAGLINE}</p></div></body></html>""")
         pg.wait_for_timeout(700); pg.screenshot(path=str(OUT / 'image-presentation-1024x500.png'))
         b.close()
 
