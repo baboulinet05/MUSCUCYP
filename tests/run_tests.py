@@ -106,6 +106,8 @@ with sync_playwright() as p:
     pg.evaluate("S.history=[];save()"); pg.evaluate("k=>bkRestore('l',k)", snaps[0]); pg.wait_for_timeout(500)
     check('restauration d\'une copie datée', pg.evaluate("S.history.length") == 3)
 
+    st = pg.evaluate("t=>{const r=analyzeHevy(t);return{src:r.src,n:r.workouts.length,ex:r.workouts.map(w=>w.exercises.map(e=>e.exId+':'+e.sets.map(s=>s.t+s.a+'x'+s.b).join(','))),dur:r.workouts.map(w=>Math.round((w.end-w.start)/6e4)),cr:r.creates.map(c=>c.name)}}", (ROOT / 'tests' / 'strong-sample.csv').read_text())
+    check('import Strong : séances, échauffement, durée, exercices reconnus', st['src'] == 'Strong' and st['n'] == 2 and sorted(st['dur']) == [52, 65] and any('developpe-couche-barre:w40x10,n80x8,n80x7' in x for w in st['ex'] for x in w) and st['cr'] == ['Machine Mystère Pro'], json.dumps(st, ensure_ascii=False)[:400])
     print('Compte Google (simulé)')
     pg.evaluate("ui.tab='reglages';renderMain()"); pg.wait_for_timeout(400); check('SDK Google préchargé dans Réglages (fenêtre ouverte au toucher)', pg.evaluate("!!FB"))
     pg.click('[data-act="fb-login"]'); pg.wait_for_timeout(1500); pg.evaluate("closeDlg()")
@@ -140,6 +142,37 @@ with sync_playwright() as p:
     pg.evaluate("fbDeleteAccount()"); pg.wait_for_timeout(1000)
     db = json.loads(pg.evaluate("localStorage.getItem('mock-db')") or '{}')
     check('suppression du compte : plus rien en ligne', not any('TESTUSER' in k for k in db) and pg.evaluate("S.history.length") == 3, str(list(db)[:4]))
+
+    print('Appli Android (simulée)')
+    NAT = '''window.__calls=[];const rec=n=>new Proxy({},{get:(t,k)=>k==='addListener'?((ev,cb)=>{(window.__l=window.__l||{})[n+'.'+ev]=cb;return Promise.resolve({remove(){}})}):(...a)=>{window.__calls.push([n+'.'+String(k),a[0]]);return Promise.resolve(k==='checkPermissions'?{display:'granted'}:k==='restGet'?{end:0,total:0}:k==='getLaunchUrl'?{}:{})}});
+      window.Capacitor={isNativePlatform:()=>true,Plugins:{Fonte:rec('Fonte'),LocalNotifications:rec('LN'),InAppReview:rec('Review'),FirebaseCrashlytics:rec('Crash'),App:rec('App'),Filesystem:rec('FS'),Share:rec('Share')}};'''
+    ctx = b.new_context(viewport={'width': 390, 'height': 844}, service_workers='block')
+    ctx.add_init_script(NAT)
+    ctx.add_init_script("if(!sessionStorage.getItem('seeded')){localStorage.setItem('carnet-fonte-v1',%s);sessionStorage.setItem('seeded','1')}" % json.dumps(json.dumps(dict(OLD_SAVE, plan={'0': 'r1', '3': 'r1'}))))
+    pa = ctx.new_page(); pa.on('pageerror', lambda e: ERRS.append(str(e))); pa.goto(URL); pa.wait_for_timeout(2500)
+    calls = lambda: pa.evaluate("window.__calls.map(c=>c[0])")
+    check('Android : widget mis à jour au démarrage', 'Fonte.widget' in calls())
+    pa.evaluate("closeDlg();S.settings.remind={on:true,at:'07:30'};remindSync()"); pa.wait_for_timeout(300)
+    sch = pa.evaluate("window.__calls.filter(c=>c[0]==='LN.schedule').pop()[1].notifications.map(n=>[n.schedule.on.weekday,n.schedule.on.hour,n.schedule.on.minute])")
+    check('Android : rappels les jours du planning (lundi, jeudi à 7 h 30)', sorted(sch) == [[2, 7, 30], [5, 7, 30]], str(sch))
+    pa.evaluate("startFrom(S.routines[0],'r1');startRest(90)"); pa.wait_for_timeout(200)
+    st = pa.evaluate("window.__calls.filter(c=>c[0]==='Fonte.restStart').pop()")
+    check('Android : minuteur de repos envoyé à l\'écran verrouillé', st and st[1]['total'] == 90 and 'Ensuite' in st[1]['body'], str(st))
+    pa.evaluate("const e=S.active.rest.end;window.__l['Fonte.rest']({action:'plus',end:e+30000,total:120})")
+    check('Android : bouton +30 s de la notification', pa.evaluate("S.active.rest.total") == 120)
+    pa.evaluate("window.__l['Fonte.rest']({action:'skip'})")
+    check('Android : bouton Passer de la notification', pa.evaluate("S.active.rest") is None)
+    pa.evaluate("vib('pr')"); check('Android : vibreur natif', ['Fonte.haptic', {'type': 'pr'}] in pa.evaluate("window.__calls"))
+    pa.evaluate("S.history=S.history.concat(S.history,S.history);S.settings.reviewAsked=0;finishWorkout&&0"); 
+    pa.evaluate("MODAL=null;askReview()"); pa.wait_for_timeout(200)
+    check('Android : demande d\'avis après 5 séances (une seule fois)', calls().count('Review.requestReview') == 1 and pa.evaluate("!!S.settings.reviewAsked"))
+    pa.evaluate("askReview()"); pa.wait_for_timeout(100); check('Android : pas de deuxième demande d\'avis', calls().count('Review.requestReview') == 1)
+    pa.evaluate("window.__l['App.appUrlOpen']({url:'carnetdefonte://ami/POTEUSER00000000000000000002.S2V2aW4'})"); pa.wait_for_timeout(200)
+    check('Android : lien carnetdefonte:// ouvre l\'ajout de pote', pa.evaluate("MODAL&&MODAL.title") == 'Ajouter un pote')
+    pa.evaluate("closeDlg();setTimeout(()=>{throw new Error('boum test')},0)"); pa.wait_for_timeout(300)
+    check('Android : erreur JS envoyée à Crashlytics', any(c[0] == 'Crash.recordException' and 'boum' in c[1]['message'] for c in pa.evaluate("window.__calls")))
+    ERRS[:] = [e for e in ERRS if 'boum test' not in e]
+    ctx.close()
 
     print('Premier lancement et affichage')
     for w in (320, 390):

@@ -57,7 +57,42 @@ let notifAsked=false;
 async function askNotif(){if(!NATIVE||notifAsked||!CP.LocalNotifications)return;notifAsked=true;const LN=CP.LocalNotifications;
   try{await LN.createChannel({id:'repos',name:'Fin du repos',description:'Prévient quand le temps de repos est écoulé',importance:5,vibration:true,visibility:1})}catch(e){}
   try{const p=await LN.checkPermissions();if(p.display!=='granted')await LN.requestPermissions()}catch(e){}}
-async function restNotif(){if(!NATIVE||!CP.LocalNotifications)return;const LN=CP.LocalNotifications;try{await LN.cancel({notifications:[{id:1}]})}catch(e){}
+const FONTE=()=>NATIVE&&CP.Fonte;
+/* avis sur le Play Store : une seule fois, après 5 séances et une séance terminée */
+/* rapports de plantage (Firebase Crashlytics, appli Android seulement) */
+function crashSetup(){if(!NATIVE||!CP.FirebaseCrashlytics)return;try{CP.FirebaseCrashlytics.setEnabled({enabled:!S.settings.noCrash})}catch(e){}}
+let crashN=0;
+function crashReport(msg,stack){if(!NATIVE||!CP.FirebaseCrashlytics||S.settings.noCrash||crashN++>20)return;try{CP.FirebaseCrashlytics.recordException({message:String(msg).slice(0,500)+(stack?'\n'+String(stack).slice(0,1500):'')})}catch(e){}}
+if(NATIVE){window.addEventListener('error',e=>crashReport(e.message+' @'+(e.filename||'').split('/').pop()+':'+e.lineno,e.error&&e.error.stack));window.addEventListener('unhandledrejection',e=>{const r=e.reason;if(r&&/cancel|annul|popup-closed/i.test(String(r.message||r)))return;crashReport('Promesse : '+(r&&r.message||r),r&&r.stack)})}
+/* liens carnetdefonte://ami/<code> (invitations du classement ouvertes depuis un autre appli) */
+function deepLink(u){const m=String(u||'').match(/ami[=\/]([A-Za-z0-9]{20,40}(?:\.[A-Za-z0-9_-]*)?)/);if(m){location.hash='ami='+m[1];checkFriendLink()}}
+if(NATIVE&&CP.App){try{CP.App.addListener('appUrlOpen',e=>deepLink(e&&e.url));CP.App.getLaunchUrl&&CP.App.getLaunchUrl().then(r=>{if(r&&r.url)setTimeout(()=>deepLink(r.url),900)}).catch(()=>{})}catch(e){}}
+if(NATIVE)setTimeout(()=>{crashSetup();widgetSync();remindSync();restSync()},1500);
+async function askReview(){if(!NATIVE||!CP.InAppReview||S.settings.reviewAsked||S.history.length<5||MODAL)return;S.settings.reviewAsked=Date.now();save();try{await CP.InAppReview.requestReview()}catch(e){}}
+/* widget d'écran d'accueil */
+let widgetT=null;
+function widgetSync(){if(!FONTE())return;clearTimeout(widgetT);widgetT=setTimeout(()=>{try{const i=dow(Date.now()),rid=(S.plan||{})[i],R=rid&&S.routines.find(r=>r.id===rid);
+  const wk=monday(Date.now()),n=S.history.filter(w=>w.start>=wk).length,g=S.settings.weekGoal,doneToday=S.history.some(w=>dayKey(w.start)===dayKey(Date.now())),st=weekStreaks().cur;
+  const title=S.active?'Séance en cours':doneToday?'Séance faite ✔':R?R.name:'Repos';
+  const line1=S.active?(S.active.name||'Séance'):R?`${R.exercises.length} exercice${R.exercises.length>1?'s':''} · ${n}${g?' / '+g:''} séance${(g||n)>1?'s':''} cette semaine`:`${n}${g?' / '+g:''} séance${(g||n)>1?'s':''} cette semaine`;
+  CP.Fonte.widget({title,line1,line2:st?`🔥 ${st} semaine${st>1?'s':''} d'affilée`:''})}catch(e){}},800)}
+/* rappels d'entraînement : notification les jours du planning */
+async function remindSync(){if(!NATIVE||!CP.LocalNotifications)return;const LN=CP.LocalNotifications,R=S.settings.remind||{};
+  try{await LN.cancel({notifications:[0,1,2,3,4,5,6].map(i=>({id:100+i}))})}catch(e){}
+  if(!R.on)return;try{await LN.createChannel({id:'rappels',name:'Rappels d\'entraînement',description:'Les jours prévus dans ton planning',importance:3})}catch(e){}
+  const [h,m]=(R.at||'18:00').split(':').map(Number),N=[];
+  for(let i=0;i<7;i++){const rid=(S.plan||{})[i],r=rid&&S.routines.find(x=>x.id===rid);if(!r)continue;
+    N.push({id:100+i,title:`${r.name} aujourd'hui 💪`,body:`${r.exercises.length} exercices au programme. On y va ?`,channelId:'rappels',schedule:{on:{weekday:((i+1)%7)+1,hour:h,minute:m},allowWhileIdle:true}})}
+  if(N.length)try{await LN.schedule({notifications:N})}catch(e){}}
+const VIBS={tap:15,heavy:45,end:[200,100,200],pr:[60,40,60,40,160]};
+function vib(t){try{if(FONTE()){CP.Fonte.haptic({type:t});return}if(navigator.vibrate)navigator.vibrate(VIBS[t]||15)}catch(e){}}
+/* minuteur de repos natif : compte à rebours sur l'écran verrouillé, boutons +30 s / Passer */
+function restSync(){if(!FONTE())return;const r=S.active&&S.active.rest;try{if(r&&r.end>Date.now()+500)CP.Fonte.restStart({end:r.end,total:r.total,title:'Repos · '+(S.active.name||'Séance'),body:restNext()});else CP.Fonte.restStop()}catch(e){}}
+function restNext(){try{const A=S.active;for(const e of A.exercises){const k=e.sets.findIndex(s=>!s.done&&s.t!=='w');if(k>=0)return'Ensuite : '+ex(e.exId).name+' · série '+(k+1)}}catch(e){}return'À la série suivante !'}
+function restFromNative(e){if(!S.active)return;if(e.action==='plus'&&S.active.rest){S.active.rest.end=e.end;S.active.rest.total=e.total||S.active.rest.total+30}else if(e.action==='skip'||e.action==='end')S.active.rest=null;save();renderRestBar();renderResume();tick()}
+async function restResume(){if(!FONTE()||!S.active||!S.active.rest)return;try{const n=await CP.Fonte.restGet();if(!n.end)S.active.rest=null;else if(Math.abs(n.end-S.active.rest.end)>900){S.active.rest.end=n.end;S.active.rest.total=n.total||S.active.rest.total}save();renderRestBar();renderResume()}catch(e){}}
+if(NATIVE)setTimeout(()=>{if(!FONTE())return;try{CP.Fonte.addListener('rest',restFromNative)}catch(e){}document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')restResume()})},0);
+async function restNotif(){if(!NATIVE||!CP.LocalNotifications||FONTE())return;const LN=CP.LocalNotifications;try{await LN.cancel({notifications:[{id:1}]})}catch(e){}
   const r=S.active&&S.active.rest;if(!r||document.visibilityState!=='hidden'||r.end<=Date.now()+1000)return;
   try{await LN.schedule({notifications:[{id:1,title:'Repos terminé',body:'Série suivante : '+(S.active.name||'séance'),channelId:'repos',schedule:{at:new Date(r.end),allowWhileIdle:true}}]})}catch(e){}}
 if(NATIVE){document.addEventListener('visibilitychange',restNotif);
@@ -77,7 +112,7 @@ function load(){let r=null;try{r=localStorage.getItem(KEY);if(r){const d=JSON.pa
   if(r)try{localStorage.setItem(KEY+'-illisible-'+Date.now(),r)}catch(e){}return null}
 let S=load()||defaultState();
 let storageOK=true;
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}catch(e){storageOK=false}try{if(typeof cloudDirty==='function')cloudDirty()}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}catch(e){storageOK=false}try{if(typeof widgetSync==='function')widgetSync()}catch(e){}try{if(typeof cloudDirty==='function')cloudDirty()}catch(e){}}
 let saveT=null;function saveSoon(){clearTimeout(saveT);saveT=setTimeout(save,300)}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save()});
 
@@ -181,10 +216,22 @@ function parseHevyDate(str){if(!str)return NaN;const t=norm(str).trim();
 function guessMuscle(n){const t=norm(n);const R=[[/mollet|calf/,'Mollets'],[/shrug|trapez/,'Trapèzes'],[/leg curl|ischio|hamstring|roumain|romanian/,'Ischios'],[/fess|glute|hip thrust|kickback.*(fess|glute)|abduct/,'Fessiers'],[/adduct/,'Adducteurs'],[/squat|presse a cuisse|leg press|fente|lunge|leg extension|quadri/,'Quadriceps'],[/crunch|abdo|\babs?\b|gainage|plank|planche|sit up|leg raise|releve/,'Abdos'],[/lombaire|back extension|extension dos|hyperext/,'Lombaires'],[/poignet|wrist|avant bras|forearm|curl invers|reverse curl/,'Avant-bras'],[/triceps|skull|kickback|dips|pushdown|barre au front/,'Triceps'],[/curl|biceps/,'Biceps'],[/lateral|laterale|epaule|shoulder|militaire|overhead press|arnold|oiseau|rear delt|face pull|visage|frontale|front raise/,'Épaules'],[/tirage|traction|pull|row|rowing|lat |dorsa|\bdos\b|back/,'Dos'],[/couche|bench|pec|chest|ecarte|fly|butterfly|pompe|push up|dip/,'Pectoraux'],[/course|run|velo|bike|cycl|rameur|rowing machine|elliptique|tapis|treadmill|natation|swim|corde a sauter|jump rope|marche|walk/,'Cardio']];
   for(const[r,m]of R)if(r.test(t))return m;return'Corps entier'}
 function guessEquip(n){const t=norm(n);const R=[[/smith/,'Smith'],[/haltere|dumbbell/,'Haltères'],[/ez/,'Barre EZ'],[/barre|barbell/,'Barre'],[/poulie|cable|cablee|corde|rope/,'Poulie'],[/machine|disques|plaques|plate/,'Machine'],[/kettlebell/,'Kettlebell'],[/elastique|band/,'Élastique'],[/poids du corps|bodyweight|pompe|traction|dips|pull up|push up/,'Poids du corps']];for(const[r,e]of R)if(r.test(t))return e;return'Autre'}
-function analyzeHevy(txt){const rows=parseCSV(txt);if(rows.length<2)throw new Error('Fichier vide');
+/* export Strong → même forme que l'export Hevy */
+function strongDur(t){t=String(t||'').trim();let m=t.match(/^(\d+):(\d{2})(?::(\d{2}))?$/);if(m)return m[3]!=null?(+m[1]*3600+ +m[2]*60+ +m[3]):(+m[1]*60+ +m[2]);
+  let sec=0;for(const[,n,u]of t.matchAll(/(\d+(?:[.,]\d+)?)\s*(h|m|min|s)\b/gi))sec+=num(n)*(/^h/i.test(u)?3600:/^m/i.test(u)?60:1);if(sec)return sec;const n=num(t);return n>0?n:0}
+function strongRows(rows){const H=rows[0].map(h=>norm(h).trim());const c=n=>H.indexOf(n);
+  const ci={date:c('date'),wn:c('workout name'),dur:c('duration'),ex:c('exercise name'),so:c('set order'),w:c('weight'),unit:c('weight unit'),reps:c('reps'),dist:c('distance'),dunit:c('distance unit'),sec:c('seconds'),note:c('notes'),wnote:c('workout notes'),rpe:c('rpe')};
+  const out=[['title','start_time','end_time','description','exercise_title','superset_id','exercise_notes','set_type','weight_kg','reps','distance_km','duration_seconds','rpe']];
+  const pad=n=>String(n).padStart(2,'0'),iso=t=>{const d=new Date(t);return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
+  for(let i=1;i<rows.length;i++){const r=rows[i],g=k=>ci[k]>=0&&ci[k]<r.length?r[ci[k]].trim():'';const st=parseHevyDate(g('date'));if(isNaN(st))continue;
+    const d=strongDur(g('dur'));const so=norm(g('so'));const lbs=/lb/i.test(g('unit'));const mi=/mi/i.test(g('dunit'));const w=num(g('w')),dist=num(g('dist'));
+    out.push([g('wn')||'Séance',iso(st),iso(st+(d>0?d*1000:3600e3)),g('wnote'),g('ex'),'',g('note'),so==='w'?'warmup':so==='d'?'dropset':so==='f'?'failure':'normal',w>0?String(lbs?w*0.453592:w):'',g('reps'),dist>0?String(mi?dist*1.60934:dist):'',g('sec'),g('rpe')])}
+  return out}
+function analyzeHevy(txt){let rows=parseCSV(txt);if(rows.length<2)throw new Error('Fichier vide');let src='Hevy';
+  {const h0=rows[0].map(h=>norm(h).trim());if(h0.includes('exercise name')&&(h0.includes('workout name')||h0.includes('date'))){rows=strongRows(rows);src='Strong'}}
   const H=rows[0].map(h=>norm(h).trim());const col=n=>H.indexOf(n);
   const ci={title:col('title'),start:col('start_time'),end:col('end_time'),desc:col('description'),ex:col('exercise_title'),ss:col('superset_id'),note:col('exercise_notes'),type:col('set_type'),kg:col('weight_kg'),lbs:col('weight_lbs'),reps:col('reps'),km:col('distance_km'),mi:col('distance_miles'),sec:col('duration_seconds'),rpe:col('rpe')};
-  if(ci.title<0||ci.start<0||ci.ex<0)throw new Error("Ce fichier ne ressemble pas à un export Hevy (colonnes title, start_time et exercise_title introuvables).");
+  if(ci.title<0||ci.start<0||ci.ex<0)throw new Error("Ce fichier ne ressemble pas à un export Hevy ou Strong.");
   const nameIdx={};for(const X of allEx())nameIdx[hkey(X.name)]=X.id;
   const resolved={},creates={};
   function resolve(name,stat){const k=hkey(name);if(k in resolved)return resolved[k];let id=null,plan=null;const m=HEVY_MAP[k];
@@ -195,7 +242,7 @@ function analyzeHevy(txt){const rows=parseCSV(txt);if(rows.length<2)throw new Er
   const W=new Map();
   for(let i=1;i<rows.length;i++){const r=rows[i];const g=c=>c>=0&&c<r.length?r[c].trim():'';
     const start=parseHevyDate(g(ci.start));if(isNaN(start))continue;const title=g(ci.title)||'Séance';const key=title+'|'+start;
-    let w=W.get(key);if(!w){const end=parseHevyDate(g(ci.end));w={id:uid(),name:title,start,end:isNaN(end)||end<start?start+3600e3:end,routineId:null,exercises:[],prs:[],hevy:true};W.set(key,w)}
+    let w=W.get(key);if(!w){const end=parseHevyDate(g(ci.end));w={id:uid(),name:title,start,end:isNaN(end)||end<start?start+3600e3:end,routineId:null,exercises:[],prs:[],hevy:true,src};W.set(key,w)}
     const exName=g(ci.ex);if(!exName)continue;const id=resolve(exName);
     const kg=ci.kg>=0?num(g(ci.kg)):(ci.lbs>=0?num(g(ci.lbs))*0.453592:NaN);const reps=num(g(ci.reps));const km=ci.km>=0?num(g(ci.km)):(ci.mi>=0?num(g(ci.mi))*1.60934:NaN);const sec=num(g(ci.sec));
     const pl=Object.values(creates).find(p=>p.id===id);if(pl){if(kg>0)pl.stat.w++;if(reps>0)pl.stat.r++;if(km>0)pl.stat.d++;if(sec>0)pl.stat.s++}
@@ -211,11 +258,12 @@ function analyzeHevy(txt){const rows=parseCSV(txt);if(rows.length<2)throw new Er
     w.exercises=w.exercises.filter(E=>E.sets.length);ssClean(w)}
   const fresh=list.filter(w=>w.exercises.length&&!S.history.some(h=>Math.abs(h.start-w.start)<90e3&&h.name===w.name));
   const used=new Set(fresh.flatMap(w=>w.exercises.map(e=>e.exId)));
-  return{workouts:fresh,dupes:list.length-fresh.length,creates:Object.values(creates).filter(p=>used.has(p.id)),matched:[...used].filter(id=>EXI[id]).length,used:used.size}}
+  for(const w of fresh){delete w.hevy;w.imp=src}
+  return{src,workouts:fresh,dupes:list.length-fresh.length,creates:Object.values(creates).filter(p=>used.has(p.id)),matched:[...used].filter(id=>EXI[id]).length,used:used.size}}
 function hevyImport(txt){let r;try{r=analyzeHevy(txt)}catch(e){return openDlg({title:'Import impossible',html:`<p class="dtext">${esc(e.message||'Fichier illisible.')}</p>`,buttons:[{label:'OK',kind:'primary'}]})}
   if(!r.workouts.length)return openDlg({title:'Rien de nouveau',html:`<p class="dtext">${r.dupes?`Les ${r.dupes} séances de ce fichier sont déjà dans ton historique.`:'Aucune séance trouvée dans ce fichier.'}</p>`,buttons:[{label:'OK',kind:'primary'}]});
   const W=r.workouts.slice().sort((a,b)=>a.start-b.start);const nSets=W.reduce((a,w)=>a+w.exercises.reduce((b,e)=>b+e.sets.length,0),0);
-  openDlg({title:'Importer depuis Hevy',html:`<div class="sum"><div><span class="k">Séances</span><span class="v">${W.length}</span></div><div><span class="k">Séries</span><span class="v">${nSets.toLocaleString('fr-FR')}</span></div><div><span class="k">Exercices</span><span class="v">${r.used}</span></div></div>
+  openDlg({title:'Importer depuis '+r.src,html:`<div class="sum"><div><span class="k">Séances</span><span class="v">${W.length}</span></div><div><span class="k">Séries</span><span class="v">${nSets.toLocaleString('fr-FR')}</span></div><div><span class="k">Exercices</span><span class="v">${r.used}</span></div></div>
     <p class="dtext">Du ${fmtShort(W[0].start)} ${new Date(W[0].start).getFullYear()} au ${fmtShort(W[W.length-1].start)} ${new Date(W[W.length-1].start).getFullYear()}.${r.dupes?` ${r.dupes} séance${r.dupes>1?'s':''} déjà présente${r.dupes>1?'s':''} ser${r.dupes>1?'ont':'a'} ignorée${r.dupes>1?'s':''}.`:''}</p>
     <p class="dtext">${r.matched} exercice${r.matched>1?'s':''} reconnu${r.matched>1?'s':''} dans l'annuaire${r.creates.length?`, ${r.creates.length} ajouté${r.creates.length>1?'s':''} comme exercice${r.creates.length>1?'s':''} perso : ${esc(r.creates.map(c=>c.name).join(', '))}.`:'.'}</p>`,
   buttons:[{label:`Importer ${W.length} séance${W.length>1?'s':''}`,kind:'primary',fn:()=>{
@@ -267,9 +315,10 @@ function measDetailHTML(k){const L=(measLast()[k]||[]);
   <section class="dsec"><h2>Mesures</h2>${L.slice().reverse().map(x=>`<div class="bw-row"><span>${esc(cap(fmtDay(x.t)))}</span><b class="num">${fmt(x.v)} cm</b><button class="icon-btn" data-act="meas-del:${x.id}" aria-label="Supprimer la mesure">${icon('x')}</button></div>`).join('')||'<p class="dtext">Aucune mesure.</p>'}</section></div></div>`}
 
 /* ================= Image à partager ================= */
-async function shareImage(w){try{await document.fonts.ready}catch(e){}
+function shareImage(w){openSheet('Partager ta séance',[{label:'Story Instagram (vertical)',fn:()=>shareImageGo(w,'story')},{label:'Publication (carré 4:5)',fn:()=>shareImageGo(w,'post')}])}
+async function shareImageGo(w,fmt){try{await document.fonts.ready}catch(e){}
     const cv=document.createElement('canvas');cv.width=1080;cv.height=1350;const x=cv.getContext('2d');
-  x.fillStyle='#0E1012';x.fillRect(0,0,1080,1350);
+  if(fmt!=='story'){x.fillStyle='#0E1012';x.fillRect(0,0,1080,1350)}
   const red=accentHex('d'),fg='#ECEEF0',mu='#8F98A1',ln='#2A2F35';const D='"Barlow Condensed","Arial Narrow",sans-serif',B='"Figtree",system-ui,sans-serif';
   [[red,150],['#6A97F2',130],['#E5AE22',110],['#55C985',90]].forEach(([c,h],i)=>{x.fillStyle=c;x.beginPath();x.roundRect(80+i*30,80+(150-h)/2,20,h,5);x.fill()});
   x.fillStyle=mu;x.font=`600 30px ${B}`;x.fillText(cap(fmtDay(w.start)).toUpperCase(),220,130);
@@ -283,9 +332,17 @@ async function shareImage(w){try{await document.fonts.ready}catch(e){}
     x.fillStyle=mu;x.font=`500 30px ${B}`;const r=`${work.length} × ${best?setStr(best,X.type):''}`;x.textAlign='right';x.fillText(r,1000,y);x.textAlign='left'}
   if(w.exercises.length>8){y+=56;x.fillStyle=mu;x.font=`500 28px ${B}`;x.fillText(`+ ${w.exercises.length-8} autres exercices`,80,y)}
   if(w.prs&&w.prs.length){y=Math.min(y+90,1180);x.fillStyle=accentHex('sd');x.beginPath();x.roundRect(80,y-50,920,80,20);x.fill();x.fillStyle=red;x.font=`700 38px ${D}`;x.fillText(`🏆 ${w.prs.length} RECORD${w.prs.length>1?'S':''} BATTU${w.prs.length>1?'S':''}`,110,y+5)}
-  const Hf=Math.min(1350,Math.max(1080,y+170));const out=document.createElement('canvas');out.width=1080;out.height=Hf;const o=out.getContext('2d');o.drawImage(cv,0,0);
-  o.fillStyle=mu;o.font=`600 26px ${B}`;o.fillText('CARNET DE FONTE',80,Hf-60);
+  let out;
+  if(fmt==='story'){const ch=Math.min(1350,y+80);out=document.createElement('canvas');out.width=1080;out.height=1920;const o=out.getContext('2d');
+    const g=o.createRadialGradient(540,0,80,540,300,1500);g.addColorStop(0,'#262B33');g.addColorStop(.55,'#0E1012');g.addColorStop(1,'#0E1012');o.fillStyle=g;o.fillRect(0,0,1080,1920);
+    const top=Math.max(170,Math.round((1920-ch-260)/2));o.drawImage(cv,0,0,1080,ch,0,top,1080,ch);
+    try{const L=await new Promise((ok,ko)=>{const im=new Image();im.onload=()=>ok(im);im.onerror=ko;im.src='media/logo.svg'});o.drawImage(L,80,1920-230,110,110)}catch(e){}
+    o.fillStyle=fg;o.font=`800 54px ${D}`;o.fillText('CARNET DE FONTE',214,1920-158);o.fillStyle=mu;o.font=`500 28px ${B}`;o.fillText('Carnet de muscu gratuit · sans pub',214,1920-116)}
+  else{const Hf=Math.min(1350,Math.max(1080,y+170));out=document.createElement('canvas');out.width=1080;out.height=Hf;const o=out.getContext('2d');o.drawImage(cv,0,0);
+    o.fillStyle=mu;o.font=`600 26px ${B}`;o.fillText('CARNET DE FONTE',80,Hf-60)}
   const blob=await new Promise(r=>out.toBlob(r,'image/png'));const url=URL.createObjectURL(blob);
+  if(NATIVE&&CP.Filesystem&&CP.Share){try{const b64=await new Promise(ok=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]);fr.readAsDataURL(blob)});
+    const f=await CP.Filesystem.writeFile({path:'seance-carnet-de-fonte.png',data:b64,directory:'CACHE'});await CP.Share.share({title:'Ma séance',files:[f.uri],dialogTitle:'Partager ta séance'});return}catch(e){if(/cancel/i.test(String(e&&e.message)))return}}
   try{const f=new File([blob],'seance.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(e){if(e&&e.name==='AbortError')return}
   openDlg({title:'Ta séance en image',html:`<img src="${url}" alt="Résumé de la séance" class="shimg"><p class="dtext">Appuie longuement sur l'image pour l'enregistrer ou la partager.</p>`,buttons:[{label:'Fermer',kind:'primary'}]})}
 
@@ -437,6 +494,10 @@ function setView(){
   return`<div class="wrap"><header class="vh"><div><p class="eyebrow">Carnet de fonte</p><h1>Réglages</h1></div></header>
   <section class="card setc"><h3>Objectif hebdomadaire</h3>
     <div class="setrow"><span>Séances par semaine</span><select class="sel" data-f="weekgoal">${[0,1,2,3,4,5,6,7].map(o=>`<option value="${o}" ${(S.settings.weekGoal||0)===o?'selected':''}>${o?o+' séance'+(o>1?'s':''):'Aucun'}</option>`).join('')}</select></div></section>
+  ${NATIVE?`<section class="card setc"><h3>Rappels</h3>
+    <div class="setrow"><span>Me rappeler les jours de séance</span><button class="toggle ${(S.settings.remind||{}).on?'on':''}" data-act="toggle-remind" role="switch" aria-checked="${!!(S.settings.remind||{}).on}" aria-label="Rappels d'entraînement"></button></div>
+    ${(S.settings.remind||{}).on?`<div class="setrow"><span>Heure du rappel</span><input type="time" class="sel" data-f="remindat" value="${esc((S.settings.remind||{}).at||'18:00')}"></div>`:''}
+    <p class="dtext" style="font-size:13px">${Object.keys(S.plan||{}).length?'Une notification les jours prévus dans ton planning (onglet Séance → Planning).':'Remplis d\'abord ton planning de la semaine (onglet Séance → Planning) : les rappels suivent les jours prévus.'}</p></section>`:''}
   <section class="card setc"><h3>Progression</h3>
     <div class="setrow"><span>Suggérer la charge suivante</span><button class="toggle ${S.settings.suggest?'on':''}" data-act="toggle-suggest" role="switch" aria-checked="${!!S.settings.suggest}" aria-label="Suggérer la charge suivante"></button></div>
     <div class="setrow"><span>Fourchette de répétitions</span><span class="btnrow" style="flex:none;gap:6px"><select class="sel" data-f="replo" aria-label="Minimum">${[3,4,5,6,8,10,12,15].map(o=>`<option ${S.settings.repLo===o?'selected':''}>${o}</option>`).join('')}</select><select class="sel" data-f="rephi" aria-label="Maximum">${[5,6,8,10,12,15,20].map(o=>`<option ${S.settings.repHi===o?'selected':''}>${o}</option>`).join('')}</select></span></div>
@@ -457,13 +518,14 @@ function setView(){
     <p class="dtext">Tes données restent sur ce téléphone. Exporte-les de temps en temps pour ne rien perdre.</p>
     <button class="btn btn-soft block" data-act="restore">${icon('clock')}Revenir à une version précédente</button>
     <div class="btnrow"><button class="btn btn-primary" data-act="export">Exporter</button><button class="btn btn-soft" data-act="import-file">Importer un fichier</button><button class="btn btn-soft" data-act="import-paste">Coller une sauvegarde</button></div></section>
-  <section class="card setc"><h3>Importer depuis Hevy</h3>
-    <ol class="steps"><li>Dans Hevy : <b>Profil → Réglages → Exporter et importer des données → Exporter les données</b>.</li><li>Enregistre le fichier CSV dans Fichiers.</li><li>Choisis-le ici : tes séances arrivent dans l'historique, avec la colonne « Précédent » et les records.</li></ol>
-    <button class="btn btn-primary" data-act="hevy-file">Choisir le fichier Hevy</button></section>
+  <section class="card setc"><h3>Importer depuis Hevy ou Strong</h3>
+    <ol class="steps"><li>Dans <b>Hevy</b> : Profil → Réglages → Exporter et importer des données → Exporter les données.<br>Dans <b>Strong</b> : Profil → ⚙️ → Exporter les données (Export Strong Data).</li><li>Enregistre le fichier CSV dans Fichiers.</li><li>Choisis-le ici : l'appli reconnaît toute seule Hevy ou Strong. Tes séances arrivent dans l'historique, avec la colonne « Précédent » et les records.</li></ol>
+    <button class="btn btn-primary" data-act="hevy-file">Choisir le fichier CSV</button></section>
   <section class="card setc" ${NATIVE?'hidden':''}><h3>Installer sur l'iPhone</h3>
     ${standalone?`<p class="okline">${icon('check')}L'app est installée sur ton écran d'accueil.</p>`:`<button class="btn btn-soft" data-act="install-help" style="align-self:flex-start">Afficher le mode d'emploi</button><ol class="steps"><li>Ouvre l'app dans <b>Safari</b>.</li><li>Touche <b>Partager</b>, puis <b>Sur l'écran d'accueil</b>.</li><li>Lance-la depuis l'icône : elle s'ouvre en plein écran et marche hors ligne.</li></ol>`}</section>
   <section class="card setc"><h3>Données</h3>
     <div class="setrow"><span class="muted">Version de l'app</span><b class="num">${APP_VERSION}</b></div>
+    ${NATIVE&&CP.FirebaseCrashlytics?`<div class="setrow"><span>Envoyer les rapports de plantage</span><button class="toggle ${S.settings.noCrash?'':'on'}" data-act="toggle-crash" role="switch" aria-checked="${!S.settings.noCrash}" aria-label="Rapports de plantage"></button></div>`:''}
     <div class="setrow"><span class="muted">Séances</span><b class="num">${S.history.length}</b></div>
     <div class="setrow"><span class="muted">Routines</span><b class="num">${S.routines.length}</b></div>
     <div class="setrow"><span class="muted">Exercices perso</span><b class="num">${S.custom.length}</b></div>
@@ -523,7 +585,7 @@ function toggleDone(u,i){const E=findE(u);if(!E)return;const s=E.sets[i];const X
   if(s.done){s.done=false;save();renderEditor();updateStats();return}
   const p=ph(E,i);if(s.a===''&&p.a!=='')s.a=p.a;if(s.b===''&&p.b!=='')s.b=p.b;
   if(!validSet(s,X.type)){const row=document.querySelector(`[data-row="${u}-${i}"]`);if(row){row.classList.remove('shake');void row.offsetWidth;row.classList.add('shake')}flash(X.type==='w'?'Indique le poids et les répétitions':X.type==='c'?'Indique une distance ou une durée':'Indique les '+TYPES[X.type].b);return}
-  s.done=true;try{navigator.vibrate&&navigator.vibrate(15)}catch(e){}
+  s.done=true;vib('tap')
   if(ui.edMode==='workout'){const r=checkRecord(E,i);s.pr=!!r;if(r)setTimeout(()=>celebrate(X,r),120)}
   const T=edTarget();const grp=E.ss?T.exercises.filter(x=>x.ss===E.ss):[];
   if(grp.length>1&&grp[grp.length-1]!==E){/* superset : enchaîner sans repos */}
@@ -556,8 +618,8 @@ function commit(includeFilled){const A=S.active;
   if(!rec.exercises.length){discardWorkout();flash('Aucune série valide : séance non enregistrée');return}
   rec.goalsHit=Object.keys(S.goals||{}).filter(id=>rec.exercises.some(e=>e.exId===id)&&bestFor(id)<S.goals[id].v);
   rec.prs=computePRs(rec);S.history.unshift(rec);S.history.sort((a,b)=>b.start-a.start);rec.goalsHit=rec.goalsHit.filter(id=>bestFor(id)>=S.goals[id].v);
-  S.active=null;ui.editorOpen=false;ui.picker=null;save();wake(false);ui.tab='historique';renderAll();summaryDlg(rec);checkBadges();setTimeout(bkDaily,1500);setTimeout(lbPublish,2000)}
-function discardWorkout(){S.active=null;ui.editorOpen=false;ui.picker=null;save();wake(false);renderAll()}
+  S.active=null;ui.editorOpen=false;ui.picker=null;save();wake(false);ui.tab='historique';renderAll();summaryDlg(rec);checkBadges();restSync();widgetSync();setTimeout(askReview,4000);setTimeout(bkDaily,1500);setTimeout(lbPublish,2000)}
+function discardWorkout(){S.active=null;ui.editorOpen=false;ui.picker=null;save();wake(false);renderAll();restSync()}
 function summaryDlg(rec){const n=rec.prs.length;
   const hasR=rec.routineId&&S.routines.some(r=>r.id===rec.routineId);
   openDlg({title:'Séance enregistrée',html:`<div class="sum"><div><span class="k">Durée</span><span class="v">${fmtDurLong(rec.end-rec.start)}</span></div><div><span class="k">Volume</span><span class="v">${fmtVol(wVolume(rec))}</span></div><div><span class="k">Séries</span><span class="v">${wSets(rec)}</span></div></div>
@@ -665,7 +727,7 @@ function wDetailHTML(id){const w=S.history.find(w=>w.id===id);
   </div></div>`}
 
 /* ================= Minuteur de repos ================= */
-function startRest(sec){if(!S.active||!sec)return;askNotif();S.active.rest={end:Date.now()+sec*1000,total:sec};renderRestBar()}
+function startRest(sec){if(!S.active||!sec)return;askNotif();S.active.rest={end:Date.now()+sec*1000,total:sec};renderRestBar();restSync()}
 function renderRestBar(){const el=$('#restbar');const r=S.active&&S.active.rest;
   const show=r&&ui.editorOpen&&ui.edMode==='workout'&&!ui.picker&&!ui.detail.length;
   if(!show){el.hidden=true;el.innerHTML='';return}
@@ -679,7 +741,7 @@ function beep(){if(!S.settings.sound||!actx)return;try{const t0=actx.currentTime
 function tick(){if(!S.active)return;
   const t=fmtDur(Date.now()-S.active.start);document.querySelectorAll('[data-elapsed]').forEach(e=>{if(e.textContent!==t)e.textContent=t});
   const r=S.active.rest;if(!r)return;const left=r.end-Date.now();
-  if(left<=0){S.active.rest=null;save();beep();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}renderRestBar();renderResume();flash('Repos terminé, série suivante !');return}
+  if(left<=0){S.active.rest=null;save();beep();vib('end');restSync();renderRestBar();renderResume();flash('Repos terminé, série suivante !');return}
   const txt=fmtDur(left+999);document.querySelectorAll('[data-restleft]').forEach(e=>{if(e.textContent!==txt)e.textContent=txt});
   document.querySelectorAll('[data-restfill]').forEach(e=>e.style.transform=`scaleX(${Math.max(0,Math.min(1,left/(r.total*1000)))})`)}
 setInterval(tick,250);
@@ -808,8 +870,9 @@ const ACTS={
   'w-redo'(id){const w=S.history.find(w=>w.id===id);if(w)ensureNoActive(()=>startFrom({name:w.name,exercises:w.exercises},null))},
   'w-routine'(id){const w=S.history.find(w=>w.id===id);if(w){routineFrom(w);flash('Routine créée')}},
   'w-del'(id){confirmDlg('Supprimer la séance ?','Elle sera retirée de ton historique et de tes records.','Supprimer',()=>{S.history=S.history.filter(w=>w.id!==id);save();ui.detail.pop();renderAll()})},
-  'rest-adj'(d){const r=S.active&&S.active.rest;if(!r)return;d=+d;r.end+=d*1000;r.total=Math.max(1,r.total+d);if(r.end<=Date.now())S.active.rest=null;save();renderRestBar();tick()},
-  'rest-skip'(){if(S.active)S.active.rest=null;save();renderRestBar();renderResume()},
+  'rest-adj'(d){const r=S.active&&S.active.rest;if(!r)return;d=+d;r.end+=d*1000;r.total=Math.max(1,r.total+d);if(r.end<=Date.now())S.active.rest=null;save();renderRestBar();tick();restSync()},
+  'rest-skip'(){if(S.active)S.active.rest=null;save();renderRestBar();renderResume();restSync()},
+  'month-pdf'(k){monthPdf(k)},
   'month'(k){if(ui.detail.length&&ui.detail[ui.detail.length-1].kind==='month'){ui.detail[ui.detail.length-1].id=k;renderDetail()}else pushDetail({kind:'month',id:k})},
   'wu-start'(){warmStart()},'wu-pause'(){if(!WU)return;WU.paused=!WU.paused;renderDetail();warmDraw()},'wu-go'(d){warmGo(+d)},
   'wu-close'(){if(WU)clearInterval(WU.t);WU=null;ui.detail=ui.detail.filter(x=>x.kind!=='warm');renderDetail();renderRestBar()},
@@ -833,6 +896,8 @@ const ACTS={
   'toggle-rare'(){S.settings.showRare=!S.settings.showRare;save();renderMain()},
   'dl-media'(){downloadMedia();const e=$('#dl-lbl');if(e)e.textContent='Téléchargement…'},
   'fav'(id){const i=S.fav.indexOf(id);if(i<0)S.fav.push(id);else S.fav.splice(i,1);save();renderDetail();if(ui.tab==='exercices')renderXList();flash(i<0?'Ajouté aux favoris':'Retiré des favoris')},
+  'toggle-remind'(){const R=S.settings.remind=Object.assign({at:'18:00'},S.settings.remind);R.on=!R.on;save();renderMain();if(R.on)askNotif();remindSync();if(R.on)flash('Rappels activés')},
+  'toggle-crash'(){S.settings.noCrash=!S.settings.noCrash;save();renderMain();crashSetup()},
   'toggle-sound'(){S.settings.sound=!S.settings.sound;save();renderMain();if(S.settings.sound){ensureAudio();beep()}},
   export(){const txt=JSON.stringify(S);openDlg({title:'Exporter mes données',html:`<p class="dtext">Garde ce texte ou ce fichier en lieu sûr. Il contient tes séances, routines et exercices perso.</p><textarea id="exp" class="ta" readonly rows="5">${esc(txt)}</textarea>`,
     buttons:[{label:'Copier',kind:'primary',fn:()=>{copyText(txt);return false}},...(NATIVE?[{label:'Enregistrer le fichier',kind:'soft',fn:()=>{nativeExport(txt);return false}}]:document.querySelector('link[rel="manifest"]')?[{label:'Télécharger le fichier',kind:'soft',fn:()=>{download(txt);return false}}]:[]),{label:'Fermer',kind:'soft'}]})},
@@ -860,8 +925,9 @@ document.addEventListener('change',e=>{const el=e.target,f=el.dataset&&el.datase
   else if(f==='replo'){S.settings.repLo=+el.value;if(S.settings.repHi<=S.settings.repLo)S.settings.repHi=S.settings.repLo+2;save();renderMain()}
   else if(f==='rephi'){S.settings.repHi=+el.value;if(S.settings.repLo>=S.settings.repHi)S.settings.repLo=Math.max(1,S.settings.repHi-2);save();renderMain()}
   else if(f==='theme'){S.settings.theme=el.value;save();applyTheme()}
-  else if(f&&f.startsWith('plan:')){S.plan=S.plan||{};const i=+f.slice(5);if(el.value)S.plan[i]=el.value;else delete S.plan[i];save();renderMain()}
+  else if(f&&f.startsWith('plan:')){S.plan=S.plan||{};const i=+f.slice(5);if(el.value)S.plan[i]=el.value;else delete S.plan[i];save();renderMain();remindSync()}
   else if(f==='weekgoal'){S.settings.weekGoal=+el.value;save()}
+  else if(f==='remindat'){S.settings.remind=Object.assign({on:true},S.settings.remind,{at:el.value||'18:00'});save();remindSync()}
   else if(el.id==='hevyIn'){const file=el.files&&el.files[0];el.value='';if(!file)return;const r=new FileReader();r.onload=()=>hevyImport(String(r.result));r.onerror=()=>flash('Lecture du fichier impossible');r.readAsText(file)}
   else if(el.id==='fileIn'){const file=el.files&&el.files[0];el.value='';if(!file)return;const r=new FileReader();r.onload=()=>applyImport(String(r.result));r.onerror=()=>flash('Lecture du fichier impossible');r.readAsText(file)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(MODAL)closeDlg();else if(ui.detail.length)ACTS['d-close']();else if(ui.picker)ACTS['p-close']()}
@@ -889,7 +955,7 @@ function checkRecord(E,i){const s=E.sets[i];if(s.t==='w')return null;const{hist,
     if(a>ma)return{kind:'Poids max',val:`${fmt(a)} kg × ${b}`};if(e1rm(a,b)>me+0.05)return{kind:'1RM estimé',val:`${Math.round(e1rm(a,b))} kg (${fmt(a)} × ${b})`};return null}
   if(type==='c'){const m=Math.max(0,...all.map(x=>+x.a||0));return a>m?{kind:'Distance max',val:fmt(a)+' km'}:null}
   const m=Math.max(0,...all.map(x=>+x.b||0));return b>m?{kind:type==='t'?'Durée max':'Reps max',val:type==='t'?fmtSec(b):b+' reps'}:null}
-function celebrate(X,r){try{navigator.vibrate&&navigator.vibrate([60,40,60,40,160])}catch(e){}
+function celebrate(X,r){vib('pr');
   if(S.settings.sound&&actx){try{const t0=actx.currentTime;[523,659,784,1047].forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.0001,t0+i*.09);g.gain.exponentialRampToValueAtTime(.35,t0+i*.09+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+i*.09+.35);o.connect(g).connect(actx.destination);o.start(t0+i*.09);o.stop(t0+i*.09+.4)})}catch(e){}}
   const old=$('#prfx');if(old)old.remove();const box=document.createElement('div');box.id='prfx';box.setAttribute('role','status');
   box.innerHTML=`<canvas></canvas><div class="prbanner"><span class="prb-ic">${icon('trophy')}</span><span><b>Nouveau record&nbsp;!</b><span>${esc(X.name)}</span><em>${esc(r.kind)} · ${esc(r.val)}</em></span></div>`;document.body.appendChild(box);
@@ -1075,8 +1141,8 @@ function warmPlan(){const{src,z}=warmTarget();const pick=(L,n)=>L.slice(0,n);con
 let WU=null;
 function warmStart(){WU={...warmPlan(),i:0,left:0,paused:false,t:null};WU.left=WU.moves[0].sec;pushDetail({kind:'warm'});warmTick(true)}
 function warmTick(first){clearInterval(WU&&WU.t);if(!WU)return;WU.t=setInterval(()=>{if(!WU||WU.paused)return;WU.left--;
-  if(WU.left<=3&&WU.left>0){try{if(navigator.vibrate)navigator.vibrate(40)}catch(e){}}
-  if(WU.left<=0){try{if(S.settings.sound){ensureAudio();beep()}if(navigator.vibrate)navigator.vibrate(200)}catch(e){}warmGo(1);return}warmDraw()},1000);warmDraw()}
+  if(WU.left<=3&&WU.left>0)vib('tap');
+  if(WU.left<=0){try{if(S.settings.sound){ensureAudio();beep()}}catch(e){}vib('heavy');warmGo(1);return}warmDraw()},1000);warmDraw()}
 function warmGo(d){if(!WU)return;WU.i+=d;if(WU.i<0)WU.i=0;if(WU.i>=WU.moves.length){clearInterval(WU.t);WU.done=true;renderDetail();return}WU.left=WU.moves[WU.i].sec;renderDetail();warmTick()}
 function warmDraw(){const c=$('#wu-left'),r=$('#wu-ring');if(!WU||!c)return;const m=WU.moves[WU.i];c.textContent=WU.left;if(r)r.style.strokeDashoffset=String(289*(1-WU.left/m.sec))}
 function warmHTML(){if(!WU)return'';const head=`<div class="sheet-head"><button class="btn-ghost" data-act="wu-close">${icon('chev-down')}Fermer</button><div class="sh-title">Échauffement</div><span style="width:70px"></span></div>`;
@@ -1344,6 +1410,8 @@ function lbHTML(){const on=lbOn(),me=lbProfile(),wk=monday(Date.now());const tab
 function checkFriendLink(){const h=location.hash;const m=h.match(/^#ami=([A-Za-z0-9]{20,40})(?:\.([A-Za-z0-9_-]*))?/);if(!m)return;try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
   let nm='';try{nm=m[2]?b64d(m[2]):''}catch(e){}
   const link=lbLinkFor(m[1],m[2]);
+  if(!NATIVE&&/Android/i.test(navigator.userAgent))return openDlg({title:'Ajouter un pote',html:`<p class="dtext">Tu as l'appli <b>Carnet de fonte</b> sur ce téléphone ? Ouvre l'invitation de <b>${esc(nm||'ton pote')}</b> directement dedans.</p>`,
+    buttons:[{label:'Ouvrir dans l\'appli',kind:'primary',fn:()=>{location.href=`intent://ami/${m[1]}${m[2]?'.'+m[2]:''}#Intent;scheme=carnetdefonte;package=fr.carnetdefonte.app;end`}},{label:'Ajouter ici (navigateur)',kind:'soft',fn:()=>{const e=lbAddFriend(m[1],nm);flash(e||'Pote ajouté')}},{label:'Plus tard',kind:'soft'}]});
   if(IN_SAFARI)return openDlg({title:'Ajouter un pote',html:`<p class="dtext">Ce lien s'est ouvert dans Safari. Si Carnet de fonte est sur ton écran d'accueil, ajoute <b>${esc(nm||'ce pote')}</b> depuis l'appli :</p><ol class="steps"><li>Touche <b>Copier le lien</b>.</li><li>Ouvre <b>Carnet de fonte</b> depuis ton écran d'accueil.</li><li><b>Classement → Ajouter un pote → Coller le lien</b>.</li></ol>`,
     buttons:[{label:'Copier le lien',kind:'primary',fn:()=>{try{navigator.clipboard.writeText(link).then(()=>flash('Lien copié : ouvre l\'appli'))}catch(e){}}},{label:'Ajouter ici (dans Safari)',kind:'soft',fn:()=>{const e=lbAddFriend(m[1],nm);flash(e||'Pote ajouté')}}]});
   openDlg({title:'Ajouter un pote',html:`<p class="dtext">Ajouter <b>${esc(nm||'ce pote')}</b> à ton classement ?</p>`,buttons:[{label:'Ajouter',kind:'primary',fn:()=>{const e=lbAddFriend(m[1],nm);flash(e||'Pote ajouté');if(!e){ui.tab='historique';renderMain();pushDetail({kind:'lb'});lbRefresh(true)}}},{label:'Plus tard',kind:'soft'}]})}
@@ -1375,7 +1443,49 @@ function monthHTML(k){const M=monthStats(k),Pm=monthStats(mShift(k,-1)),cur=k===
     <section class="dsec"><h2>Muscles</h2>${M.topM.length?`<ul class="mlist">${M.topM.slice(0,5).map(([m,n])=>`<li><span>${esc(m)}</span><b>${n} séries</b></li>`).join('')}</ul>`:''}${M.missing.length?`<p class="dtext" style="font-size:14px">Pas travaillé ce mois : <b>${M.missing.map(esc).join(', ')}</b>.</p>`:''}</section>
     <section class="dsec"><h2>Exercices les plus faits</h2><ul class="mlist">${M.topE.map(([id,n])=>`<li><span>${esc(ex(id).name)}</span><b>${n} séance${n>1?'s':''}</b></li>`).join('')}</ul></section>`
     :'<div class="empty"><b>Aucune séance ce mois-là</b></div>'}
+    ${M.n?`<button class="btn btn-soft block" data-act="month-pdf:${k}">${icon('share')}Exporter le bilan en PDF</button>`:''}
   </div></div>`}
+/* ================= Bilan du mois en PDF (pages dessinées puis assemblées en PDF, sans bibliothèque) ================= */
+function pdfFromJpegs(pages){const enc=new TextEncoder(),parts=[],offs=[];let len=0;const push=x=>{const b=typeof x==='string'?enc.encode(x):x;parts.push(b);len+=b.length};
+  const obj=(n,body)=>{offs[n]=len;push(`${n} 0 obj\n`);for(const b of[].concat(body))push(b);push('\nendobj\n')};
+  const W=595.28,H=841.89,N=pages.length;push('%PDF-1.4\n%\xE2\xE3\n');
+  obj(1,'<< /Type /Catalog /Pages 2 0 R >>');obj(2,`<< /Type /Pages /Count ${N} /Kids [${pages.map((_,i)=>`${3+i*3} 0 R`).join(' ')}] >>`);
+  pages.forEach((pg,i)=>{const o=3+i*3,c=`q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;
+    obj(o,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 ${o+1} 0 R >> >> /Contents ${o+2} 0 R >>`);
+    obj(o+1,[`<< /Type /XObject /Subtype /Image /Width ${pg.w} /Height ${pg.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${pg.data.length} >>\nstream\n`,pg.data,'\nendstream']);
+    obj(o+2,`<< /Length ${c.length} >>\nstream\n${c}\nendstream`)});
+  const xref=len,n=3+N*3;push(`xref\n0 ${n}\n0000000000 65535 f \n`);for(let i=1;i<n;i++)push(String(offs[i]).padStart(10,'0')+' 00000 n \n');
+  push(`trailer\n<< /Size ${n} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);return new Blob(parts,{type:'application/pdf'})}
+async function monthPdf(k){flash('Création du PDF…');try{await document.fonts.ready}catch(e){}
+  const M=monthStats(k),P=monthStats(mShift(k,-1)),Wd=1240,Hd=1754,mx=100;const pages=[];let cv,x,y;
+  const red=accentHex('d'),fg='#14181D',mu='#5E6873',ln='#E3E6EA',D='"Barlow Condensed","Arial Narrow",sans-serif',B='"Figtree",system-ui,sans-serif';
+  const page=()=>{if(cv)pages.push(cv);cv=document.createElement('canvas');cv.width=Wd;cv.height=Hd;x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,Wd,Hd);
+    [[red,0],['#6A97F2',1],['#E5AE22',2],['#55C985',3]].forEach(([c,i])=>{x.fillStyle=c;x.fillRect(mx+i*262,60,250,10)});
+    x.fillStyle=mu;x.font=`500 22px ${B}`;x.fillText('Carnet de fonte · '+cap(mLabel(k)),mx,Hd-60);x.textAlign='right';x.fillText('Page '+(pages.length+1),Wd-mx,Hd-60);x.textAlign='left';y=150};
+  const need=h=>{if(y+h>Hd-120)page()};
+  const h2=t=>{need(110);y+=70;x.fillStyle=red;x.font=`800 40px ${D}`;x.fillText(t.toUpperCase(),mx,y);y+=26};
+  page();x.fillStyle=mu;x.font=`600 26px ${B}`;x.fillText((P.n?'BILAN DU MOIS · écarts par rapport au mois précédent':'BILAN DU MOIS')+(S.settings.lbName||S.settings.fbName?' · '+(S.settings.lbName||S.settings.fbName):''),mx,y);y+=78;
+  x.fillStyle=fg;x.font=`800 92px ${D}`;x.fillText(cap(mLabel(k)).toUpperCase(),mx,y);y+=50;
+  const tiles=[['Séances',String(M.n),M.n-P.n],['Volume',fmtVol(M.vol),P.vol?Math.round((M.vol-P.vol)/P.vol*100)+' %':null],['Temps',fmtDurLong(M.dur||0),null],['Séries',String(M.sets),M.sets-P.sets],['Calories','≈ '+Math.round(M.kcal).toLocaleString('fr-FR'),null],['Semaines actives',String(M.weeks),null]];
+  tiles.forEach(([k2,v,d],i)=>{const c=i%3,r=Math.floor(i/3),X0=mx+c*350,Y0=y+r*170;x.fillStyle='#F3F4F6';x.beginPath();x.roundRect(X0,Y0,330,150,22);x.fill();
+    x.fillStyle=mu;x.font=`600 24px ${B}`;x.fillText(k2.toUpperCase(),X0+26,Y0+46);x.fillStyle=fg;let fs=58;x.font=`800 ${fs}px ${D}`;while(x.measureText(v).width>280&&fs>30){fs-=2;x.font=`800 ${fs}px ${D}`}x.fillText(v,X0+26,Y0+112);
+    if(d!==null&&d!==undefined&&P.n){const sv=typeof d==='number'?(d>=0?'+':'')+d:(String(d)[0]==='-'?d:'+'+d);x.fillStyle=String(sv)[0]==='-'?'#C0392B':'#1E8E4E';x.font=`700 22px ${B}`;x.textAlign='right';x.fillText(sv,X0+306,Y0+46);x.textAlign='left'}});
+  y+=350;
+  if(M.topM.length){h2('Muscles travaillés (séries)');const mxv=M.topM[0][1];for(const[m,n]of M.topM){need(54);y+=44;x.fillStyle=fg;x.font=`600 28px ${B}`;x.fillText(m,mx,y);x.fillStyle='#F0F1F3';x.beginPath();x.roundRect(mx+290,y-26,700,30,8);x.fill();
+    x.fillStyle=red;x.beginPath();x.roundRect(mx+290,y-26,Math.max(12,700*n/mxv),30,8);x.fill();x.fillStyle=mu;x.font=`600 26px ${B}`;x.textAlign='right';x.fillText(String(n),Wd-mx,y);x.textAlign='left'}
+    if(M.missing.length){need(60);y+=54;x.fillStyle=mu;x.font=`500 24px ${B}`;x.fillText('Pas travaillé ce mois : '+M.missing.join(', '),mx,y)}}
+  if(M.prs.length){h2(`Records battus (${M.prs.length})`);for(const p of M.prs){need(52);y+=48;x.fillStyle=fg;x.font=`600 28px ${B}`;let n=ex(p.exId).name;while(x.measureText(n).width>620&&n.length>4)n=n.slice(0,-2);x.fillText(n,mx,y);
+    x.fillStyle=mu;x.font=`500 26px ${B}`;x.textAlign='right';x.fillText(`${p.label} · ${p.value} · ${fmtShort(p.t)}`,Wd-mx,y);x.textAlign='left';x.strokeStyle=ln;x.beginPath();x.moveTo(mx,y+16);x.lineTo(Wd-mx,y+16);x.stroke()}}
+  h2('Séances');const L=M.H.slice().sort((a,b)=>a.start-b.start);for(const w of L){need(52);y+=48;x.fillStyle=mu;x.font=`600 26px ${B}`;x.fillText(cap(fmtShort(w.start)),mx,y);
+    x.fillStyle=fg;x.font=`600 28px ${B}`;let n=w.name;while(x.measureText(n).width>520&&n.length>4)n=n.slice(0,-2);x.fillText(n,mx+190,y);
+    x.fillStyle=mu;x.font=`500 26px ${B}`;x.textAlign='right';x.fillText(`${fmtDurLong(w.end-w.start)} · ${fmtVol(wVolume(w))} · ${wSets(w)} séries`,Wd-mx,y);x.textAlign='left';x.strokeStyle=ln;x.beginPath();x.moveTo(mx,y+16);x.lineTo(Wd-mx,y+16);x.stroke()}
+  pages.push(cv);
+  const J=[];for(const c of pages){const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));J.push({w:c.width,h:c.height,data:new Uint8Array(await b.arrayBuffer())})}
+  const pdf=pdfFromJpegs(J),name=`bilan-${k}.pdf`;
+  if(NATIVE&&CP.Filesystem&&CP.Share){try{const b64=await new Promise(ok=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]);fr.readAsDataURL(pdf)});
+    const f=await CP.Filesystem.writeFile({path:name,data:b64,directory:'CACHE'});await CP.Share.share({title:'Bilan '+mLabel(k),files:[f.uri],dialogTitle:'Enregistrer ou partager le PDF'});return}catch(e){if(/cancel/i.test(String(e&&e.message)))return}}
+  try{const f=new File([pdf],name,{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Bilan '+mLabel(k)});return}}catch(e){if(e&&e.name==='AbortError')return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(pdf);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>a.remove(),1000)}
 function checkMonthReport(){const now=mKey(Date.now());if(S.settings.lastReport===now)return;const prev=mShift(now,-1),had=S.settings.lastReport;S.settings.lastReport=now;save();
   if(!had||!monthStats(prev).n||S.active)return;
   setTimeout(()=>{if(MODAL)return;openDlg({title:`Ton bilan de ${new Date(mStart(prev)).toLocaleDateString('fr-FR',{month:'long'})} est prêt`,html:`<p class="dtext">${monthStats(prev).n} séances, tes records et les muscles travaillés.</p>`,buttons:[{label:'Voir le bilan',kind:'primary',fn:()=>pushDetail({kind:'month',id:prev})},{label:'Plus tard',kind:'soft'}]})},800)}
@@ -1432,7 +1542,7 @@ function chronoStart(u,i){const E=findE(u);if(!E)return;const X=ex(E.exId);const
       s2.b=String(Math.max(1,Math.round((Date.now()-C.start)/1000)));if(s2.done){save();renderEditor();return}toggleDone(C.u,C.i)}},{label:'Annuler',kind:'soft',fn:()=>{ui.chrono=null}}]})}
 function chronoTick(){const C=ui.chrono;if(!C)return;if(!MODAL){ui.chrono=null;return}const sec=Math.floor((Date.now()-C.start)/1000);const el=$('#chr-t');if(el){const t=fmtClock(sec);if(el.textContent!==t)el.textContent=t}
   const f=$('#chr-f');if(f)f.style.transform=`scaleX(${Math.min(1,sec/C.tgt)})`;
-  if(C.tgt&&!C.beeped&&sec>=C.tgt){C.beeped=true;beep();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}if(el)el.classList.add('ok')}}
+  if(C.tgt&&!C.beeped&&sec>=C.tgt){C.beeped=true;beep();vib('end');if(el)el.classList.add('ok')}}
 setInterval(chronoTick,250);
 
 /* ================= Muscles négligés ================= */
