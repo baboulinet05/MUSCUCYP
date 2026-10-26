@@ -46,8 +46,6 @@ const BUILTIN=[];
 
 const KEY='carnet-fonte-v1';
 const APP_VERSION='3.3';
-/* bouton « Soutenir l'appli » : lien de don (Ko-fi, Buy Me a Coffee…). Masqué dans l'appli Android (règles du Play Store). */
-const DON_URL='';
 /* ================= Appli Android (Capacitor) ================= */
 const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const CP=NATIVE?window.Capacitor.Plugins:{};
@@ -464,7 +462,6 @@ function setView(){
     <button class="btn btn-primary" data-act="hevy-file">Choisir le fichier Hevy</button></section>
   <section class="card setc" ${NATIVE?'hidden':''}><h3>Installer sur l'iPhone</h3>
     ${standalone?`<p class="okline">${icon('check')}L'app est installée sur ton écran d'accueil.</p>`:`<button class="btn btn-soft" data-act="install-help" style="align-self:flex-start">Afficher le mode d'emploi</button><ol class="steps"><li>Ouvre l'app dans <b>Safari</b>.</li><li>Touche <b>Partager</b>, puis <b>Sur l'écran d'accueil</b>.</li><li>Lance-la depuis l'icône : elle s'ouvre en plein écran et marche hors ligne.</li></ol>`}</section>
-  ${DON_URL&&!NATIVE?`<section class="card setc don"><h3>Soutenir l'appli</h3><p class="dtext">Carnet de fonte est gratuit, sans pub et sans abonnement, et le restera. Si elle t'aide à progresser, tu peux m'offrir un café : ça paie l'hébergement et motive à ajouter des nouveautés.</p><a class="btn btn-primary block" href="${esc(DON_URL)}" target="_blank" rel="noopener">☕ Offrir un café</a></section>`:''}
   <section class="card setc"><h3>Données</h3>
     <div class="setrow"><span class="muted">Version de l'app</span><b class="num">${APP_VERSION}</b></div>
     <div class="setrow"><span class="muted">Séances</span><b class="num">${S.history.length}</b></div>
