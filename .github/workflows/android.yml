@@ -40,7 +40,7 @@ jobs:
           GSJ: ${{ secrets.GOOGLE_SERVICES_JSON }}
         working-directory: mobile/android
         run: |
-          if [ -n "$GSJ" ]; then printf '%s' "$GSJ" > app/google-services.json; echo "::notice title=Firebase::google-services.json présent, connexion Google activée"; else echo "::warning title=Firebase::google-services.json absent, la connexion Google ne marchera pas"; fi
+          if [ -n "$GSJ" ]; then printf '%s' "$GSJ" > app/google-services.json; echo "::notice title=Firebase::google-services.json présent, connexion Google activée"; python3 -c "import json;d=json.load(open('app/google-services.json'));C=[c for c in d['client'] if c['client_info']['android_client_info']['package_name']=='fr.carnetdefonte.app'];o=[x for c in C for x in c.get('oauth_client',[])];a=[x for x in o if x.get('client_type')==1];w=[x for x in o if x.get('client_type')==3];sh=[x.get('android_info',{}).get('certificate_hash','')[:6] for x in a];print('::notice title=Firebase (contenu)::appli fr.carnetdefonte.app %s, clients Android %d (empreintes %s), client Web %d' % ('trouvée' if C else 'ABSENTE',len(a),','.join(sh) or 'aucune',len(w)))" || true; else echo "::warning title=Firebase::google-services.json absent, la connexion Google ne marchera pas"; fi
           if [ -n "$KS" ]; then
             echo "$KS" | base64 -d > upload-key.jks
             printf 'storeFile=upload-key.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$KS_PASS" "$KEY_ALIAS" "$KEY_PASS" > keystore.properties
