@@ -53,7 +53,11 @@ jobs:
         if: steps.secrets.outputs.signed == 'true'
         working-directory: mobile/android
         run: |
-          ./gradlew bundleRelease assembleRelease --console=plain
+          set -o pipefail
+          if ! ./gradlew bundleRelease assembleRelease --console=plain 2>&1 | tee /tmp/gradle.log; then
+            grep -E "ERROR|Missing class|What went wrong|> |error:|R8" /tmp/gradle.log | grep -v "^> Task" | head -25 | while IFS= read -r l; do echo "::error title=Compilation::$l"; done
+            exit 1
+          fi
           echo "Empreintes de la clé (à copier dans Firebase) :"
           P="$(grep storePassword keystore.properties | cut -d= -f2-)"
           SHA1=$(keytool -list -v -keystore upload-key.jks -storepass "$P" | grep -m1 'SHA1:' | sed 's/.*SHA1: *//')
