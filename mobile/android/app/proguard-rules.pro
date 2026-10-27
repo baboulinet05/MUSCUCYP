@@ -38,3 +38,7 @@
 -keep class com.google.android.libraries.identity.googleid.** { *; }
 -dontwarn com.google.android.libraries.identity.googleid.**
 -dontwarn org.apache.cordova.**
+# Fournisseurs de connexion non utilisés par l'appli (seul Google est activé)
+-dontwarn com.facebook.**
+-dontwarn com.twitter.**
+-dontwarn com.linecorp.**
