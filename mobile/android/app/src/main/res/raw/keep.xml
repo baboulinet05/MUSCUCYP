@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ressources appelées par leur nom (icône des notifications, écran de démarrage) : à garder malgré shrinkResources -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_fonte,@drawable/splash,@mipmap/ic_launcher*,@layout/widget_fonte,@xml/widget_fonte_info" />
