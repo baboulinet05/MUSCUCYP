@@ -11,6 +11,8 @@ on:
   push:
     branches: [main, 'dev/**']
     paths: ['index.html', 'css/**', 'js/**', 'media/**', 'lib/**', 'mobile/**', '.github/workflows/android.yml']
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -56,6 +58,10 @@ jobs:
           set -o pipefail
           if ! ./gradlew bundleRelease assembleRelease --console=plain 2>&1 | tee /tmp/gradle.log; then
             grep -E "ERROR|Missing class|What went wrong|> |error:|R8" /tmp/gradle.log | grep -v "^> Task" | head -25 | while IFS= read -r l; do echo "::error title=Compilation::$l"; done
+            # journal d'erreur publié sur la branche ci-log (pour le diagnostic à distance)
+            mkdir -p /tmp/cilog && cd /tmp/cilog && git init -q && cp /tmp/gradle.log . && tail -c 200000 gradle.log > gradle-tail.log && rm gradle.log
+            git config user.email ci@carnetdefonte && git config user.name ci && git add . && git commit -qm "journal $GITHUB_RUN_ID"
+            git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" HEAD:refs/heads/ci-log || true
             exit 1
           fi
           echo "Empreintes de la clé (à copier dans Firebase) :"
