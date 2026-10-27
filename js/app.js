@@ -65,7 +65,7 @@ const BUILTIN=[];
   if(typeof OEIMG!=='undefined')for(const id in OEIMG){const[k,one]=OEIMG[id].split(':');const I=INFO[id]||(INFO[id]={s:[]});if(I.img||I.rp)continue;I.oe=k;I.oe1=!!one}})();
 
 const KEY='carnet-fonte-v1';
-const APP_VERSION='4.1';
+const APP_VERSION='4.2';
 /* ================= Appli Android (Capacitor) ================= */
 const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const CP=NATIVE?window.Capacitor.Plugins:{};
